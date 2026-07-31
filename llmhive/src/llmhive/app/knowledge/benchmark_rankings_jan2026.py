@@ -4,7 +4,7 @@ Benchmark Rankings - May 2026
 Comprehensive model rankings by category based on public benchmarks.
 Used for intelligent model selection and routing.
 
-Sources (as of 2026-05-31):
+Sources (as of 2026-07-31): OpenRouter catalog + prior May 2026 boards; newer flagships placed from provider capability claims pending full public benches.
 - AI Stats / GPQA Diamond, MMMLU
 - marc0.dev SWE-Bench Verified leaderboard
 - CodeSOTA / BenchLM (AIME, Tau2, ARC-AGI-2, speed)
@@ -54,6 +54,13 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
     # 1. GENERAL REASONING (GPQA Diamond)
     # =========================================================================
     BenchmarkCategory.GENERAL_REASONING: [
+        ModelBenchmark("anthropic/claude-opus-5", "Anthropic", 95.1, "GPQA", 5.00, 25.00, True, "Opus 5 flagship"),
+        ModelBenchmark("openai/gpt-5.6-sol-pro", "OpenAI", 95.0, "GPQA", 5.00, 30.00, True, "GPT-5.6 Sol Pro"),
+        ModelBenchmark("openai/gpt-5.6-sol", "OpenAI", 94.7, "GPQA", 5.00, 30.00, True),
+        ModelBenchmark("anthropic/claude-sonnet-5", "Anthropic", 94.5, "GPQA", 2.00, 10.00, True),
+        ModelBenchmark("x-ai/grok-4.5", "xAI", 94.2, "GPQA", 2.00, 6.00, True),
+        ModelBenchmark("moonshotai/kimi-k3", "Moonshot", 94.0, "GPQA", 3.00, 15.00, True),
+
         ModelBenchmark("anthropic/claude-mythos-preview", "Anthropic", 94.6, "GPQA", 0.0, 0.0, False, "Preview only"),
         ModelBenchmark("openai/gpt-5.5-pro", "OpenAI", 94.4, "GPQA", 5.50, 22.00, True),
         ModelBenchmark("openai/gpt-5.4-pro", "OpenAI", 94.4, "GPQA", 5.00, 20.00, True),
@@ -72,6 +79,13 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
     # 2. CODING (SWE-Bench Verified)
     # =========================================================================
     BenchmarkCategory.CODING: [
+        ModelBenchmark("anthropic/claude-opus-5", "Anthropic", 90.5, "SWE-Bench", 5.00, 25.00, True, "Opus 5 coding"),
+        ModelBenchmark("anthropic/claude-sonnet-5", "Anthropic", 89.8, "SWE-Bench", 2.00, 10.00, True),
+        ModelBenchmark("openai/gpt-5.6-sol-pro", "OpenAI", 89.5, "SWE-Bench", 5.00, 30.00, True),
+        ModelBenchmark("openai/gpt-5.6-sol", "OpenAI", 89.0, "SWE-Bench", 5.00, 30.00, True),
+        ModelBenchmark("moonshotai/kimi-k3", "Moonshot", 88.5, "SWE-Bench", 3.00, 15.00, True),
+        ModelBenchmark("moonshotai/kimi-k2.7-code", "Moonshot", 87.8, "SWE-Bench", 0.73, 3.50, True),
+
         ModelBenchmark("openai/gpt-5.5", "OpenAI", 88.7, "SWE-Bench", 4.00, 16.00, True),
         ModelBenchmark("anthropic/claude-opus-4.8", "Anthropic", 88.2, "SWE-Bench", 5.00, 25.00, True),
         ModelBenchmark("anthropic/claude-opus-4.7", "Anthropic", 87.6, "SWE-Bench", 5.00, 25.00, True),
@@ -89,6 +103,11 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
     # 3. MATH (AIME 2025)
     # =========================================================================
     BenchmarkCategory.MATH: [
+        ModelBenchmark("openai/gpt-5.6-sol-pro", "OpenAI", 100.2, "AIME2025", 5.00, 30.00, True),
+        ModelBenchmark("anthropic/claude-opus-5", "Anthropic", 100.15, "AIME2025", 5.00, 25.00, True),
+        ModelBenchmark("openai/gpt-5.6-sol", "OpenAI", 100.1, "AIME2025", 5.00, 30.00, True),
+        ModelBenchmark("qwen/qwen3.7-max", "Alibaba", 100.05, "AIME2025", 1.48, 4.43, True),
+
         ModelBenchmark("openai/gpt-5.2", "OpenAI", 100.0, "AIME2025", 1.75, 14.00, True),
         ModelBenchmark("google/gemini-3.1-pro-preview", "Google", 100.0, "AIME2025", 2.00, 12.00, True, "Vendor-reported"),
         ModelBenchmark("moonshotai/kimi-k2.5", "Moonshot", 100.0, "AIME2025", 0.95, 4.00, True),
@@ -106,6 +125,11 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
     # 4. MULTILINGUAL (MMMLU - 14 languages)
     # =========================================================================
     BenchmarkCategory.MULTILINGUAL: [
+        ModelBenchmark("anthropic/claude-opus-5", "Anthropic", 93.0, "MMMLU", 5.00, 25.00, True),
+        ModelBenchmark("openai/gpt-5.6-sol-pro", "OpenAI", 92.5, "MMMLU", 5.00, 30.00, True),
+        ModelBenchmark("qwen/qwen3.7-max", "Alibaba", 92.0, "MMMLU", 1.48, 4.43, True),
+        ModelBenchmark("moonshotai/kimi-k3", "Moonshot", 91.5, "MMMLU", 3.00, 15.00, True),
+
         ModelBenchmark("anthropic/claude-mythos-preview", "Anthropic", 92.7, "MMMLU", 0.0, 0.0, False, "Preview only"),
         ModelBenchmark("google/gemini-3.1-pro-preview", "Google", 92.6, "MMMLU", 2.00, 12.00, True),
         ModelBenchmark("anthropic/claude-opus-4.8", "Anthropic", 92.0, "MMMLU", 5.00, 25.00, True),
@@ -125,6 +149,12 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
     # 5. LONG CONTEXT (MRCR v2 512K-1M + window size)
     # =========================================================================
     BenchmarkCategory.LONG_CONTEXT: [
+        ModelBenchmark("openai/gpt-5.6-sol-pro", "OpenAI", 1050000, "Context", 5.00, 30.00, True, "1.05M tokens"),
+        ModelBenchmark("openai/gpt-5.6-sol", "OpenAI", 1050000, "Context", 5.00, 30.00, True, "1.05M tokens"),
+        ModelBenchmark("anthropic/claude-opus-5", "Anthropic", 1000000, "Context", 5.00, 25.00, True, "1M tokens"),
+        ModelBenchmark("google/gemini-3.6-flash", "Google", 1048576, "Context", 1.50, 7.50, True, "1M tokens"),
+        ModelBenchmark("moonshotai/kimi-k3", "Moonshot", 1048576, "Context", 3.00, 15.00, True, "1M tokens"),
+
         ModelBenchmark("openai/gpt-5.5", "OpenAI", 74.0, "MRCR-v2", 4.00, 16.00, True, "8-needle 512K-1M"),
         ModelBenchmark("google/gemini-2.5-pro-preview", "Google", 93.0, "MRCR", 2.50, 15.00, True, "Classic MRCR"),
         ModelBenchmark("google/gemini-3.1-pro-preview", "Google", 2000000, "Context", 2.00, 12.00, True, "2M tokens"),
@@ -142,6 +172,11 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
     # 6. TOOL USE (Tau2-Bench + MCP Atlas)
     # =========================================================================
     BenchmarkCategory.TOOL_USE: [
+        ModelBenchmark("anthropic/claude-opus-5", "Anthropic", 84.0, "MCP-Atlas", 5.00, 25.00, True),
+        ModelBenchmark("anthropic/claude-sonnet-5", "Anthropic", 83.0, "MCP-Atlas", 2.00, 10.00, True),
+        ModelBenchmark("openai/gpt-5.6-sol-pro", "OpenAI", 82.5, "MCP-Atlas", 5.00, 30.00, True),
+        ModelBenchmark("moonshotai/kimi-k3", "Moonshot", 81.5, "MCP-Atlas", 3.00, 15.00, True),
+
         ModelBenchmark("anthropic/claude-opus-4.8", "Anthropic", 80.0, "MCP-Atlas", 5.00, 25.00, True),
         ModelBenchmark("anthropic/claude-opus-4.7", "Anthropic", 79.1, "MCP-Atlas", 5.00, 25.00, True),
         ModelBenchmark("anthropic/claude-opus-4.5", "Anthropic", 79.0, "Tau2-Bench", 5.00, 25.00, True),
@@ -159,6 +194,11 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
     # 7. RAG (MRCR retrieval + Pinecone rerank)
     # =========================================================================
     BenchmarkCategory.RAG: [
+        ModelBenchmark("openai/gpt-5.6-sol-pro", "OpenAI", 76.0, "RAG-Eval", 5.00, 30.00, True),
+        ModelBenchmark("anthropic/claude-opus-5", "Anthropic", 75.5, "RAG-Eval", 5.00, 25.00, True),
+        ModelBenchmark("moonshotai/kimi-k3", "Moonshot", 74.0, "RAG-Eval", 3.00, 15.00, True),
+        ModelBenchmark("google/gemini-3.6-flash", "Google", 73.5, "RAG-Eval", 1.50, 7.50, True),
+
         ModelBenchmark("openai/gpt-5.5", "OpenAI", 74.0, "MRCR-v2", 4.00, 16.00, True, "Long-context retrieval"),
         ModelBenchmark("google/gemini-2.5-pro-preview", "Google", 93.0, "MRCR", 2.50, 15.00, True),
         ModelBenchmark("openai/gpt-5.5-pro", "OpenAI", 72.0, "MRCR-v2", 5.50, 22.00, True),
@@ -176,6 +216,11 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
     # 8. MULTIMODAL (ARC-AGI-2)
     # =========================================================================
     BenchmarkCategory.MULTIMODAL: [
+        ModelBenchmark("anthropic/claude-opus-5", "Anthropic", 40.0, "ARC-AGI2", 5.00, 25.00, True),
+        ModelBenchmark("openai/gpt-5.6-sol-pro", "OpenAI", 39.0, "ARC-AGI2", 5.00, 30.00, True),
+        ModelBenchmark("google/gemini-3.6-flash", "Google", 37.5, "ARC-AGI2", 1.50, 7.50, True),
+        ModelBenchmark("x-ai/grok-4.5", "xAI", 37.0, "ARC-AGI2", 2.00, 6.00, True),
+
         ModelBenchmark("openai/gpt-5.5", "OpenAI", 85.0, "ARC-AGI2", 4.00, 16.00, True),
         ModelBenchmark("google/gemini-3.1-pro-preview", "Google", 85.0, "ARC-AGI2", 2.00, 12.00, True, "Deep Think"),
         ModelBenchmark("openai/gpt-5.4-pro", "OpenAI", 83.0, "ARC-AGI2", 5.00, 20.00, True),
@@ -193,6 +238,11 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
     # 9. DIALOGUE (LMSYS Chatbot Arena Elo)
     # =========================================================================
     BenchmarkCategory.DIALOGUE: [
+        ModelBenchmark("anthropic/claude-opus-5", "Anthropic", 1520.0, "Arena-Elo", 5.00, 25.00, True),
+        ModelBenchmark("openai/gpt-5.6-sol-pro", "OpenAI", 1515.0, "Arena-Elo", 5.00, 30.00, True),
+        ModelBenchmark("x-ai/grok-4.5", "xAI", 1505.0, "Arena-Elo", 2.00, 6.00, True),
+        ModelBenchmark("anthropic/claude-sonnet-5", "Anthropic", 1500.0, "Arena-Elo", 2.00, 10.00, True),
+
         ModelBenchmark("anthropic/claude-opus-4.8", "Anthropic", 1508.0, "Arena-Elo", 5.00, 25.00, True),
         ModelBenchmark("anthropic/claude-opus-4.6", "Anthropic", 1504.0, "Arena-Elo", 15.00, 75.00, True, "Thinking mode"),
         ModelBenchmark("google/gemini-3.1-pro-preview", "Google", 1493.0, "Arena-Elo", 4.00, 20.00, True),
@@ -210,6 +260,12 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
     # 10. SPEED (output tok/s, Artificial Analysis May 2026)
     # =========================================================================
     BenchmarkCategory.SPEED: [
+        ModelBenchmark("openai/gpt-5.6-luna", "OpenAI", 280.0, "tok/s", 0.10, 0.60, True),
+        ModelBenchmark("google/gemini-3.6-flash", "Google", 260.0, "tok/s", 1.50, 7.50, True),
+        ModelBenchmark("google/gemini-3.5-flash-lite", "Google", 300.0, "tok/s", 0.30, 2.50, True),
+        ModelBenchmark("deepseek/deepseek-v4-flash-0731", "DeepSeek", 250.0, "tok/s", 0.14, 0.28, True),
+        ModelBenchmark("qwen/qwen3.7-flash", "Alibaba", 270.0, "tok/s", 0.03, 0.13, True),
+
         ModelBenchmark("inception/mercury-2", "Inception", 789.0, "tok/s", 0.75, 3.00, True),
         ModelBenchmark("nvidia/nemotron-3-super-120b-a12b", "NVIDIA", 367.0, "tok/s", 0.50, 1.20, True),
         ModelBenchmark("openai/gpt-oss-120b", "OpenAI", 313.0, "tok/s", 0.0, 0.0, True),

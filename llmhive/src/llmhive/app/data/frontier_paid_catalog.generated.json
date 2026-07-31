@@ -4,23 +4,23 @@
   "paid_catalog": [
     {
       "rank": 1,
-      "model_id": "anthropic/claude-opus-4.8",
-      "display": "Claude Opus 4.8",
+      "model_id": "anthropic/claude-opus-5",
+      "display": "Claude Opus 5",
       "provider": "Anthropic",
       "preferred_api": "anthropic",
-      "native_model_id": "claude-opus-4.8",
-      "best_for": "agentic orchestration, complex coding, long-horizon knowledge work",
+      "native_model_id": "claude-opus-5",
+      "best_for": "demanding reasoning, complex coding, long-horizon agentic work",
       "docs": "https://docs.anthropic.com/",
       "caveat": "Premium direct/provider-paid route."
     },
     {
       "rank": 2,
-      "model_id": "openai/gpt-5.5-pro",
-      "display": "GPT-5.5 Pro",
+      "model_id": "openai/gpt-5.6-sol-pro",
+      "display": "GPT-5.6 Sol Pro",
       "provider": "OpenAI",
       "preferred_api": "openai",
-      "native_model_id": "gpt-5.5-pro",
-      "best_for": "general intelligence, tool use, multimodal workflows",
+      "native_model_id": "gpt-5.6-sol-pro",
+      "best_for": "complex reasoning, coding, and agentic workflows",
       "docs": "https://platform.openai.com/docs",
       "caveat": "Premium direct/provider-paid route."
     },
@@ -37,17 +37,39 @@
     },
     {
       "rank": 4,
-      "model_id": "anthropic/claude-sonnet-4.6",
-      "display": "Claude Sonnet 4.6",
+      "model_id": "anthropic/claude-sonnet-5",
+      "display": "Claude Sonnet 5",
       "provider": "Anthropic",
       "preferred_api": "anthropic",
-      "native_model_id": "claude-sonnet-4.6",
-      "best_for": "balanced quality, coding, fast agent loops",
+      "native_model_id": "claude-sonnet-5",
+      "best_for": "balanced frontier coding, agents, and professional work",
       "docs": "https://docs.anthropic.com/",
       "caveat": "Paid direct route; better latency/cost than Opus for many agents."
     },
     {
       "rank": 5,
+      "model_id": "moonshotai/kimi-k3",
+      "display": "Kimi K3",
+      "provider": "Moonshot",
+      "preferred_api": "kimi",
+      "native_model_id": "kimi-k3",
+      "best_for": "long-context multimodal reasoning and agentic coding",
+      "docs": "https://platform.moonshot.ai/docs",
+      "caveat": "LLMHive direct API via Kimi keys / OpenRouter."
+    },
+    {
+      "rank": 6,
+      "model_id": "x-ai/grok-4.5",
+      "display": "Grok 4.5",
+      "provider": "xAI",
+      "preferred_api": "grok",
+      "native_model_id": "grok-4.5",
+      "best_for": "coding, knowledge work, and STEM",
+      "docs": "https://docs.x.ai/docs",
+      "caveat": "Paid xAI/Grok route."
+    },
+    {
+      "rank": 7,
       "model_id": "deepseek/deepseek-v4-pro",
       "display": "DeepSeek V4 Pro",
       "provider": "DeepSeek",
@@ -58,35 +80,13 @@
       "caveat": "Paid/provider route, often strong value per token."
     },
     {
-      "rank": 6,
-      "model_id": "moonshotai/kimi-k2.6",
-      "display": "Kimi K2.6",
-      "provider": "Moonshot",
-      "preferred_api": "kimi",
-      "native_model_id": "kimi-k2.6",
-      "best_for": "long-context agentic reasoning and document workflows",
-      "docs": "https://platform.moonshot.ai/docs",
-      "caveat": "LLMHive direct API via Kimi_K26_Api_Key and https://api.moonshot.ai/v1."
-    },
-    {
-      "rank": 7,
-      "model_id": "x-ai/grok-4.3",
-      "display": "Grok 4.3",
-      "provider": "xAI",
-      "preferred_api": "grok",
-      "native_model_id": "grok-4.3",
-      "best_for": "real-time reasoning and broad assistant tasks",
-      "docs": "https://docs.x.ai/docs",
-      "caveat": "Paid xAI/Grok route."
-    },
-    {
       "rank": 8,
-      "model_id": "qwen/qwen3.6-plus",
-      "display": "Qwen3.6 Plus",
+      "model_id": "qwen/qwen3.7-max",
+      "display": "Qwen3.7 Max",
       "provider": "Alibaba",
       "preferred_api": "dashscope",
-      "native_model_id": "qwen3.6-plus",
-      "best_for": "multilingual, Chinese-language, math, and coding workflows",
+      "native_model_id": "qwen3.7-max",
+      "best_for": "agent-centric multilingual, math, and coding workloads",
       "docs": "https://help.aliyun.com/zh/model-studio/",
       "caveat": "Paid DashScope/provider route."
     }

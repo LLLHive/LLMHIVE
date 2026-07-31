@@ -41,12 +41,17 @@ OUT_REGISTRY_JSON = ROOT / "llmhive" / "src" / "llmhive" / "app" / "data" / "fro
 
 # Flagship families: if OpenRouter adds a newer slug in these families, drift check fails.
 FLAGSHIP_FAMILY_PATTERNS = [
+    r"^anthropic/claude-opus-5(-fast)?$",
     r"^anthropic/claude-opus-4\.\d+$",
+    r"^anthropic/claude-sonnet-5$",
+    r"^openai/gpt-5\.6-(sol|terra|luna)(-pro)?$",
     r"^openai/gpt-5\.\d+(-pro)?$",
+    r"^google/gemini-3\.6-flash$",
     r"^google/gemini-3\.1-pro",
     r"^x-ai/grok-4\.\d+$",
     r"^deepseek/deepseek-v4-pro$",
-    r"^moonshotai/kimi-k2\.6$",
+    r"^moonshotai/kimi-k3$",
+    r"^qwen/qwen3\.7-max$",
 ]
 
 

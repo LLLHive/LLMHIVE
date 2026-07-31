@@ -28,10 +28,10 @@ CATEGORY_RANKINGS_PATH = ROOT / "lib" / "marketing" / "usecase-category-rankings
 
 # UI categories that must surface the top paid roster model when benchmarks include it.
 _CATEGORY_RANKINGS_REQUIRED_SLUGS: Dict[str, List[str]] = {
-    "programming": ["anthropic/claude-opus-4.8"],
-    "science": ["anthropic/claude-opus-4.8"],
-    "reasoning": ["anthropic/claude-opus-4.8"],
-    "technology": ["anthropic/claude-opus-4.8"],
+    "programming": ["anthropic/claude-opus-5"],
+    "science": ["anthropic/claude-opus-5"],
+    "reasoning": ["anthropic/claude-opus-5"],
+    "technology": ["anthropic/claude-opus-5"],
 }
 
 

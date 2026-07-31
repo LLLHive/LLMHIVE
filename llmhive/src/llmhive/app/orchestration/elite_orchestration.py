@@ -254,48 +254,68 @@ BUDGET_MODELS = {
 # Uses most expensive models + multiple rounds + consensus for maximum margin
 MAXIMUM_MODELS = {
     "math": [
+        "openai/gpt-5.6-sol-pro",
         "openai/o3",               # 98.4% AIME
         "openai/gpt-5.5-pro",
         "openai/gpt-5",
         # Calculator is AUTHORITATIVE - these just verify/explain
     ],
     "reasoning": [
+        "anthropic/claude-opus-5",
+        "openai/gpt-5.6-sol-pro",
         "openai/gpt-5.5-pro",
         "openai/o3",               # Native reasoning
         # 2-model consensus = 95%+ expected
     ],
     "coding": [
+        "anthropic/claude-opus-5",
+        "anthropic/claude-sonnet-5",
+        "openai/gpt-5.6-sol-pro",
         "anthropic/claude-sonnet-4", # 82% SWE-Bench
         "anthropic/claude-opus-4",   # 80.9%
         # 3-round challenge-refine = 97%+ expected
     ],
     "rag": [
+        "openai/gpt-5.6-sol-pro",
+        "anthropic/claude-opus-5",
         "openai/gpt-5.5-pro",
         "anthropic/claude-opus-4", # 94%
         # With Pinecone rerank = 97%+ expected
     ],
     "multilingual": [
+        "anthropic/claude-opus-5",
+        "qwen/qwen3.7-max",
         "anthropic/claude-opus-4", # 90.8% MMMLU
         "openai/gpt-5.5-pro",
         # 2-model consensus = 93%+ expected
     ],
     "long_context": [
+        "openai/gpt-5.6-sol-pro",
         "google/gemini-3.1-pro-preview", # 1.05M tokens - newest, best
+        "moonshotai/kimi-k3",
         "anthropic/claude-sonnet-4",      # 1M tokens
     ],
     "speed": [
+        "google/gemini-3.6-flash",
+        "openai/gpt-5.6-luna",
         "anthropic/claude-sonnet-4", # Fast + capable
         # Parallel execution = 2200+ tok/s expected
     ],
     "dialogue": [
+        "anthropic/claude-opus-5",
+        "openai/gpt-5.6-sol-pro",
         "openai/gpt-5.5-pro",
         # + Reflection loop = 97%+ expected
     ],
     "multimodal": [
+        "anthropic/claude-opus-5",
+        "openai/gpt-5.6-sol-pro",
         "anthropic/claude-opus-4", # 378 ARC-AGI 2 - ALREADY #1!
         "openai/gpt-5.5-pro",
     ],
     "tool_use": [
+        "anthropic/claude-opus-5",
+        "anthropic/claude-sonnet-5",
         "anthropic/claude-sonnet-4", # 82% SWE-Bench
         # + Full tools + verification = 96%+ expected
     ],
