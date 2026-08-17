@@ -48,13 +48,13 @@ Submit the **Short Version** to:
 - **X/Twitter:** short thread with visuals + press link.
 
 ## 6) Outreach Email Template (Media)
-Subject: Miami founder’s AI platform beats GPT‑5.2 at 99.9% lower cost
+Subject: Miami founder’s AI platform routes 350+ models, reports #1 in 5 of 8 categories
 
 Hi [Name],
 
 I’m Camilo Diaz, founder of LLMHive. A few years ago, my teenage daughter’s neurological condition sent me to AI for answers—and I found confident, dangerous errors. I taught myself to code at 59 and built LLMHive to solve that problem.
 
-We’re launching today. LLMHive orchestrates multiple AI models, cross‑verifies outputs, and reports #1 performance across 10 benchmark categories while cutting costs up to 99.9%. The story blends a human‑interest mission with a major technical breakthrough.
+We’re launching today. LLMHive orchestrates multiple AI models, can cross‑verify outputs, and reports #1 in 5 out of 8 benchmark categories (May 2026). Trial checkout requires a card.
 
 Press release: https://www.llmhive.ai/landing  
 Orchestration overview: https://www.llmhive.ai/orchestration  
@@ -64,14 +64,14 @@ If this is a fit, I’d love to share benchmark details and a demo.
 
 Thank you,  
 Camilo Diaz  
-press@llmhive.ai
+cdiaz@llmhive.ai
 
 ## 7) Outreach Email Template (Partners / Influencers)
-Subject: New AI orchestration platform with reported #1 benchmarks — want a demo?
+Subject: New AI orchestration platform — #1 in 5 of 8 categories (May 2026) — want a demo?
 
 Hi [Name],
 
-We’re launching LLMHive, a multi‑model AI orchestration platform that routes tasks to specialized models and uses critique loops to verify results. We report #1 rankings across 10 benchmarks while delivering up to 99.9% lower cost.
+We’re launching LLMHive, a multi‑model AI orchestration platform that routes tasks to specialized models and can use critique loops to verify results. We report #1 in 5 out of 8 benchmark categories (May 2026). Trial checkout requires a card.
 
 If you’d like a demo or early access, here are quick links:
 - https://www.llmhive.ai/landing
@@ -82,14 +82,14 @@ Happy to share the founder story and internal benchmark notes.
 
 Thanks,  
 Camilo Diaz  
-press@llmhive.ai
+cdiaz@llmhive.ai
 
 ## 8) Social Post Templates
 **LinkedIn:**
-“I built LLMHive because I couldn’t trust a single AI with my daughter’s health. Today we launch a platform that orchestrates multiple AI models, cross‑verifies outputs, and reports #1 benchmark performance with massive cost savings. Read the story: https://www.llmhive.ai/landing”
+“I built LLMHive because I couldn’t trust a single AI with my daughter’s health. Today we launch a platform that orchestrates multiple AI models and reports #1 in 5 out of 8 benchmark categories (May 2026). Read the story: https://www.llmhive.ai/landing”
 
 **X/Twitter (Thread opener):**
-“I taught myself to code at 59 to help my daughter. Today we’re launching LLMHive — a multi‑model AI orchestration platform that reports #1 benchmarks and up to 99.9% lower costs. Story + demo: https://www.llmhive.ai/landing”
+“I taught myself to code at 59 to help my daughter. Today we’re launching LLMHive — a multi‑model AI orchestration platform that reports #1 in 5 of 8 benchmark categories. Story + demo: https://www.llmhive.ai/landing”
 
 ## 9) Distribution Checklist
 - [ ] Add verification tokens for Google/Bing/Yandex/Baidu

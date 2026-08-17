@@ -7,6 +7,7 @@ import {
   OFFER_STANDARD_FEATURES,
 } from "@/lib/marketing/pricing-offers"
 import { getSiteUrl, sitePath } from "@/lib/site-url"
+import { MARKETING_FEATURED_LINE, MARKETING_META_DESCRIPTION_MODELS } from "@/lib/marketing/featured-models"
 import {
   Sparkles,
   Zap,
@@ -25,21 +26,21 @@ import {
 export const metadata: Metadata = {
   title: "LLMHive - Multi-Model AI Orchestration Platform",
   description:
-    "LLMHive routes every request to the best AI model for accuracy, speed, and cost. One interface for 350+ OpenRouter models with enterprise security.",
+    `LLMHive routes every request across ${MARKETING_META_DESCRIPTION_MODELS} for accuracy, speed, and cost. One interface with encryption and plan controls.`,
   alternates: {
     canonical: sitePath('/landing'),
   },
   openGraph: {
     title: "LLMHive - Multi-Model AI Orchestration Platform",
     description:
-      "Route every request to the best AI model for accuracy, speed, and cost. One interface for 350+ OpenRouter models with enterprise security.",
+      `Route every request across ${MARKETING_META_DESCRIPTION_MODELS} for accuracy, speed, and cost.`,
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "LLMHive - Multi-Model AI Orchestration Platform",
     description:
-      "Route every request to the best AI model for accuracy, speed, and cost. One interface for 350+ OpenRouter models with enterprise security.",
+      `Route every request across ${MARKETING_META_DESCRIPTION_MODELS} for accuracy, speed, and cost.`,
   },
 }
 
@@ -48,7 +49,7 @@ const features = [
     icon: Brain,
     title: "Multi-Model Orchestration",
     description:
-      "Route queries to the best AI model automatically. GPT-5.4, Claude Sonnet 4.6 / Opus 4.7, Gemini 3.1, Grok 4.2, Llama 4, DeepSeek V3.2, and 350+ OpenRouter models—all in one place.",
+      `Route queries across current flagships — ${MARKETING_FEATURED_LINE} — from one interface.`,
   },
   {
     icon: Layers,
@@ -57,18 +58,18 @@ const features = [
   },
   {
     icon: Zap,
-    title: "Lightning Fast",
-    description: "Parallel model querying and intelligent caching deliver responses in milliseconds, not seconds."
+    title: "Intelligent routing",
+    description: "LLMHive classifies each request and routes it to a model matched to the task and plan — without you switching tools."
   },
   {
     icon: Shield,
     title: "Enterprise Security",
-    description: "SOC 2 compliant infrastructure with end-to-end encryption. Your data never trains our models."
+    description: "Encryption in transit and at rest. Your data is not used to train our models. We are pursuing SOC 2 Type II certification."
   },
   {
     icon: BarChart3,
     title: "Cost Optimization",
-    description: "Save up to 60% on AI costs with smart routing that balances quality and price."
+    description: "Flat monthly plans with routing that balances quality and spend instead of paying separately for every model."
   },
   {
     icon: Globe,
@@ -114,10 +115,9 @@ const tiers = [
 ]
 
 const stats = [
-  { value: "10M+", label: "Messages Processed" },
-  { value: "99.9%", label: "Uptime" },
-  { value: "150ms", label: "Avg Response Time" },
   { value: "350+", label: "OpenRouter models" },
+  { value: "5/8", label: "#1 categories — May 2026" },
+  { value: "99.9%", label: "Uptime SLA" },
 ]
 
 const faqItems = [
@@ -139,12 +139,12 @@ const faqItems = [
   {
     question: "Is LLMHive secure for enterprise use?",
     answer:
-      "Yes. LLMHive is built with enterprise-grade security, encryption, and privacy controls. Your data is protected, and you maintain governance over model usage and access.",
+      "LLMHive encrypts data in transit and at rest and does not use your prompts to train our models. We are pursuing SOC 2 Type II certification. Enterprise customers can request current security documentation.",
   },
   {
     question: "What business outcomes does LLMHive improve?",
     answer:
-      "LLMHive improves answer quality, reduces AI spend, and boosts team productivity by automatically selecting the best model per task. It eliminates tool switching and gives leaders clear visibility into usage and performance.",
+      "LLMHive reduces tool switching by routing each task to a suitable model from 350+ OpenRouter options, with usage visibility and plan controls.",
   },
 ]
 
@@ -252,7 +252,7 @@ export default function LandingPage() {
           <div className="text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm mb-8">
               <Sparkles className="h-4 w-4" />
-              <span>Now with GPT-5.4, Claude Sonnet 4.6 / Opus 4.7, Gemini 3.1, Grok 4.2 & Llama 4</span>
+              <span>Now with {MARKETING_FEATURED_LINE}</span>
             </div>
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
               One Interface.<br />Every AI Model.
@@ -365,7 +365,7 @@ export default function LandingPage() {
               {
                 step: "03",
                 title: "Get Results",
-                description: "Receive the best possible answer, with transparency about which model was used and why."
+                description: "Receive one answer, with transparency about which model was used and why."
               }
             ].map((item, i) => (
               <div key={item.step} className="relative">
@@ -477,7 +477,7 @@ export default function LandingPage() {
           <div className="flex flex-wrap items-center justify-center gap-12 opacity-50">
             <div className="flex items-center gap-2">
               <Lock className="h-5 w-5" />
-              <span className="text-sm">SOC 2 Compliant</span>
+              <span className="text-sm">Pursuing SOC 2 Type II</span>
             </div>
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
@@ -498,7 +498,7 @@ export default function LandingPage() {
             Ready to supercharge your AI workflow?
           </h2>
           <p className="text-xl text-zinc-400 mb-10">
-            Join thousands of developers and teams using LLMHive to build smarter, faster.
+            One interface for 350+ OpenRouter models, with routing matched to each task.
           </p>
           <Button
             asChild

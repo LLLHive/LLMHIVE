@@ -50,23 +50,53 @@ def _fetch_openrouter_ids() -> Set[str]:
     }
 
 
+# OpenRouter routing suffixes and dated snapshots are not UI roster entries.
+_ROUTING_SKIP_TOKENS = (
+    "-fast",
+    "-multi-agent",
+    ":free",
+    "customtools",
+    ":batch",
+    ":nitro",
+    ":floor",
+    ":extended",
+    ":online",
+)
+_SNAPSHOT_SUFFIX = re.compile(r"-\d{4,8}$")
+
+
 def _latest_family_slug(or_ids: Set[str], prefix: str) -> str | None:
-    """Return highest-version non-fast slug for a family prefix."""
-    skip_tokens = ("-fast", "-multi-agent", ":free", "customtools")
+    """Return highest-version canonical chat slug for a family prefix.
+
+    Ignores routing variants (``:batch``, ``:nitro``, …) so live OpenRouter
+    listings do not force those IDs onto the UI roster. Dated snapshot
+    suffixes (``-0813``, ``-20260816``) are also skipped when a non-snapshot
+    candidate exists.
+    """
     candidates = [
         mid
         for mid in or_ids
-        if mid.startswith(prefix.lower()) and not any(tok in mid for tok in skip_tokens)
+        if mid.startswith(prefix.lower())
+        and not any(tok in mid for tok in _ROUTING_SKIP_TOKENS)
     ]
     if not candidates:
         return None
 
-    def sort_key(slug: str) -> tuple:
-        tail = slug.split("/")[-1]
-        nums = [int(n) for n in re.findall(r"\d+", tail)]
-        return tuple(nums or [0])
+    def _tail(slug: str) -> str:
+        return slug.split("/")[-1].split(":")[0]
 
-    return sorted(candidates, key=sort_key)[-1]
+    canonical = [
+        slug
+        for slug in candidates
+        if ":" not in slug and not _SNAPSHOT_SUFFIX.search(_tail(slug))
+    ]
+    pool = canonical or candidates
+
+    def sort_key(slug: str) -> tuple:
+        nums = [int(n) for n in re.findall(r"\d+", _tail(slug))]
+        return (tuple(nums or [0]), slug)
+
+    return sorted(pool, key=sort_key)[-1]
 
 
 def _category_rankings_model_ids(payload: Dict[str, Any], category: str) -> List[str]:

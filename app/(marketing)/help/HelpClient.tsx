@@ -42,7 +42,7 @@ const faqCategories: FAQCategory[] = [
       {
         question: "What is LLMHive?",
         answer:
-          "LLMHive is an AI orchestration platform that dynamically routes your queries to the best-performing AI models across all major providers. Our intelligent routing ensures you always get top-tier responses while optimizing for cost and performance.",
+          "LLMHive is an AI orchestration platform that routes your queries across major providers. Routing is matched to the task type while balancing cost and performance.",
       },
       {
         question: "How do I get started with LLMHive?",
@@ -52,7 +52,7 @@ const faqCategories: FAQCategory[] = [
       {
         question: "What makes LLMHive different from using ChatGPT or Claude directly?",
         answer:
-          "LLMHive intelligently routes each query to the optimal model based on the task type. For coding, we might use Claude; for analysis, GPT-4o; for creative writing, Gemini. This ensures you always get the best response without manually switching between platforms.",
+          "LLMHive routes each query to a model matched to the task type. For coding it may use Claude; for analysis a GPT flagship; for other work Gemini or another provider — so you are not switching tools by hand.",
       },
       {
         question: "Do I need API keys to use LLMHive?",

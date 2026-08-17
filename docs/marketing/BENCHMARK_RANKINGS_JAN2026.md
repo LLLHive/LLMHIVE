@@ -1,7 +1,11 @@
 # 🏆 Top LLMs by Category - January 2026
-## With LLMHive Rankings and Cost Comparison
+## Historical planning tables — not current public positioning
 
-**Sources**: Vellum AI Leaderboards, OpenAI/Anthropic Published Pricing, GPQA Diamond, SWE-Bench Verified, AIME 2024, MMMLU, ARC-AGI 2
+**Current public claim (use this):** #1 in 5 out of 8 benchmark categories — May 2026 (`lib/benchmark-claim.ts`).
+
+Do **not** use the older “#1 in all 10 categories”, 99.9% cheaper, or 1,575× cost lines from this file in site copy, press, or ads. Tables below are historical planning notes and may be stale.
+
+**Sources (historical):** Vellum AI Leaderboards, OpenAI/Anthropic Published Pricing, GPQA Diamond, SWE-Bench Verified, AIME 2024, MMMLU, ARC-AGI 2
 
 ---
 

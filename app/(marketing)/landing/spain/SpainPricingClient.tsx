@@ -842,7 +842,7 @@ export default function SpainPricingClient() {
           </div>
         </section>
 
-        {/* ── Spain watch scene — above Why thousands choose LLMHive */}
+        {/* ── Spain watch scene — above Why teams choose LLMHive */}
         <section className="border-t border-white/5 bg-[#050505] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
           <div className="mx-auto flex max-w-6xl justify-center">
             <div className="relative w-full max-w-[1037px] overflow-hidden rounded-2xl border border-white/10 bg-[#050505]">
@@ -862,7 +862,7 @@ export default function SpainPricingClient() {
         {/* ── Features + how it works (from pricing + mockup) ─────────── */}
         <section id="features" className="scroll-mt-20 border-t border-white/5 px-4 py-16 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
-            <SectionRule>Why thousands choose LLMHive</SectionRule>
+            <SectionRule>Why teams choose LLMHive</SectionRule>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               {[
                 { icon: Wallet, t: "Save Money", d: "One plan instead of stacked AI tools." },

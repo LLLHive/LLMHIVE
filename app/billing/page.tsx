@@ -56,9 +56,9 @@ interface QuotaUsage {
 
 const ORCHESTRATION_MODE_LABELS = {
   elite: { label: "Premium", color: "text-green-500", bg: "bg-green-500/10", icon: Zap, desc: "GPT-5, Claude & Gemini unified — #1 in 5 out of 8 benchmark categories" },
-  standard: { label: "Balanced", color: "text-yellow-500", bg: "bg-yellow-500/10", icon: TrendingUp, desc: "Premium routing & verification — Top 3 quality" },
-  budget: { label: "Budget", color: "text-orange-500", bg: "bg-orange-500/10", icon: Zap, desc: "Claude Sonnet optimized — Excellent quality" },
-  free: { label: "Standard", color: "text-emerald-500", bg: "bg-emerald-500/10", icon: Zap, desc: "Patent Pending AI ensemble — BEATS most paid models" },
+  standard: { label: "Balanced", color: "text-yellow-500", bg: "bg-yellow-500/10", icon: TrendingUp, desc: "Premium routing & verification" },
+  budget: { label: "Budget", color: "text-orange-500", bg: "bg-orange-500/10", icon: Zap, desc: "Cost-aware routing" },
+  free: { label: "Standard", color: "text-emerald-500", bg: "bg-emerald-500/10", icon: Zap, desc: "Patent Pending multi-model ensemble" },
 }
 
 /** User-facing label when showing raw after-quota tier keys from the API */
@@ -310,12 +310,8 @@ export default function BillingPage() {
                       Using {AFTER_QUOTA_TIER_LABELS[usage.afterQuotaTier] ?? usage.afterQuotaTier} mode
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Premium quota exhausted. Still getting great quality — 
-                      {usage.afterQuotaTier === "standard"
-                        ? " #1 in 8 categories!"
-                        : usage.afterQuotaTier === "budget"
-                        ? " #1 in 6 categories!"
-                        : " Standard orchestration"}
+                      Premium quota exhausted. Standard orchestration remains available
+                      {usage.daysUntilReset > 0 ? ` until reset (${usage.daysUntilReset} days).` : "."}
                     </p>
                     {usage.afterQuotaQueries && (
                       <p className="text-xs text-muted-foreground mt-1">

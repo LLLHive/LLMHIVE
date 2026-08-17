@@ -342,6 +342,10 @@ async def run_benchmark(
                         f"  {system_name}: {status_str} "
                         f"(score={score.composite_score:.2f}, latency={result.latency_ms:.0f}ms)"
                     )
+                    if getattr(runner, "mode", None) == "http":
+                        gap = float(os.getenv("LLMHIVE_BENCHMARK_HTTP_GAP_SECONDS", "0.5"))
+                        if gap > 0:
+                            await asyncio.sleep(gap)
                     
                 except Exception as e:
                     logger.error(f"  {system_name}: Error - {e}")

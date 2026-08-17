@@ -18,6 +18,38 @@ from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+# Word numbers used when answers spell out a quantity ("fifty years").
+_WORD_NUMBERS = {
+    "ten": 10,
+    "eleven": 11,
+    "twelve": 12,
+    "thirteen": 13,
+    "fourteen": 14,
+    "fifteen": 15,
+    "sixteen": 16,
+    "seventeen": 17,
+    "eighteen": 18,
+    "nineteen": 19,
+    "twenty": 20,
+    "thirty": 30,
+    "forty": 40,
+    "fifty": 50,
+    "sixty": 60,
+    "seventy": 70,
+    "eighty": 80,
+    "ninety": 90,
+}
+
+
+def _answer_with_word_numbers(answer: str) -> str:
+    """Replace spelled-out tens with digits for numeric extraction."""
+    text = answer
+    for word, value in _WORD_NUMBERS.items():
+        text = re.sub(rf"\b{word}\b", str(value), text, flags=re.IGNORECASE)
+    text = re.sub(r"\bfive\s+decades\b", "50 years", text, flags=re.IGNORECASE)
+    text = re.sub(r"\bhalf\s+(a\s+)?century\b", "50 years", text, flags=re.IGNORECASE)
+    return text
+
 
 class ScoreType(Enum):
     """Type of scoring method used."""
@@ -265,6 +297,7 @@ class ObjectiveScorer:
         expected_value = numeric_config.get("value")
         tolerance = numeric_config.get("tolerance", 0)
         extract_pattern = numeric_config.get("extract_pattern")
+        search_text = _answer_with_word_numbers(answer)
         
         if expected_value is None:
             return False, "No expected value specified"
@@ -274,7 +307,7 @@ class ObjectiveScorer:
         
         if extract_pattern:
             # Use custom extraction pattern
-            match = re.search(extract_pattern, answer)
+            match = re.search(extract_pattern, search_text)
             if match:
                 try:
                     # Remove commas and parse
@@ -285,7 +318,7 @@ class ObjectiveScorer:
         
         if extracted_value is None:
             # Fallback: find any number in the answer
-            numbers = re.findall(r"-?[\d,]+\.?\d*", answer)
+            numbers = re.findall(r"-?[\d,]+\.?\d*", search_text)
             for num_str in numbers:
                 try:
                     val = float(num_str.replace(",", ""))

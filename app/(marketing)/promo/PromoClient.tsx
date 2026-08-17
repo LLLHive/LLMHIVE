@@ -250,7 +250,7 @@ export default function PromoClient() {
             </div>
             <div className="flex items-center gap-2">
               <Check className="h-4 w-4 text-green-400" />
-              <span>SOC 2 compliant</span>
+              <span>Pursuing SOC 2 Type II</span>
             </div>
           </div>
         </div>

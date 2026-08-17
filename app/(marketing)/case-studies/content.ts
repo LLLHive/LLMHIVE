@@ -14,177 +14,177 @@ export type CaseStudy = {
 
 export const caseStudies: CaseStudy[] = [
   {
-    title: "Legal Ops: Contract Review Acceleration",
+    title: "Legal Ops: Contract Review Workflows",
     slug: "legal-ops-contract-review",
     industry: "Legal",
     summary:
-      "A legal operations team standardized contract review with multi-model routing and governance.",
+      "Example workflow for routing contract drafting, clause extraction, and risk notes through LLMHive with audit logs.",
     challenge:
-      "The team needed faster turnaround without sacrificing accuracy or compliance review steps.",
+      "Legal teams often need faster review without losing a record of what was asked and which model answered.",
     solution:
-      "LLMHive routed drafting, clause extraction, and risk scoring to specialized models with audit trails.",
+      "LLMHive can route drafting, clause extraction, and risk scoring to specialized models and keep task-level logs.",
     highlights: [
       "Routing policies for sensitive clauses",
-      "Automated redline summaries",
-      "Centralized audit logs for compliance review",
+      "Redline and summary drafts in one chat",
+      "Audit logs for compliance review",
     ],
     outcomes: [
-      "Shorter contract review cycles",
-      "Improved consistency across reviewers",
-      "Reduced rework from missed clauses",
+      "One interface instead of switching models by hand",
+      "Consistent templates for reviewers",
+      "A recorded trail of routing and outputs",
     ],
-    metrics: ["42% faster review time", "28% fewer escalations", "99% audit-ready logs"],
+    metrics: [],
     timeline: ["Week 1: workflow mapping", "Week 2: model routing setup", "Week 4: rollout"],
     faq: [
       {
         question: "How were sensitive documents handled?",
         answer:
-          "Routing policies restricted model access and enforced audit logging for every task.",
+          "Routing policies can restrict model access and keep audit logging for every task.",
       },
       {
         question: "Did the team replace existing tools?",
         answer:
-          "No. LLMHive connected to existing document systems and added orchestration on top.",
+          "No. LLMHive can sit alongside existing document systems and add orchestration on top.",
       },
     ],
   },
   {
-    title: "Finance: Analyst Reporting at Scale",
+    title: "Finance: Analyst Reporting Workflows",
     slug: "finance-analyst-reporting",
     industry: "Finance",
     summary:
-      "A finance team automated recurring analysis with deterministic routing and governance controls.",
+      "Example workflow for recurring analysis with model allowlists, templates, and reviewable outputs.",
     challenge:
-      "Analysts were spending too much time on repetitive reporting with inconsistent outputs.",
+      "Analysts often spend time on repetitive reporting where model choice and wording drift from cycle to cycle.",
     solution:
-      "LLMHive routed forecasting, narrative generation, and validation checks to role-optimized models.",
+      "LLMHive can route forecasting, narrative generation, and validation checks to role-optimized models with templates.",
     highlights: [
       "Model allowlists for regulated outputs",
       "Automated variance explanations",
       "Consistent reporting templates",
     ],
     outcomes: [
-      "Faster monthly reporting cycles",
-      "Higher confidence in narrative quality",
-      "Reduced manual QA hours",
+      "Repeatable reporting templates",
+      "Reviewable routing for each report",
+      "Less manual switching between model vendors",
     ],
-    metrics: ["35% faster close cycles", "22% reduction in QA time", "100% traceable outputs"],
+    metrics: [],
     timeline: ["Week 1: data source alignment", "Week 3: routing policy setup", "Week 6: expand to full team"],
     faq: [
       {
         question: "How did compliance teams validate outputs?",
         answer:
-          "Audit logs and routing policies ensured outputs were reviewable and traceable.",
+          "Audit logs and routing policies make outputs reviewable and traceable.",
       },
       {
         question: "Were reports still customizable?",
         answer:
-          "Yes. Analysts kept control of templates and prompt parameters.",
+          "Yes. Analysts keep control of templates and prompt parameters.",
       },
     ],
   },
   {
-    title: "Healthcare: Clinical Summaries with Governance",
+    title: "Healthcare: Clinical Summary Workflows",
     slug: "healthcare-clinical-summaries",
     industry: "Healthcare",
     summary:
-      "A healthcare provider reduced documentation time while maintaining compliance controls.",
+      "Example workflow for documentation drafts with templates, human review, and logged routing. LLMHive is not a certified HIPAA product.",
     challenge:
-      "Clinicians needed faster documentation workflows without risking compliance issues.",
+      "Clinicians often need faster documentation drafts while keeping a human in the loop.",
     solution:
-      "LLMHive routed transcription, summarization, and coding suggestions through compliant workflows.",
+      "LLMHive can route transcription, summarization, and coding suggestions through templates with a required reviewer step.",
     highlights: [
-      "HIPAA-aligned routing policies",
-      "Clinical template enforcement",
       "Human-in-the-loop review steps",
+      "Clinical template enforcement",
+      "Access controls and audit logs",
     ],
     outcomes: [
-      "More time for patient care",
-      "Higher consistency in documentation",
-      "Clear audit trails for compliance",
+      "Drafts that clinicians can edit before use",
+      "More consistent documentation templates",
+      "A logged record of routing and edits",
     ],
-    metrics: ["31% reduction in documentation time", "18% fewer revisions", "100% policy adherence"],
+    metrics: [],
     timeline: ["Week 1: workflow discovery", "Week 2: routing policy design", "Week 5: staged deployment"],
     faq: [
       {
         question: "How was data governance handled?",
         answer:
-          "LLMHive enforced routing rules and access controls for protected health information.",
+          "LLMHive can enforce routing rules and access controls. This example is not a claim of HIPAA certification.",
       },
       {
         question: "Could clinicians override summaries?",
         answer:
-          "Yes. Clinicians retained final approval with edit controls.",
+          "Yes. Clinicians retain final approval with edit controls.",
       },
     ],
   },
   {
-    title: "Support: Tier-1 Deflection with Quality Controls",
+    title: "Support: Tier-1 Drafting Workflows",
     slug: "support-tier1-deflection",
     industry: "Support",
     summary:
-      "A support organization improved response quality while deflecting tier-1 tickets.",
+      "Example workflow for ticket summaries and reply drafts with knowledge-base grounding and escalation routing.",
     challenge:
-      "Support agents needed consistent answers with minimal escalation risks.",
+      "Support agents often need consistent drafts without sending low-confidence answers to customers.",
     solution:
-      "LLMHive routed ticket summaries and responses to the best model with knowledge base context.",
+      "LLMHive can route ticket summaries and responses with knowledge-base context and hand off low-confidence work.",
     highlights: [
       "Knowledge base grounding for responses",
       "Escalation triggers for low-confidence outputs",
       "Quality checks by ticket category",
     ],
     outcomes: [
-      "Higher first-contact resolution",
-      "Lower backlog of repeat questions",
-      "Reduced escalation volume",
+      "Draft replies in the agent's existing tools",
+      "A path to escalate weak answers",
+      "One routing layer for common ticket types",
     ],
-    metrics: ["26% higher FCR", "19% fewer escalations", "30% faster response time"],
+    metrics: [],
     timeline: ["Week 1: knowledge base ingestion", "Week 2: routing setup", "Week 4: production rollout"],
     faq: [
       {
         question: "How were low-confidence responses handled?",
         answer:
-          "LLMHive triggered escalations and routed the ticket to senior agents.",
+          "LLMHive can trigger escalations and route the ticket to senior agents.",
       },
       {
         question: "Did this change agent workflows?",
         answer:
-          "Agents kept their tools while LLMHive handled drafting and routing.",
+          "Agents can keep their tools while LLMHive handles drafting and routing.",
       },
     ],
   },
   {
-    title: "SaaS: Product Enablement at Enterprise Scale",
+    title: "SaaS: Product Enablement Workflows",
     slug: "saas-product-enablement",
     industry: "SaaS",
     summary:
-      "A SaaS organization standardized enablement across teams with multi-model orchestration.",
+      "Example workflow for onboarding copy, release notes, and training drafts with shared templates.",
     challenge:
-      "Teams needed consistent enablement content and insights across product lines.",
+      "Teams often need consistent enablement content across product lines without a new tool per team.",
     solution:
-      "LLMHive routed onboarding, release notes, and training content to specialized models.",
+      "LLMHive can route onboarding, release notes, and training content to specialized models with shared templates.",
     highlights: [
-      "Cross-team content governance",
-      "Release note automation",
-      "Role-specific enablement templates",
+      "Cross-team content templates",
+      "Release note drafts",
+      "Role-specific enablement prompts",
     ],
     outcomes: [
-      "Faster onboarding cycles",
+      "Shared templates across teams",
       "More consistent product messaging",
-      "Reduced manual content overhead",
+      "Less manual switching between AI vendors",
     ],
-    metrics: ["40% faster onboarding", "25% reduction in content creation time", "Unified enablement playbooks"],
+    metrics: [],
     timeline: ["Week 1: content audit", "Week 3: routing setup", "Week 6: global enablement rollout"],
     faq: [
       {
         question: "How was content quality ensured?",
         answer:
-          "LLMHive enforced templates and routed outputs through evaluation checks.",
+          "LLMHive can enforce templates and route outputs through review steps.",
       },
       {
         question: "Could teams customize outputs?",
         answer:
-          "Yes. Teams could adapt templates while keeping governance rules intact.",
+          "Yes. Teams can adapt templates while keeping governance rules intact.",
       },
     ],
   },

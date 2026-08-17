@@ -154,6 +154,7 @@ jobs:
       - name: Run Critical Benchmarks
         if: steps.mode.outputs.mode == 'critical'
         id: run-critical
+        continue-on-error: true
         env:
           API_KEY: ${{ env.API_KEY }}
           LLMHIVE_API_KEY: ${{ env.LLMHIVE_API_KEY }}
@@ -176,9 +177,11 @@ jobs:
       - name: Run Full Benchmarks
         if: steps.mode.outputs.mode == 'full'
         id: run-full
+        continue-on-error: true
         env:
           API_KEY: ${{ env.API_KEY }}
           LLMHIVE_API_KEY: ${{ env.LLMHIVE_API_KEY }}
+          LLMHIVE_SCHEDULED_BENCHMARK_SECRET: ${{ secrets.LLMHIVE_SCHEDULED_BENCHMARK_SECRET }}
         run: |
           echo "Running benchmarks in $BENCHMARK_MODE mode"
           if [ "$BENCHMARK_MODE" == "http" ]; then
@@ -196,6 +199,7 @@ jobs:
       - name: Run Domain Benchmarks
         if: steps.mode.outputs.mode == 'domain'
         id: run-domain
+        continue-on-error: true
         env:
           API_KEY: ${{ env.API_KEY }}
           LLMHIVE_API_KEY: ${{ env.LLMHIVE_API_KEY }}
@@ -263,11 +267,24 @@ jobs:
       - name: Analyze Results
         id: run-benchmark
         run: |
+          RAN=false
+          for outcome in "${{ steps.run-critical.outcome }}" "${{ steps.run-full.outcome }}" "${{ steps.run-domain.outcome }}"; do
+            if [ "$outcome" = "success" ] || [ "$outcome" = "failure" ]; then
+              RAN=true
+            fi
+          done
+
           # Find latest report
           REPORT=$(ls -t artifacts/benchmarks/*/report.json 2>/dev/null | head -1)
           
           if [ -z "$REPORT" ]; then
             echo "No benchmark report found"
+            if [ "$RAN" = "true" ]; then
+              echo "::error::Benchmark run produced no report.json (infrastructure failure)"
+              echo "passed=false" >> $GITHUB_OUTPUT
+              echo "critical_failures=0" >> $GITHUB_OUTPUT
+              exit 1
+            fi
             echo "passed=true" >> $GITHUB_OUTPUT
             echo "critical_failures=0" >> $GITHUB_OUTPUT
             exit 0
@@ -284,9 +301,16 @@ jobs:
           
           # Run summary
           python scripts/benchmark_summary.py --report "$REPORT"
+
+          # Answer-quality misses stay in the report / GitHub issue / Slack.
+          # Do not fail this job for them — that is what was spamming "Run failed" emails.
+          if [ "$PASSED" != "true" ]; then
+            echo "::notice::Benchmark quality gate failed (see artifacts / create-issue). Job stays green so CI email is reserved for infrastructure errors."
+          fi
       
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: benchmark-results-${{ github.run_id }}
           path: artifacts/benchmarks/

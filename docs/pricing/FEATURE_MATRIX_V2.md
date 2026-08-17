@@ -269,7 +269,7 @@ Per your research, these are the current top models by category:
 | | SSO (SAML/OIDC) | ✅ | Identity integration |
 | | Audit Logs | ✅ | Full activity logs |
 | | Data Retention Policy | ✅ | Configurable |
-| | SOC 2 Compliance | ✅ | Certified |
+| | SOC 2 Compliance | ⏳ | In progress — do not claim certified |
 | | GDPR Compliance | ✅ | EU data handling |
 | **Administration** | | | |
 | | Admin Dashboard | ✅ | Full admin |

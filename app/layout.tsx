@@ -57,7 +57,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "LLMHive - Multi-Model AI Orchestration Platform",
   description:
-    "LLMHive is a multi-model AI orchestration platform that routes every request to the best model for accuracy, speed, and cost. Built for teams and enterprises.",
+    "LLMHive is a multi-model AI orchestration platform that routes each request across 350+ OpenRouter models. Built for teams.",
   applicationName: "LLMHive",
   generator: "v0.app",
   alternates: {
@@ -78,7 +78,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "LLMHive - Multi-Model AI Orchestration Platform",
     description:
-      "Route every request to the best model for accuracy, speed, and cost. LLMHive unifies 350+ OpenRouter models in one interface.",
+      "Route each request to a suitable model for the task. LLMHive unifies 350+ OpenRouter models in one interface.",
     url: siteUrl,
     siteName: "LLMHive",
     type: "website",
@@ -87,7 +87,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "LLMHive - Multi-Model AI Orchestration Platform",
     description:
-      "Route every request to the best model for accuracy, speed, and cost. LLMHive unifies 350+ OpenRouter models in one interface.",
+      "Route each request to a suitable model for the task. LLMHive unifies 350+ OpenRouter models in one interface.",
   },
   icons: {
     icon: [

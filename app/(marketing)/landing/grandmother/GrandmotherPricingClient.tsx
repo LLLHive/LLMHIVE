@@ -858,7 +858,7 @@ export default function GrandmotherPricingClient() {
         {/* ── Features + how it works (from pricing + mockup) ─────────── */}
         <section id="features" className="scroll-mt-20 border-t border-white/5 px-4 py-16 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
-            <SectionRule>Why thousands choose LLMHive</SectionRule>
+            <SectionRule>Why teams choose LLMHive</SectionRule>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               {[
                 { icon: Wallet, t: "Save Money", d: "One plan instead of stacked AI tools." },

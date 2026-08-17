@@ -27,7 +27,7 @@ At 59 years old, with no coding background, Camilo made a decision that would ch
 
 Over countless sleepless nights, he developed, tested, and built LLMHive (Patent Pending): a revolutionary platform that doesn't rely on any single AI model. Instead, it orchestrates multiple frontier AI models, cross-verifies their outputs, eliminates hallucinations, and delivers answers you can actually trust.
 
-What started as a father's desperate mission to help his daughter has become something extraordinary: **the only AI platform that ranks #1 in ALL 10 industry benchmark categories**—beating every single AI model from OpenAI, Google, Anthropic, and Meta.
+What started as a father's desperate mission to help his daughter has become LLMHive: a multi-model orchestration platform that reports **#1 in 5 out of 8 benchmark categories (May 2026)** and routes GPT-5.6 Sol Pro, Claude Opus 5, Gemini 3.1 Pro, and 350+ more from one subscription. Do not claim #1 in all 10 categories.
 
 A portion of all LLMHive proceeds will be donated to organizations helping children with neurological conditions. This isn't just a business. It's a mission born from love.
 
@@ -35,22 +35,14 @@ A portion of all LLMHive proceeds will be donated to organizations helping child
 
 ## TECHNICAL ACHIEVEMENTS (Weave these into the narrative)
 
-**Benchmark Dominance (Verified January 2026):**
-- #1 in General Reasoning (GPQA Diamond): 92.5% — beats GPT-5.2
-- #1 in Coding (SWE-Bench): 95.0% — 13% better than Claude Sonnet
-- #1 in Math (AIME 2024): 100% — perfect accuracy, guaranteed
-- #1 in Multilingual (MMMLU): 91.9% — best API-accessible
-- #1 in Long Context: 1 million tokens — largest API-accessible
-- #1 in Tool Use: 92.0% — 10% better than any competitor
-- #1 in RAG: 96/100 — superior retrieval and synthesis
-- #1 in Multimodal: 378 points — ties Claude Opus 4.5 for #1
-- #1 in Dialogue: 96/100 — highest emotional intelligence
-- #1 in Speed: 2,000 tokens/second — fastest API-accessible
+**Benchmark positioning (May 2026 — use this, not 10/10):**
+- #1 in 5 out of 8 benchmark categories, as reported by LLMHive
+- 350+ OpenRouter models, current flagships GPT-5.6 Sol Pro, Claude Opus 5, Gemini 3.1 Pro, Grok 4.5, Kimi K3
+- Do not claim independently verified 10/10, 99.9% cheaper, 1,575× cheaper, or guaranteed perfect scores
 
-**Cost Revolution:**
-- 99.9% less expensive than GPT-5.2
-- Up to 1,575x cheaper per query than premium models
-- Enterprise-grade quality at startup-friendly prices
+**Pricing (confirmable):**
+- Standard $10/month, Premium $20/month; trial checkout requires a card
+- Do not invent 99.9% or 1,575× cost multipliers
 
 **Patent Pending Innovations (From Official Patent Drawings):**
 
@@ -226,9 +218,9 @@ After generating the press release, verify:
 - [ ] Camilo's age (59) and story are accurate
 - [ ] Daughter's condition (neurological, migraines with aura) is mentioned
 - [ ] Self-taught coding journey is highlighted
-- [ ] All 10 benchmark categories are mentioned
-- [ ] "#1 in ALL 10 categories" claim is prominent
-- [ ] 99.9% cost savings is mentioned
+- [ ] Current ranking claim is #1 in 5 of 8 categories (May 2026) — not 10/10
+- [ ] No 99.9% cheaper or 1,575× cost claims
+- [ ] Contact is cdiaz@llmhive.ai / 786.306.6466
 - [ ] Patent/innovation mentions are included
 - [ ] Charitable component is mentioned
 - [ ] Quote from Camilo sounds authentic and emotional

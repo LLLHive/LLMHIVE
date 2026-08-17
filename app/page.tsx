@@ -16,7 +16,6 @@ import {
   LogIn,
   MessageSquare,
   Network,
-  Quote,
   Shield,
   Sparkles,
   Workflow,
@@ -45,22 +44,22 @@ import {
 } from "@/lib/marketing/featured-models"
 
 export const metadata: Metadata = {
-  title: "LLMHive — One AI Hive. Every Model. Always the Best Answer.",
+  title: "LLMHive — One AI Hive. 350+ Models. Task-aware routing.",
   description:
-    `LLMHive routes every request to the best AI model — ${MARKETING_META_DESCRIPTION_MODELS} — for accuracy, speed and cost. Built for teams and enterprises.`,
+    `LLMHive routes every request across ${MARKETING_META_DESCRIPTION_MODELS} for accuracy, speed and cost. Built for teams.`,
   alternates: { canonical: sitePath('/') },
   openGraph: {
-    title: "LLMHive — One AI Hive. Every Model. Always the Best Answer.",
+    title: "LLMHive — One AI Hive. 350+ Models. Task-aware routing.",
     description:
-      "Stop choosing AI models. LLMHive routes each request to the optimal one — automatically. 350+ models, enterprise security, transparent pricing.",
+      "Stop choosing AI models. LLMHive routes each request to a suitable model automatically. 350+ models, encryption, transparent pricing.",
     type: "website",
     images: [{ url: "/logo.png" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "LLMHive — One AI Hive. Every Model. Always the Best Answer.",
+    title: "LLMHive — One AI Hive. 350+ Models. Task-aware routing.",
     description:
-      "Stop choosing AI models. LLMHive routes each request to the optimal one — automatically.",
+      "Stop choosing AI models. LLMHive routes each request to a suitable model automatically.",
   },
 }
 
@@ -83,9 +82,8 @@ const PROVIDER_LOGOS: ReadonlyArray<{ name: string; src: string }> = [
 
 const HEADLINE_STATS = [
   { value: "350+", label: "Models routed" },
+  { value: "5/8", label: "#1 categories — May 2026" },
   { value: "99.9%", label: "Uptime SLA" },
-  { value: "60%", label: "Avg AI cost saved" },
-  { value: "150ms", label: "Median routing latency" },
 ]
 
 const FEATURES = [
@@ -97,7 +95,7 @@ const FEATURES = [
   {
     icon: Brain,
     title: "HRM intelligent selection",
-    body: "Our Hive Routing Model classifies each request by task type, complexity and budget, then picks the model that delivers the best answer — not just the cheapest or the loudest.",
+    body: "Our Hive Routing Model classifies each request by task type, complexity and budget, then picks a model matched to that task — not just the cheapest or the loudest.",
   },
   {
     icon: Layers,
@@ -160,11 +158,11 @@ const TIERS = [
 const FAQ = [
   {
     q: "What does LLMHive actually do?",
-    a: "LLMHive is a multi-model AI orchestration platform. You ask one question; LLMHive analyses it, picks the optimal model from a pool of 350+, and returns the best answer. You get one chat, one API, and one bill instead of juggling subscriptions.",
+    a: "LLMHive is a multi-model AI orchestration platform. You ask one question; LLMHive analyses it, picks a model from a pool of 350+, and returns one answer. You get one chat, one API, and one bill instead of juggling subscriptions.",
   },
   {
     q: "How is this different from using ChatGPT or Claude directly?",
-    a: `Single-model tools commit you to one company's strengths and weaknesses. LLMHive lets the right model handle each task — ${MARKETING_OPENAI_FLAGSHIP} for reasoning, Claude Sonnet 4.6 for writing, Gemini 3.1 Pro for long context, DeepSeek V3.2 for cheap throughput — so quality goes up and cost goes down without you thinking about it.`,
+    a: `Single-model tools commit you to one company's strengths and weaknesses. LLMHive routes each task across current flagships — ${MARKETING_FEATURED_LINE} — so you are not locked to one model for every job.`,
   },
   {
     q: "Can I trust the orchestrator to pick the right model?",
@@ -183,13 +181,6 @@ const FAQ = [
     a: "Sign up, choose a plan, and you're in. Most users run their first multi-model query inside 60 seconds. No infrastructure to provision, no API keys to wire up.",
   },
 ]
-
-const TESTIMONIAL = {
-  quote:
-    "LLMHive replaced four AI subscriptions and our internal router. Quality on every prompt went up, and our monthly AI spend dropped almost in half — without us changing a single workflow.",
-  author: "Engineering Lead",
-  role: "Mid-market SaaS company",
-}
 
 // ---------------------------------------------------------------------------
 // Structured data for SEO (Organization + SoftwareApplication + FAQ).
@@ -340,9 +331,9 @@ export default async function Home() {
             <h1 className="mt-6 text-balance text-4xl font-extrabold leading-[1.07] tracking-tight text-white drop-shadow-[0_4px_30px_rgba(0,0,0,0.7)] sm:text-5xl md:text-6xl lg:text-7xl">
               Ask once.{" "}
               <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300 bg-clip-text text-transparent">
-                The best AI model
+                The right AI model
               </span>{" "}
-              answers — every time.
+              is chosen for the task.
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-zinc-100/90 drop-shadow-[0_2px_18px_rgba(0,0,0,0.7)] sm:text-xl">
@@ -509,8 +500,8 @@ export default async function Home() {
 
                 <div className="space-y-2.5">
                   {[
-                    { name: "Claude Sonnet 4.6", note: "Pedagogical clarity", pick: false },
-                    { name: MARKETING_OPENAI_FLAGSHIP, note: "Best reasoning + code", pick: true },
+                    { name: "Claude Opus 5", note: "Coding and writing", pick: false },
+                    { name: MARKETING_OPENAI_FLAGSHIP, note: "Reasoning + code", pick: true },
                     { name: "Gemini 3.1 Pro", note: "Long-context fallback", pick: false },
                   ].map((m) => (
                     <div
@@ -614,7 +605,7 @@ export default async function Home() {
               },
               {
                 step: "03",
-                title: "Get the best answer",
+                title: "Get a routed answer",
                 body: "Optional: run consensus across multiple providers. Always: full transparency on which model ran and why.",
                 icon: Zap,
               },
@@ -641,22 +632,14 @@ export default async function Home() {
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Distributed social proof                                            */}
+      {/* Routing note                                                        */}
       {/* ------------------------------------------------------------------ */}
       <section className="px-4 pb-12 pt-2 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
           <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 p-8 sm:p-12">
-            <Quote className="absolute right-8 top-8 h-12 w-12 text-amber-500/10" />
             <p className="text-xl leading-relaxed text-zinc-200 sm:text-2xl">
-              &ldquo;{TESTIMONIAL.quote}&rdquo;
+              LLMHive is #1 in 5 out of 8 benchmark categories (May 2026) and routes across 350+ OpenRouter models from one subscription.
             </p>
-            <div className="mt-6 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600" />
-              <div>
-                <div className="text-sm font-semibold text-white">{TESTIMONIAL.author}</div>
-                <div className="text-xs text-zinc-500">{TESTIMONIAL.role}</div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -746,7 +729,7 @@ export default async function Home() {
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-12 gap-y-4 text-zinc-400">
           <div className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            <span className="text-sm">SOC 2 controls</span>
+            <span className="text-sm">Pursuing SOC 2 Type II</span>
           </div>
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5" />

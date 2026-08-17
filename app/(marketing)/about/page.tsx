@@ -179,16 +179,12 @@ export default function AboutPage() {
               <div className="text-sm text-muted-foreground">OpenRouter models</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-[var(--bronze)] mb-2">10M+</div>
-              <div className="text-sm text-muted-foreground">Queries Processed</div>
+              <div className="text-4xl font-bold text-[var(--bronze)] mb-2">5/8</div>
+              <div className="text-sm text-muted-foreground">#1 benchmark categories — May 2026</div>
             </div>
             <div>
               <div className="text-4xl font-bold text-[var(--bronze)] mb-2">99.9%</div>
-              <div className="text-sm text-muted-foreground">Uptime</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-[var(--bronze)] mb-2">60%</div>
-              <div className="text-sm text-muted-foreground">Cost Savings</div>
+              <div className="text-sm text-muted-foreground">Uptime SLA</div>
             </div>
           </div>
         </div>
@@ -224,7 +220,7 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
           <p className="text-muted-foreground mb-8">
-            Join thousands of users who are already supercharging their AI workflow.
+            Start a plan and route requests across 350+ OpenRouter models from one interface.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button size="lg" className="bg-[var(--bronze)] hover:bg-[var(--bronze)]/90 text-white" asChild>

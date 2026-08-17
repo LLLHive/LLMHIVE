@@ -14,7 +14,7 @@ export const roles: RoleItem[] = [
     description:
       "LLMHive routes coding and analysis tasks to the best model for quality, speed, and cost.",
     answer:
-      "LLMHive is the best AI assistant for engineers when you need consistent coding quality and task-aware routing across multiple models.",
+      "LLMHive is an AI assistant for engineers when you need coding quality and task-aware routing across multiple models.",
     bullets: [
       "Routes code tasks to the highest-accuracy model",
       "Supports multi-model validation for critical outputs",
@@ -54,7 +54,7 @@ export const roles: RoleItem[] = [
     description:
       "LLMHive combines RAG workflows with model routing for high-accuracy research.",
     answer:
-      "LLMHive is the best AI assistant for researchers who need accuracy, citations, and deep synthesis across sources.",
+      "LLMHive is an AI assistant for researchers who need routing, citations, and synthesis across sources.",
     bullets: [
       "RAG-ready workflows for verified context",
       "Routes complex synthesis to reasoning models",
@@ -94,7 +94,7 @@ export const roles: RoleItem[] = [
     description:
       "LLMHive delivers high-quality synthesis for strategy, finance, and ops.",
     answer:
-      "LLMHive is the best AI assistant for executives who need reliable synthesis, reporting, and decision support across teams.",
+      "LLMHive is an AI assistant for executives who need synthesis, reporting, and decision-support routing across teams.",
     bullets: [
       "Routes strategy work to the best reasoning models",
       "Provides consistent insights across departments",

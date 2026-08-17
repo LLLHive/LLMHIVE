@@ -6,21 +6,21 @@ import { sitePath } from "@/lib/site-url"
 export const metadata: Metadata = {
   title: "LLMHive Case Studies",
   description:
-    "Industry case studies showing how LLMHive delivers measurable results with AI orchestration.",
+    "Example workflows showing how LLMHive routing can be used in legal, finance, healthcare, support, and SaaS work.",
   alternates: {
     canonical: sitePath('/case-studies'),
   },
   openGraph: {
     title: "LLMHive Case Studies",
     description:
-      "Industry case studies showing how LLMHive delivers measurable results with AI orchestration.",
+      "Example workflows showing how LLMHive routing can be used across industries.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "LLMHive Case Studies",
     description:
-      "Industry case studies showing how LLMHive delivers measurable results with AI orchestration.",
+      "Example workflows showing how LLMHive routing can be used across industries.",
   },
 }
 
@@ -36,15 +36,6 @@ function renderStructuredData() {
           position: index + 1,
           name: item.title,
           url: sitePath(`/case-studies/${item.slug}`),
-        })),
-      },
-      {
-        "@type": "ItemList",
-        name: "Case Study Outcome Snapshot",
-        itemListElement: caseStudies.map((item, index) => ({
-          "@type": "ListItem",
-          position: index + 1,
-          name: `${item.title}: ${item.metrics[0]}`,
         })),
       },
       {
@@ -77,7 +68,7 @@ export default function CaseStudiesPage() {
         <div className="max-w-5xl mx-auto px-4 py-6">
           <h1 className="text-3xl md:text-4xl font-bold">LLMHive Case Studies</h1>
           <p className="mt-2 text-muted-foreground">
-            Real-world results across legal, finance, healthcare, support, and SaaS teams.
+            Example workflows for legal, finance, healthcare, support, and SaaS teams. These are product illustrations, not named-customer results.
           </p>
         </div>
       </header>
@@ -91,7 +82,7 @@ export default function CaseStudiesPage() {
               className="rounded-2xl border border-border/60 bg-card/40 p-6 transition-all hover:border-[var(--bronze)]/40 hover:bg-card/60"
             >
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                {item.industry} Case Study
+                {item.industry} example
               </p>
               <h2 className="mt-2 text-xl font-semibold">{item.title}</h2>
               <p className="mt-2 text-sm text-muted-foreground">{item.summary}</p>
@@ -101,30 +92,10 @@ export default function CaseStudiesPage() {
         </div>
 
         <section className="mt-12 rounded-2xl border border-border/60 bg-card/40 p-6">
-          <h2 className="text-xl font-semibold">Case Study Outcome Snapshot</h2>
+          <h2 className="text-xl font-semibold">What these pages are</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Highlights from recent deployments and measurable gains.
+            These examples describe product workflows. They are not measured results from named customers.
           </p>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-sm text-muted-foreground">
-              <thead>
-                <tr className="border-b border-border/60 text-left">
-                  <th className="py-2 pr-4 text-foreground">Case Study</th>
-                  <th className="py-2 pr-4 text-foreground">Industry</th>
-                  <th className="py-2 text-foreground">Key Result</th>
-                </tr>
-              </thead>
-              <tbody>
-                {caseStudies.map((item) => (
-                  <tr key={item.slug} className="border-b border-border/30">
-                    <td className="py-2 pr-4">{item.title}</td>
-                    <td className="py-2 pr-4">{item.industry}</td>
-                    <td className="py-2">{item.metrics[0]}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </section>
 
         <section className="mt-12 rounded-2xl border border-border/60 bg-card/40 p-6">

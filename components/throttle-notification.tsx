@@ -78,7 +78,7 @@ export function ThrottleNotification({
             <p className="text-sm font-medium">
               <span className="font-semibold">Premium quota exhausted.</span>{" "}
               You&apos;re now using Standard orchestration. 
-              <span className="hidden sm:inline"> Upgrade to restore #1 quality.</span>
+              <span className="hidden sm:inline"> Upgrade for premium orchestration.</span>
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -155,7 +155,7 @@ export function ThrottleNotification({
           <div className="flex-1 space-y-1">
             <p className="text-sm font-semibold">Premium quota exhausted</p>
             <p className="text-xs text-muted-foreground">
-              Using Standard orchestration. Upgrade for #1 quality.
+              Using Standard orchestration. Upgrade for premium routing.
             </p>
           </div>
           <button

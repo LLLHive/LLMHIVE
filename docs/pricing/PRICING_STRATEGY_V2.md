@@ -1,5 +1,7 @@
 # LLMHive Pricing Strategy V2
-## Aligned with Elite Orchestration Architecture (January 2026)
+## Historical planning notes (January 2026)
+
+**Do not use public copy from this file that says #1 in 6/8/ALL 10 categories.** Live ranking claim is #1 in 5 out of 8 (May 2026).
 
 ---
 

@@ -1,8 +1,10 @@
 # 🐝 LLMHive — Final Go-To-Market Document
 
 **Date:** January 22, 2026  
-**Status:** ✅ READY FOR IMMEDIATE MARKET LAUNCH  
-**Version:** 2.0 (Post-Cost Optimization)
+**Status:** HISTORICAL — do not copy claims below into public site/press  
+**Current public ranking claim:** #1 in 5 out of 8 benchmark categories (May 2026)
+
+Do **not** use the “#1 in ALL 10” or “99.9% less / 1575x cheaper” lines from this file in live marketing.
 
 ---
 

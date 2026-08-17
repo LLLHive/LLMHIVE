@@ -5,8 +5,8 @@ const content = {
     founded: 2025,
     headquarters: "Miami, Florida",
     website: getSiteUrl(),
-    contact_email: "press@llmhive.ai",
-    contact_phone: "305-555-0160",
+    contact_email: "cdiaz@llmhive.ai",
+    contact_phone: "786.306.6466",
   },
   quick_links: {
     landing: sitePath('/landing'),
@@ -26,7 +26,7 @@ const content = {
   },
   fact_sheet: sitePath('/press/fact-sheet'),
   notes: [
-    "Benchmark claims are reported by LLMHive and available on request.",
+    "Public ranking claim: #1 in 5 out of 8 benchmark categories (May 2026), as reported by LLMHive.",
     "Please use official logos without altering brand colors.",
   ],
 }

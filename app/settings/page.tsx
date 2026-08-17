@@ -565,7 +565,7 @@ export default function SettingsPage() {
                   <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
                     <Check className="h-3 w-3 text-white" />
                   </div>
-                  <span className="text-sm font-semibold text-green-400">Standard beats most paid models</span>
+                  <span className="text-sm font-semibold text-green-400">Standard uses multi-model routing</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Our Patent Pending multi-model orchestration delivers strong quality on the Standard plan.

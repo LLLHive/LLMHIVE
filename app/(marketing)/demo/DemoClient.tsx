@@ -19,7 +19,6 @@ import {
   FileSearch,
   Lightbulb,
   BarChart3,
-  Users,
   Clock,
   Award,
   Circle,
@@ -234,21 +233,14 @@ export default function DemoClient() {
                 <Award className="h-6 w-6 text-[#C48E48]" />
                 <span className="text-4xl font-bold text-foreground">#1</span>
               </div>
-              <p className="text-muted-foreground">Ranked in 10/10 Categories</p>
+              <p className="text-muted-foreground">in 5 of 8 benchmark categories — May 2026</p>
             </div>
             <div>
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Zap className="h-6 w-6 text-[#C48E48]" />
-                <span className="text-4xl font-bold text-foreground">5x</span>
+                <span className="text-4xl font-bold text-foreground">350+</span>
               </div>
-              <p className="text-muted-foreground">Faster Than Manual Selection</p>
-            </div>
-            <div>
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Users className="h-6 w-6 text-[#C48E48]" />
-                <span className="text-4xl font-bold text-foreground">10k+</span>
-              </div>
-              <p className="text-muted-foreground">Active Users</p>
+              <p className="text-muted-foreground">OpenRouter models available to route</p>
             </div>
           </div>
         </div>
@@ -260,8 +252,7 @@ export default function DemoClient() {
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="text-3xl font-bold text-foreground mb-4">Ready to experience Premium AI?</h2>
             <p className="text-muted-foreground mb-8">
-              Join thousands of professionals who use LLMHive. Plans start at $10/month for Standard
-              orchestration; Premium is $20/month with annual discounts.
+              Plans start at $10/month for Standard orchestration; Premium is $20/month with annual discounts.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="bronze-gradient w-full font-semibold text-[#0a0a0a] sm:w-auto">

@@ -324,11 +324,26 @@ class LLMHiveRunner(RunnerBase):
             headers[SCHEDULED_BENCHMARK_HEADER_NAME] = bench_secret
 
         async with httpx.AsyncClient(timeout=config.timeout_seconds) as client:
-            response = await client.post(
-                f"{self.base_url}/v1/chat",
-                json=payload,
-                headers=headers,
-            )
+            response = None
+            for attempt in range(4):
+                response = await client.post(
+                    f"{self.base_url}/v1/chat",
+                    json=payload,
+                    headers=headers,
+                )
+                if response.status_code in {429, 502, 503, 504} and attempt < 3:
+                    delay = min(2 ** attempt, 20)
+                    logger.warning(
+                        "HTTP %s for case %s (attempt %s/4); retrying in %ss",
+                        response.status_code,
+                        case.id,
+                        attempt + 1,
+                        delay,
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+                break
+            assert response is not None
             response.raise_for_status()
             data = response.json()
         

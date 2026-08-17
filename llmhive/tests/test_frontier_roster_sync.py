@@ -57,3 +57,37 @@ def test_category_rankings_include_opus_5():
     assert programming.index("anthropic/claude-opus-5") < programming.index(
         "anthropic/claude-opus-4.8"
     )
+
+
+def _load_drift_module():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "check_frontier_surface_drift",
+        ROOT / "scripts" / "check_frontier_surface_drift.py",
+    )
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_latest_family_slug_skips_batch_and_snapshots():
+    drift = _load_drift_module()
+    or_ids = {
+        "openai/gpt-5.6-luna",
+        "openai/gpt-5.6-luna:batch",
+        "deepseek/deepseek-v4-flash",
+        "deepseek/deepseek-v4-pro",
+        "deepseek/deepseek-v4-pro-0813",
+        "google/gemini-3.6-flash",
+        "google/gemini-3.6-flash:batch",
+        "z-ai/glm-5.1",
+        "z-ai/glm-5.2:batch",
+    }
+    assert drift._latest_family_slug(or_ids, "openai/gpt-5.6-") == "openai/gpt-5.6-luna"
+    assert drift._latest_family_slug(or_ids, "deepseek/deepseek-v4-") == "deepseek/deepseek-v4-pro"
+    assert (
+        drift._latest_family_slug(or_ids, "google/gemini-3.6-") == "google/gemini-3.6-flash"
+    )
+    assert drift._latest_family_slug(or_ids, "z-ai/glm-5.") == "z-ai/glm-5.1"

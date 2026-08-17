@@ -113,7 +113,7 @@
 **Key Points:**
 - Show the 4-tier pricing
 - Emphasize value vs. paying for multiple subscriptions
-- Highlight "beats ChatGPT Pro by 5%"
+- Highlight routing value vs. paying for multiple subscriptions
 
 ---
 
@@ -121,7 +121,7 @@
 **Visual:** Benchmark results, category rankings
 
 **Script:**
-> "Don't just take our word for it. LLMHive ranks #1 in ALL 10 benchmark categories. That's General Reasoning, Coding, Math, Multilingual, and more—all with one subscription."
+> "Don't just take our word for it. LLMHive reports #1 in 5 out of 8 benchmark categories as of May 2026 — not 10 out of 10. One subscription routes across 350+ OpenRouter models."
 
 **Actions to Record:**
 1. Show admin benchmarks dashboard (if available)
@@ -134,13 +134,13 @@
 **Visual:** Sign-up page, CTA buttons
 
 **Script:**
-> "Ready to experience ELITE AI orchestration? Sign up free at llmhive.ai—no credit card required. Start with 50 free queries and see the difference for yourself."
+> "Ready to try LLMHive? Start a plan at llmhive.ai. Trial checkout requires a card. Standard is $10/month and Premium is $20/month."
 > 
 > "LLMHive. The hive mind of AI."
 
 **Actions to Record:**
 1. Navigate to pricing page
-2. Show "Get Started Free" button
+2. Show the pricing CTA (card required for trial)
 3. End with logo animation
 
 ---

@@ -139,6 +139,7 @@ export default async function CaseStudyPage({ params }: PageProps) {
           </ul>
         </section>
 
+        {page.metrics.length > 0 && (
         <section className="rounded-2xl border border-border/60 bg-card/40 p-6">
           <h2 className="text-xl font-semibold">Impact Metrics</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -149,6 +150,7 @@ export default async function CaseStudyPage({ params }: PageProps) {
             ))}
           </div>
         </section>
+        )}
 
         <section className="rounded-2xl border border-border/60 bg-card/40 p-6">
           <h2 className="text-xl font-semibold">Implementation Timeline</h2>

@@ -202,6 +202,39 @@ class TestObjectiveScorer:
         
         assert result.checks.get("numeric") is False
         assert "Could not extract" in result.details.get("numeric", "")
+
+    def test_numeric_accepts_spelled_fifty_years(self, scorer):
+        """mhr_006-style answers that spell out fifty must still score as 50."""
+        result = scorer.score(
+            answer="Fifty years passed between 1953 and the 2003 Human Genome Project.",
+            expected={
+                "expected_numeric": {
+                    "value": 50,
+                    "tolerance": 1,
+                    "extract_pattern": "([0-9]+)\\s*years?",
+                },
+                "expected_regex": r"50\s*-?\s*years?|fifty\s*-?\s*years?|five\s*decades|half\s*(a\s*)?century",
+            },
+        )
+        assert result.checks.get("numeric") is True
+        assert result.checks.get("regex") is True
+        assert result.passed is True
+
+    def test_numeric_accepts_half_a_century(self, scorer):
+        result = scorer.score(
+            answer="That gap is half a century.",
+            expected={
+                "expected_numeric": {
+                    "value": 50,
+                    "tolerance": 1,
+                    "extract_pattern": "([0-9]+)\\s*years?",
+                },
+                "expected_regex": r"50\s*-?\s*years?|fifty\s*-?\s*years?|five\s*decades|half\s*(a\s*)?century",
+            },
+        )
+        assert result.checks.get("numeric") is True
+        assert result.checks.get("regex") is True
+        assert result.passed is True
     
     # ==========================================================================
     # Clarification Requirement Tests

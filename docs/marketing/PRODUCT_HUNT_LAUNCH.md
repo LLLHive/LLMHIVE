@@ -12,15 +12,15 @@
 
 ### Tagline Options (Choose One - Max 60 chars)
 
-1. `Use GPT-4, Claude & Gemini together. Beat them all.` (52 chars) ⭐ RECOMMENDED
-2. `Multi-model AI that outperforms ChatGPT Pro` (44 chars)
-3. `One interface. 400+ AI models. #1 results.` (42 chars)
-4. `ELITE AI orchestration that never disappoints` (46 chars)
-5. `Stop choosing between AI models. Use them all.` (47 chars)
+1. `One interface. 350+ models. Task-aware routing.` (48 chars) ⭐ RECOMMENDED
+2. `Stop choosing between AI models. Use them all.` (47 chars)
+3. `GPT-5.6, Claude Opus 5, Gemini — one hive.` (45 chars)
+4. `Multi-model routing for ChatGPT, Claude, Gemini` (49 chars)
+5. `One subscription. 350+ OpenRouter models.` (42 chars)
 
 ### Description (Max 260 chars)
 
-> LLMHive orchestrates GPT-4, Claude, Gemini & 400+ AI models through a single interface. Our ELITE mode combines multiple models for #1 results across all categories—outperforming ChatGPT Pro by 5%. Start free, no credit card required.
+> LLMHive routes GPT-5.6 Sol Pro, Claude Opus 5, Gemini 3.1 Pro and 350+ OpenRouter models from one interface. We report #1 in 5 of 8 benchmark categories (May 2026). Paid trial — card required.
 
 ### Topics/Tags
 - Artificial Intelligence
@@ -30,7 +30,7 @@
 - Tech
 
 ### Pricing
-`Freemium` - Free tier available, paid plans from $9.99/month
+`Subscription` - Standard $10/month, Premium $20/month. Trial checkout requires a card.
 
 ### Links
 - **Website:** https://llmhive.ai
@@ -56,18 +56,18 @@ Like many of you, I was constantly switching between ChatGPT, Claude, and other 
 LLMHive combines ALL major AI models through intelligent orchestration. Instead of picking one, our system automatically routes queries to the best model—or combines multiple models for superior results.
 
 **What Makes Us Different:**
-🐝 **Multi-Model Orchestration** - GPT-4, Claude, Gemini, DeepSeek, and 400+ more
-🏆 **#1 in All Categories** - Independently verified across 10 benchmark categories
-⚡ **ELITE Mode** - HRM, DeepConf, and Adaptive Ensemble for maximum accuracy
-💰 **Better Value** - One subscription instead of paying for multiple AI tools
+🐝 **Multi-Model Orchestration** - GPT-5.6 Sol Pro, Claude Opus 5, Gemini 3.1 Pro, and 350+ more
+🏆 **#1 in 5 of 8 categories** - May 2026, as reported by LLMHive (not an independent lab award)
+⚡ **Premium mode** - HRM, DeepConf, and ensembles on paid plans
+💰 **One subscription** - instead of paying separately for every model vendor
 
 **Quick Numbers:**
-- Beats ChatGPT Pro by 5% on composite scores
 - 350+ OpenRouter models available
-- #1 ranking in General Reasoning, Coding, Math, Multilingual, and more
+- #1 in 5 out of 8 benchmark categories (May 2026)
+- Standard $10/mo, Premium $20/mo
 
-**Try It Free:**
-Sign up at llmhive.ai and get 50 free ELITE queries—no credit card needed. Just see the difference for yourself.
+**Try It:**
+Start a paid plan at llmhive.ai. Trial checkout requires a card.
 
 Would love to hear your feedback! Happy to answer any questions. 🙏
 
@@ -79,16 +79,16 @@ Would love to hear your feedback! Happy to answer any questions. 🙏
 > Great question! OpenRouter is fantastic for model routing, but LLMHive goes further with intelligent orchestration. We don't just route to one model—we combine outputs from multiple models, run consensus voting, and use proprietary methods like HRM and DeepConf to synthesize the best possible answer. Think of it as the difference between a solo musician and an orchestra.
 
 ### "What models are included?"
-> We route across 350+ OpenRouter models (OpenAI GPT-5.x, Anthropic Claude 4.x, Google Gemini 3.x, DeepSeek V4, xAI Grok, Meta Llama 4, and more). ELITE mode uses a consensus team for maximum accuracy.
+> We route across 350+ OpenRouter models (OpenAI GPT-5.6, Anthropic Claude 5, Google Gemini 3.x, DeepSeek, xAI Grok, Meta Llama 4, and more). Paid plans can use consensus teams.
 
-### "How does pricing compare to ChatGPT Pro?"
-> ChatGPT Pro is $20/month for one model. Our Pro tier is $29.99/month and gives you access to ALL models plus our orchestration engine that consistently outperforms single-model solutions. The extra $10/month gets you significantly better results across all categories.
+### "How does pricing compare to ChatGPT Plus?"
+> ChatGPT Plus is a single-model subscription. LLMHive Standard is $10/month and Premium is $20/month for routing across 350+ models. We do not claim to outperform ChatGPT Pro by a fixed percentage.
 
 ### "Is there an API?"
-> Yes! Pro and higher tiers include full API access. We're OpenAI-compatible, so you can often swap your existing integrations with minimal changes.
+> Yes! Paid tiers include API access. We're OpenAI-compatible, so you can often swap existing integrations with minimal changes.
 
 ### "What about data privacy?"
-> Your data is never used to train models. We're SOC 2 compliant (Enterprise tier), GDPR/CCPA compliant, and offer PII redaction and content filtering. Enterprise customers get additional security features including SSO/SAML.
+> Your data is not used to train our models. We encrypt data in transit and at rest, and we are pursuing SOC 2 Type II certification. Enterprise customers can request security documentation.
 
 ### "Can I use this for my team?"
 > Absolutely! Our Enterprise tier ($35/seat/month, min 5 seats) includes team workspaces, admin dashboard, SSO integration, and dedicated support.
@@ -149,9 +149,9 @@ Would love to hear your feedback! Happy to answer any questions. 🙏
 ```
 🚀 We're live on @ProductHunt!
 
-LLMHive lets you use GPT-4, Claude, Gemini & 400+ AI models through one interface.
+LLMHive lets you use GPT-5.6 Sol Pro, Claude Opus 5, Gemini 3.1 Pro, and 350+ OpenRouter models through one interface.
 
-Our ELITE mode outperforms ChatGPT Pro by 5% across all categories.
+We report #1 in 5 of 8 benchmark categories (May 2026). Trial checkout requires a card.
 
 Would love your support! 🐝
 
@@ -162,11 +162,9 @@ https://producthunt.com/posts/llmhive
 ```
 Excited to announce LLMHive is now live on Product Hunt! 🚀
 
-After months of development, we've built an AI orchestration platform that combines frontier models (GPT-5.4, Claude 4.6/4.7, Gemini 3.1, and 350+ OpenRouter models) into a single, powerful interface.
+After months of development, we've built an AI orchestration platform that routes frontier models (GPT-5.6 Sol Pro, Claude Opus 5, Gemini 3.1 Pro, and 350+ OpenRouter models) from a single interface.
 
-The results speak for themselves: #1 rankings across all 10 benchmark categories.
-
-If you're tired of switching between AI tools, give LLMHive a try. We offer 50 free queries to see the difference yourself.
+Current positioning: #1 in 5 out of 8 benchmark categories (May 2026). Trial checkout requires a card.
 
 Check us out on Product Hunt: [LINK]
 

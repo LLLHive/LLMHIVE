@@ -5,11 +5,11 @@
 - **Founded:** 2025
 - **Headquarters:** Miami, Florida
 - **Website:** https://www.llmhive.ai
-- **Press Contact:** press@llmhive.ai
-- **Phone:** 305-555-0160
+- **Press Contact:** cdiaz@llmhive.ai
+- **Phone:** 786.306.6466
 
 ## One‑Sentence Description
-LLMHive is a multi‑model AI orchestration platform that routes each request to the best expert models, cross‑verifies outputs, and delivers more reliable results at dramatically lower cost.
+LLMHive is a multi‑model AI orchestration platform that routes each request to a suitable model, can cross‑verify outputs, and returns one answer from one subscription.
 
 ## Core Links (Backlink Targets)
 - https://www.llmhive.ai/landing
@@ -24,7 +24,7 @@ LLMHive is a multi‑model AI orchestration platform that routes each request to
 - Press releases: https://www.llmhive.ai/press
 
 ## Mission
-Make AI trustworthy, powerful, and accessible by orchestrating multiple specialized models and validating results before delivery.
+Make AI more usable by orchestrating multiple specialized models and showing which model answered.
 
 ## Founder
 **Camilo Diaz — Founder & CEO**  

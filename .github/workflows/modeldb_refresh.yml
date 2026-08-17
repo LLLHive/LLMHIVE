@@ -142,6 +142,7 @@ jobs:
           PINECONE_KEY=$(gcloud secrets versions access latest --secret="pinecone-api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
           if [ -n "$PINECONE_KEY" ]; then
             echo "✅ Retrieved pinecone-api-key from Secret Manager"
+            echo "::add-mask::$PINECONE_KEY"
             echo "PINECONE_API_KEY=$PINECONE_KEY" >> $GITHUB_ENV
             echo "pinecone_ok=true" >> $GITHUB_OUTPUT
           else
@@ -153,6 +154,7 @@ jobs:
           OPENROUTER_KEY=$(gcloud secrets versions access latest --secret="open-router-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
           if [ -n "$OPENROUTER_KEY" ]; then
             echo "✅ Retrieved open-router-key from Secret Manager"
+            echo "::add-mask::$OPENROUTER_KEY"
             echo "OPENROUTER_API_KEY=$OPENROUTER_KEY" >> $GITHUB_ENV
             echo "openrouter_ok=true" >> $GITHUB_OUTPUT
           else
@@ -221,7 +223,11 @@ jobs:
         if: steps.run-mode.outputs.mode == 'weekly'
         run: |
           python scripts/sync_frontier_surfaces.py --check
-          python scripts/check_frontier_surface_drift.py --strict --verify-openrouter
+          # In-repo generated surfaces must stay in sync with the committed roster.
+          python scripts/check_frontier_surface_drift.py --strict
+          # Live OpenRouter may list newer :batch / snapshot IDs overnight.
+          # Warn only — do not fail the catalog refresh (that was red-emailing CI).
+          python scripts/check_frontier_surface_drift.py --verify-openrouter
       
       - name: Upload run logs
         uses: actions/upload-artifact@v4

@@ -46,7 +46,7 @@ export const businessPages: Record<string, PageContent> = {
       {
         title: "Compliance Coverage",
         items: [
-          "SOC 2 Type II controls mapped to operational practices.",
+          "SOC 2 Type II certification is in progress. Enterprise customers can request current security documentation.",
           "GDPR-aligned data handling and privacy obligations.",
           "Vendor risk management and third-party attestations.",
         ],

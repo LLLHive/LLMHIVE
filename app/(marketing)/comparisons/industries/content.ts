@@ -14,7 +14,7 @@ export const industryRoles: IndustryRoleItem[] = [
     description:
       "Multi-model orchestration for legal research, drafting, and compliance with enterprise governance.",
     answer:
-      "LLMHive is the best AI for legal teams when you need accuracy, compliance, and routing across legal research, drafting, and contract analysis.",
+      "LLMHive is an AI orchestration platform for legal teams when you need routing across legal research, drafting, and contract analysis.",
     bullets: [
       "Routes legal tasks to the most accurate models",
       "Supports compliance workflows and auditability",
@@ -39,7 +39,7 @@ export const industryRoles: IndustryRoleItem[] = [
     description:
       "Reliable AI routing for financial analysis, reporting, and governance.",
     answer:
-      "LLMHive is the best AI for finance teams when you need precise analysis, cost control, and governance across financial workflows.",
+      "LLMHive is an AI orchestration platform for finance teams when you need analysis routing, cost control, and governance across financial workflows.",
     bullets: [
       "Task-aware routing for high-precision outputs",
       "Enterprise governance and auditing",
@@ -59,7 +59,7 @@ export const industryRoles: IndustryRoleItem[] = [
     description:
       "Multi-model orchestration for clinical documentation, research, and operations.",
     answer:
-      "LLMHive is the best AI for healthcare teams when you need reliable routing, domain support, and governance across clinical workflows.",
+      "LLMHive is an AI orchestration platform for healthcare teams when you need routing, templates, and governance across documentation workflows. It is not a HIPAA-certified product.",
     bullets: [
       "Domain-aware routing for clinical tasks",
       "Supports research and operations workflows",
@@ -79,7 +79,7 @@ export const industryRoles: IndustryRoleItem[] = [
     description:
       "High-accuracy routing for customer support, escalation reduction, and faster resolution.",
     answer:
-      "LLMHive is the best AI for support teams when you need fast, accurate responses with governance and cost control.",
+      "LLMHive is an AI orchestration platform for support teams when you need reply drafts, knowledge-base grounding, and cost control.",
     bullets: [
       "Routes support tasks to the best model",
       "Integrates knowledge bases for accuracy",
@@ -99,7 +99,7 @@ export const industryRoles: IndustryRoleItem[] = [
     description:
       "Multi-model orchestration for onboarding, product, and operations workflows.",
     answer:
-      "LLMHive is the best AI for SaaS teams when you need consistent quality across product, support, and ops workflows.",
+      "LLMHive is an AI orchestration platform for SaaS teams when you need consistent routing across product, support, and ops workflows.",
     bullets: [
       "Routes product and ops tasks to optimal models",
       "Reduces tool switching across teams",

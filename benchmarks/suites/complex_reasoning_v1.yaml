@@ -130,7 +130,7 @@ prompts:
         value: 50
         tolerance: 1
         extract_pattern: "([0-9]+)\\s*years?"
-      expected_regex: "50\\s*years?|five\\s*decades"
+      expected_regex: "50\\s*-?\\s*years?|fifty\\s*-?\\s*years?|five\\s*decades|half\\s*(a\\s*)?century"
     requirements:
       requires_rag: true
       requires_no_clarification: true

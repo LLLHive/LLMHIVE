@@ -9,7 +9,9 @@ The **MAXIMUM tier** is LLMHive's mission-critical offering for organizations th
 
 **Price**: $499/month (1,000 queries)
 **Average cost**: ~$0.50/query
-**Expected margin**: +5% average vs best competitor
+**Expected margin**: Do not claim a fixed +5% vs the best competitor in public copy.
+
+The current public ranking claim is **#1 in 5 out of 8 benchmark categories (May 2026)**, not #1 in all 10.
 
 ---
 
@@ -127,12 +129,12 @@ The **MAXIMUM tier** is LLMHive's mission-critical offering for organizations th
 
 | Option | Cost/Query | Quality |
 |--------|------------|---------|
-| **LLMHive MAXIMUM** | $1.49 avg | **#1 in ALL** |
+| **LLMHive MAXIMUM** | $1.49 avg (planning model) | Do not claim #1 in all categories |
 | GPT-5.2 Direct | $3.15 | #1-2 in some |
 | Claude Opus Direct | $0.006 | #1 in multimodal only |
 | Claude Sonnet Direct | $0.0036 | #2-4 in most |
 
-**LLMHive MAXIMUM is 53% CHEAPER than GPT-5.2 while being BETTER in 8/10 categories.**
+Do **not** claim MAXIMUM is 53% cheaper than GPT-5.2 while better in 8/10 categories in public copy. Current ranking claim is #1 in 5 of 8 (May 2026).
 
 ---
 
@@ -190,10 +192,10 @@ The **MAXIMUM tier** is LLMHive's mission-critical offering for organizations th
 ## 🏆 Marketing Headlines
 
 ### Press Release
-> "LLMHive MAXIMUM: The Only AI Tier That Beats GPT-5.2 in 8 Categories While Costing 53% Less"
+> "LLMHive MAXIMUM: mission-critical routing with flagship models. Public ranking claim is #1 in 5 of 8 categories (May 2026)."
 
 ### Landing Page
-> "When failure is not an option, choose MAXIMUM. +5% better than the best, mission-critical confidence."
+> "When the task is high-stakes, MAXIMUM uses flagship routing. Do not claim +5% better than the best."
 
 ### Comparison
 > "GPT-5.2 gets you 92.4% reasoning. LLMHive MAXIMUM gets you 95.0%. That's not a bug, that's orchestration."
@@ -205,7 +207,7 @@ The **MAXIMUM tier** is LLMHive's mission-critical offering for organizations th
 1. **Quality SLA**: If MAXIMUM doesn't beat GPT-5.2 direct on your use case, we'll refund the difference.
 2. **Uptime**: 99.9% availability with priority routing
 3. **Support**: Dedicated success manager, 1-hour response time
-4. **Security**: SOC 2 Type II, HIPAA-ready, GDPR compliant
+4. **Security**: Encryption in transit and at rest. SOC 2 Type II is in progress. Do not claim HIPAA-ready unless a BAA is in place.
 
 ---
 
