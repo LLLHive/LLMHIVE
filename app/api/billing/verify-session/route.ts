@@ -203,6 +203,7 @@ export async function GET(request: NextRequest) {
         isTrial: trialInfo.isTrial,
         trialEnd: trialInfo.trialEnd,
         amountDueToday: stripeSession ? (stripeSession.amount_total ?? 0) / 100 : null,
+        trialWithoutCard: metadata.trial_without_card === "true",
       },
       purchase,
     })

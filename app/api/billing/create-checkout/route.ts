@@ -12,6 +12,11 @@ import {
   stripeStandardAnnualPriceId,
   stripeStandardMonthlyPriceId,
 } from "@/lib/billing/stripe-price-ids"
+import {
+  campaignCancelUrl,
+  resolveCheckoutPaymentMode,
+  stripeTrialSettingsForNoCard,
+} from "@/lib/billing/standard-trial-checkout"
 
 // Lazy initialize Stripe
 function getStripe(): Stripe | null {
@@ -30,6 +35,46 @@ const STANDARD_TRIAL_DAYS = Math.max(
   0,
   parseInt(process.env.STANDARD_TRIAL_DAYS || "3", 10) || 3
 )
+
+async function customerAlreadyUsedStandardTrial(
+  stripe: Stripe,
+  email: string | undefined,
+  userId: string
+): Promise<boolean> {
+  const looksLikeTrial = (sub: Stripe.Subscription) =>
+    Boolean(
+      sub.trial_start ||
+        sub.metadata?.is_trial === "true" ||
+        sub.metadata?.trial_without_card === "true"
+    )
+
+  try {
+    const safeId = userId.replace(/["\\]/g, "")
+    const byMeta = await stripe.subscriptions.search({
+      query: `metadata["user_id"]:"${safeId}"`,
+      limit: 10,
+    })
+    if (byMeta.data.some(looksLikeTrial)) return true
+  } catch {
+    // Subscription search is not enabled on every Stripe account.
+  }
+
+  if (!email) return false
+  try {
+    const customers = await stripe.customers.list({ email, limit: 5 })
+    for (const customer of customers.data) {
+      const subs = await stripe.subscriptions.list({
+        customer: customer.id,
+        status: "all",
+        limit: 20,
+      })
+      if (subs.data.some(looksLikeTrial)) return true
+    }
+  } catch (err) {
+    console.warn("standard trial history lookup failed:", err)
+  }
+  return false
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SIMPLIFIED 4-TIER PRICING (January 2026)
@@ -111,7 +156,7 @@ export async function POST(request: NextRequest) {
     const userEmail = user?.emailAddresses?.[0]?.emailAddress
 
     const body = await request.json()
-    const { tier, billingCycle, quantity = 1 } = body
+    const { tier, billingCycle, quantity = 1, trialWithoutCard = false, cancelPath } = body
 
     if (!tier || !billingCycle) {
       return NextResponse.json(
@@ -137,6 +182,10 @@ export async function POST(request: NextRequest) {
           billing_cycle: cycleLower,
           user_id: userId,
           user_email: userEmail,
+          trial_without_card: Boolean(trialWithoutCard),
+          ...(campaignCancelUrl("https://llmhive.ai", cancelPath)
+            ? { cancel_path: cancelPath }
+            : {}),
         }),
       })
 
@@ -206,7 +255,28 @@ export async function POST(request: NextRequest) {
 
     // Create Stripe checkout session
     const isStandardMonthlyTrial =
-      tierLower === "lite" && cycleLower === "monthly" && STANDARD_TRIAL_DAYS > 0
+      (tierLower === "lite" || tierLower === "standard") &&
+      cycleLower === "monthly" &&
+      STANDARD_TRIAL_DAYS > 0
+
+    const paymentMode = resolveCheckoutPaymentMode({
+      tier: tierLower,
+      billingCycle: cycleLower,
+      trialDays: STANDARD_TRIAL_DAYS,
+      trialWithoutCardRequested: Boolean(trialWithoutCard),
+    })
+    const noCardTrial = paymentMode === "no_card_trial"
+
+    if (noCardTrial && (await customerAlreadyUsedStandardTrial(stripe, userEmail, userId))) {
+      return NextResponse.json(
+        {
+          error:
+            "A Standard trial was already used on this account. Start Standard with a payment method, or subscribe to Premium.",
+          code: "trial_already_used",
+        },
+        { status: 409 }
+      )
+    }
 
     const subscriptionData: Stripe.Checkout.SessionCreateParams.SubscriptionData = {
       metadata: {
@@ -218,13 +288,16 @@ export async function POST(request: NextRequest) {
         seats: String(finalQuantity),
         pricing_version: "quota_based_jan2026",
         ...(isStandardMonthlyTrial ? { is_trial: "true", trial_cap_usd: "3" } : {}),
+        ...(noCardTrial ? { trial_without_card: "true" } : {}),
       },
       ...(isStandardMonthlyTrial ? { trial_period_days: STANDARD_TRIAL_DAYS } : {}),
+      ...(noCardTrial ? { trial_settings: stripeTrialSettingsForNoCard() } : {}),
     }
 
-    const session = await stripe.checkout.sessions.create({
+    const cancelUrl = campaignCancelUrl(getSiteUrl(), cancelPath) || `${getSiteUrl()}/pricing`
+
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer_email: userEmail,
-      payment_method_types: ["card"],
       mode: "subscription",
       line_items: [
         {
@@ -253,12 +326,21 @@ export async function POST(request: NextRequest) {
         min_seats_required: String(tierConfig.minSeats),
         pricing_version: "quota_based_jan2026",
         ...(isStandardMonthlyTrial ? { is_trial: "true" } : {}),
+        ...(noCardTrial ? { trial_without_card: "true" } : {}),
       },
       success_url: `${getSiteUrl()}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${getSiteUrl()}/pricing`,
+      cancel_url: cancelUrl,
       allow_promotion_codes: true,
       subscription_data: subscriptionData,
-    })
+    }
+
+    if (noCardTrial) {
+      sessionParams.payment_method_collection = "if_required"
+    } else {
+      sessionParams.payment_method_types = ["card"]
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams)
 
     return NextResponse.json({
       url: session.url,

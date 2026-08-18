@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/landing/origins",
     "/landing/spain",
     "/landing/grandmother",
+    "/landing/grandmother-free",
     "/promo",
     "/about",
     "/contact",

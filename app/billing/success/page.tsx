@@ -22,6 +22,7 @@ export default function BillingSuccessPage() {
     isTrial?: boolean
     trialEnd?: string | null
     amountDueToday?: number | null
+    trialWithoutCard?: boolean
   } | null>(null)
   const [purchase, setPurchase] = useState<GtmPurchasePayload | null>(null)
 
@@ -69,6 +70,7 @@ export default function BillingSuccessPage() {
     subscription?.isTrial ||
     subscription?.status === "trialing" ||
     (subscription?.amountDueToday === 0 && subscription?.tier === "lite")
+  const isNoCardTrial = Boolean(isTrial && subscription?.trialWithoutCard)
 
   const trialEndLabel = subscription?.trialEnd
     ? new Date(subscription.trialEnd).toLocaleDateString(undefined, {
@@ -108,7 +110,9 @@ export default function BillingSuccessPage() {
             {loading
               ? "Please wait while we confirm your subscription..."
               : isTrial
-                ? "You were not charged today. Enjoy premium orchestration for 3 days."
+                ? isNoCardTrial
+                  ? "You were not charged today. Add a payment method in Billing before day 4 or access ends."
+                  : "You were not charged today. Enjoy premium orchestration for 3 days."
                 : "Thank you for subscribing to LLMHive."}
           </CardDescription>
         </CardHeader>
@@ -132,8 +136,11 @@ export default function BillingSuccessPage() {
                     <div className="space-y-1 text-sm">
                       <p className="font-medium text-amber-300">$0.00 charged today</p>
                       <p className="text-muted-foreground">
-                        Then $10/month{trialEndLabel ? ` starting ${trialEndLabel}` : " after 3 days"} unless
-                        you cancel
+                        {isNoCardTrial
+                          ? `Then $10/month if you add a payment method${
+                              trialEndLabel ? ` by ${trialEndLabel}` : " before the trial ends"
+                            }. If you don't, access ends and you are not charged.`
+                          : `Then $10/month${trialEndLabel ? ` starting ${trialEndLabel}` : " after 3 days"} unless you cancel`}
                       </p>
                     </div>
                   ) : (
@@ -153,11 +160,19 @@ export default function BillingSuccessPage() {
 
                 <div className="text-sm text-muted-foreground space-y-1 text-left max-w-sm mx-auto">
                   {isTrial ? (
-                    <>
-                      <p>✓ No charge today — card saved for after the trial</p>
-                      <p>✓ Premium orchestration during trial</p>
-                      <p>✓ Cancel anytime in Billing before trial ends to avoid $10/mo</p>
-                    </>
+                    isNoCardTrial ? (
+                      <>
+                        <p>✓ No charge today — no card on file</p>
+                        <p>✓ Premium orchestration during trial</p>
+                        <p>✓ Add a payment method in Billing before trial ends to continue at $10/mo</p>
+                      </>
+                    ) : (
+                      <>
+                        <p>✓ No charge today — card saved for after the trial</p>
+                        <p>✓ Premium orchestration during trial</p>
+                        <p>✓ Cancel anytime in Billing before trial ends to avoid $10/mo</p>
+                      </>
+                    )
                   ) : (
                     <>
                       <p>✓ Receipt sent to your email</p>

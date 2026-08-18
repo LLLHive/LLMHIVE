@@ -23,3 +23,11 @@ def test_cancelled_does_not_grant_access():
     sub = {"status": "cancelled", "tier_name": "lite"}
     assert subscription_grants_app_access(sub) is False
     assert subscription_grants_paid_access(sub) is False
+
+
+def test_stripe_canceled_trial_does_not_grant_access():
+    """Stripe uses US spelling; missing-card trial end must drop access."""
+    sub = {"status": "canceled", "tier_name": "lite"}
+    assert subscription_grants_app_access(sub) is False
+    assert subscription_grants_paid_access(sub) is False
+    assert is_trialing_standard_subscription(sub) is False

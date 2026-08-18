@@ -366,7 +366,7 @@ export default function BillingPage() {
                   {isFreeTier 
                     ? "Standard plan • Upgrade anytime"
                     : isTrialing
-                      ? "3-day free trial • Converts to $10/mo Standard"
+                      ? "3-day free trial • Continues at $10/mo if a payment method is on file"
                       : `${subscription?.billingCycle === "annual" ? "Annual" : "Monthly"} billing`
                   }
                 </p>
@@ -383,6 +383,22 @@ export default function BillingPage() {
                 )}
               </div>
             </div>
+
+            {isTrialing && !subscription?.cancelAtPeriodEnd && (
+              <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 mb-6">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-amber-400">Payment method required to continue</p>
+                    <p className="text-sm text-muted-foreground">
+                      Standard continues at $10/month only if a payment method is on file when the
+                      trial ends. Use Manage Payment to add or update a card. If none is on file,
+                      the trial ends and you are not charged.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {subscription?.cancelAtPeriodEnd && (
               <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20 mb-6">

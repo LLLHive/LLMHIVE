@@ -17,6 +17,13 @@ from ..config import settings
 from ..database import get_db
 from ..billing.pricing import TierName, get_pricing_manager
 from ..billing.payments import get_payment_processor, STRIPE_AVAILABLE
+from ..billing.standard_trial_checkout import (
+    apply_session_payment_collection,
+    apply_trial_subscription_data,
+    campaign_cancel_url,
+    customer_used_standard_trial,
+    is_standard_monthly_trial,
+)
 from ..billing.subscription_sync import upsert_subscription_from_checkout_session
 
 logger = logging.getLogger(__name__)
@@ -42,6 +49,32 @@ def _price_id_for_checkout(tier_lower: str, billing_cycle: str) -> Optional[str]
     return None
 
 
+def _list_customer_subscriptions(stripe_module, email: Optional[str]) -> list:
+    """Best-effort Stripe history for Standard trial reuse checks. Fail-open."""
+    if not email:
+        return []
+    rows: list = []
+    try:
+        customers = stripe_module.Customer.list(email=email, limit=5)
+        for customer in customers.data:
+            subs = stripe_module.Subscription.list(
+                customer=customer.id,
+                status="all",
+                limit=20,
+            )
+            for sub in subs.data:
+                rows.append(
+                    {
+                        "trial_start": getattr(sub, "trial_start", None),
+                        "trial_end": getattr(sub, "trial_end", None),
+                        "metadata": dict(getattr(sub, "metadata", None) or {}),
+                    }
+                )
+    except Exception as exc:
+        logger.warning("standard trial history lookup failed: %s", exc)
+    return rows
+
+
 class CreateCheckoutRequest(BaseModel):
     """Request to create a Stripe checkout session."""
     
@@ -49,6 +82,14 @@ class CreateCheckoutRequest(BaseModel):
     billing_cycle: str = Field(default="monthly", description="Billing cycle: 'monthly' or 'annual'")
     user_email: Optional[str] = Field(default=None, description="User email for Stripe customer")
     user_id: str = Field(..., description="Internal user ID to link subscription")
+    trial_without_card: bool = Field(
+        default=False,
+        description="Standard monthly trial without collecting a card (campaign checkout)",
+    )
+    cancel_path: Optional[str] = Field(
+        default=None,
+        description="Optional relative cancel path, e.g. /landing/grandmother-free",
+    )
 
 
 class CheckoutSessionResponse(BaseModel):
@@ -145,8 +186,20 @@ def create_checkout_session(
         
         # Stripe webhook handling: Create checkout session
         # Stripe rejects passing both ``customer`` and ``customer_email`` on the same session.
+        no_card_trial = bool(request.trial_without_card) and is_standard_monthly_trial(
+            tier_lower, request.billing_cycle
+        )
+        if no_card_trial and customer_used_standard_trial(
+            _list_customer_subscriptions(stripe, request.user_email)
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    "A Standard trial was already used on this account. "
+                    "Start Standard with a payment method, or subscribe to Premium."
+                ),
+            )
         session_kwargs: dict = {
-            "payment_method_types": ["card"],
             "mode": "subscription",
             "line_items": [{"price": price_id, "quantity": 1}],
             "client_reference_id": request.user_id,
@@ -154,11 +207,14 @@ def create_checkout_session(
                 "user_id": request.user_id,
                 "tier": request.tier.lower(),
                 "billing_cycle": request.billing_cycle,
+                **({"trial_without_card": "true"} if no_card_trial else {}),
             },
             "success_url": settings.stripe_success_url + f"?session_id={{CHECKOUT_SESSION_ID}}",
-            "cancel_url": settings.stripe_cancel_url,
+            "cancel_url": campaign_cancel_url(settings.stripe_success_url, request.cancel_path)
+            or settings.stripe_cancel_url,
             "allow_promotion_codes": True,
         }
+        apply_session_payment_collection(session_kwargs, no_card=no_card_trial)
         if customer_id:
             session_kwargs["customer"] = customer_id
         elif request.user_email:
@@ -171,11 +227,14 @@ def create_checkout_session(
                 "billing_cycle": request.billing_cycle,
             },
         }
-        if tier_lower == "lite" and request.billing_cycle == "monthly":
+        if is_standard_monthly_trial(tier_lower, request.billing_cycle):
             trial_days = int(os.getenv("STANDARD_TRIAL_DAYS", "3"))
             if trial_days > 0:
-                subscription_data["trial_period_days"] = trial_days
-                subscription_data["metadata"]["is_trial"] = "true"
+                apply_trial_subscription_data(
+                    subscription_data,
+                    trial_days=trial_days,
+                    no_card=no_card_trial,
+                )
         session_kwargs["subscription_data"] = subscription_data
 
         checkout_session = stripe.checkout.Session.create(**session_kwargs)
