@@ -8,6 +8,7 @@ import {
 } from "@/lib/marketing/pricing-offers"
 import { getSiteUrl, sitePath } from "@/lib/site-url"
 import { MARKETING_FEATURED_LINE, MARKETING_META_DESCRIPTION_MODELS } from "@/lib/marketing/featured-models"
+import ProductDemoPlayer from "@/components/marketing/product-demo-player"
 import {
   Sparkles,
   Zap,
@@ -15,7 +16,7 @@ import {
   BarChart3,
   ArrowRight,
   Check,
-  MessageSquare,
+  Play,
   Brain,
   Layers,
   Globe,
@@ -279,8 +280,8 @@ export default function LandingPage() {
                 className="border-zinc-700 text-lg px-8 h-14 text-white hover:bg-zinc-900"
               >
                 <Link href="/demo">
-                  <MessageSquare className="mr-2 h-5 w-5" />
-                  Try Demo
+                  <Play className="mr-2 h-5 w-5" />
+                  Watch demo
                 </Link>
               </Button>
             </div>
@@ -294,6 +295,16 @@ export default function LandingPage() {
                 <div className="text-sm text-zinc-500">{stat.label}</div>
               </div>
             ))}
+          </div>
+
+          <div className="mt-16 max-w-5xl mx-auto">
+            <ProductDemoPlayer compact />
+            <p className="mt-3 text-center text-sm text-zinc-500">
+              60-second product film ·{" "}
+              <Link href="/demo" className="text-amber-400 hover:underline">
+                Open full demo
+              </Link>
+            </p>
           </div>
 
           <div className="mt-14 max-w-4xl mx-auto text-center">

@@ -137,3 +137,6 @@ benchmark_reports/
 artifacts/checkpoints/
 artifacts/snapshots/
 artifacts/benchmarks/debug_*/
+
+# Source stills for scripts/render_demo_video.py (generated locally)
+public/videos/stills/
