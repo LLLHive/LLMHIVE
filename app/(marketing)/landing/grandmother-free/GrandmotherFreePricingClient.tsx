@@ -112,8 +112,8 @@ const pricingTiers: PricingTier[] = [
       detail: "Premium orchestration included with your subscription",
     },
     features: [...OFFER_STANDARD_FEATURES],
-    cta: "Start 3-day free trial",
-    trialBadge: "3 days free",
+    cta: "Start 7-day free trial",
+    trialBadge: "7 days free",
   },
   {
     name: "Premium",
@@ -152,9 +152,9 @@ const pricingTiers: PricingTier[] = [
 
 const pricingFaq = [
   {
-    question: "How does the 3-day Standard trial work?",
+    question: "How does the 7-day Standard trial work?",
     answer:
-      "Start a free 3-day trial on Standard (monthly). No credit card is required to begin. You get premium orchestration during the trial. Add a payment method in Billing before day 4 to continue at $10/month. If you do not add a payment method, the trial ends, access stops, and you are not charged.",
+      "Start a free 7-day trial on Standard (monthly). No credit card is required to begin. You get premium orchestration during the trial. Add a payment method in Billing before day 8 to continue at $10/month. If you do not add a payment method, the trial ends, access stops, and you are not charged.",
   },
   {
     question: "What is included in Standard?",
@@ -502,7 +502,7 @@ export default function GrandmotherFreePricingClient() {
                   onClick={() => void handleSubscribe(pricingTiers[0])}
                   disabled={loadingTier === "lite"}
                 >
-                  {loadingTier === "lite" ? "Starting…" : "Start 3-day free trial"}
+                  {loadingTier === "lite" ? "Starting…" : "Start 7-day free trial"}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
                 <Button
@@ -647,13 +647,13 @@ export default function GrandmotherFreePricingClient() {
                           <div>
                             <div className="flex items-baseline gap-2">
                               <span className="text-4xl font-bold text-amber-300">$0</span>
-                              <span className={cn("text-sm", copyMuted)}>for 3 days</span>
+                              <span className={cn("text-sm", copyMuted)}>for 7 days</span>
                             </div>
                             <p className={cn("mt-1 text-sm", copyMuted)}>
                               then <span className="font-semibold text-white">${price.toFixed(2)}/month</span>
                             </p>
                             <p className="mt-2 text-xs font-medium text-amber-300/95">
-                              No card required · Add payment in Billing before day 4 to continue
+                              No card required · Add payment in Billing before day 8 to continue
                             </p>
                           </div>
                         ) : (
@@ -856,7 +856,7 @@ export default function GrandmotherFreePricingClient() {
               {[
                 { icon: Trophy, v: "#1 in 5/8", l: "Benchmark categories — May 2026" },
                 { icon: Network, v: "350+", l: "Models available to route" },
-                { icon: Clock, v: "3-day", l: "Standard free trial, no card ($0 today)" },
+                { icon: Clock, v: "7-day", l: "Standard free trial, no card ($0 today)" },
                 { icon: BadgeCheck, v: "Cancel anytime", l: "Flat monthly pricing, no lock-in" },
               ].map((s) => (
                 <div key={s.v + s.l} className="flex items-start gap-3 px-1 py-1">
@@ -926,8 +926,8 @@ export default function GrandmotherFreePricingClient() {
               })}
             </ol>
             <p className={cn("mt-6 text-center text-sm", copySubtle)}>
-              Standard ($10/mo, 3-day trial on monthly, no card required) and Premium ($20/mo)
-              include premium orchestration — same offers as{" "}
+              Standard ($10/mo, 7-day trial on monthly, no card required) and Premium ($20/mo)
+              include premium orchestration. Card-required plans are on{" "}
               <Link href="/pricing" className="text-amber-400 underline-offset-2 hover:underline">
                 /pricing
               </Link>
@@ -976,7 +976,7 @@ export default function GrandmotherFreePricingClient() {
                 Ready to get started?
               </h2>
               <p className={cn("mb-6 leading-relaxed", copyMuted)}>
-                Premium from $20/mo, or start Standard with a 3-day free trial — $0 today, no card
+                Premium from $20/mo, or start Standard with a 7-day free trial — $0 today, no card
                 required on monthly billing.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
@@ -997,7 +997,7 @@ export default function GrandmotherFreePricingClient() {
                   onClick={() => void handleSubscribe(pricingTiers[0])}
                   disabled={loadingTier === "lite"}
                 >
-                  Start 3-day trial
+                  Start 7-day trial
                 </Button>
               </div>
             </div>

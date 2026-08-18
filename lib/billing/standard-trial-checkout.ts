@@ -4,9 +4,27 @@
  * Default: card required (historic Stripe Checkout with payment_method_types=["card"]).
  * No-card campaign: payment_method_collection=if_required and cancel at trial end
  * if no payment method was collected.
+ *
+ * Card-required Standard monthly trial: 3 days.
+ * No-card campaign (/landing/grandmother-free): 7 days.
  */
 
 export type CheckoutPaymentMode = "card_required" | "no_card_trial"
+
+export const DEFAULT_STANDARD_TRIAL_DAYS = 3
+export const DEFAULT_NO_CARD_TRIAL_DAYS = 7
+
+function parsePositiveInt(raw: string | undefined, fallback: number): number {
+  const parsed = parseInt(raw || "", 10)
+  if (!Number.isFinite(parsed) || parsed < 0) return fallback
+  return parsed
+}
+
+export function resolveStandardTrialDays(noCard: boolean): number {
+  return noCard
+    ? parsePositiveInt(process.env.STANDARD_NO_CARD_TRIAL_DAYS, DEFAULT_NO_CARD_TRIAL_DAYS)
+    : parsePositiveInt(process.env.STANDARD_TRIAL_DAYS, DEFAULT_STANDARD_TRIAL_DAYS)
+}
 
 export function isStandardMonthlyTrial(
   tier: string | undefined,

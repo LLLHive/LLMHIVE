@@ -14,7 +14,9 @@ import {
 } from "@/lib/billing/stripe-price-ids"
 import {
   campaignCancelUrl,
+  isStandardMonthlyTrial as isStandardMonthlyTrialOffer,
   resolveCheckoutPaymentMode,
+  resolveStandardTrialDays,
   stripeTrialSettingsForNoCard,
 } from "@/lib/billing/standard-trial-checkout"
 
@@ -30,11 +32,6 @@ const BACKEND_URL =
   process.env.ORCHESTRATOR_API_BASE_URL ||
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   "https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app"
-
-const STANDARD_TRIAL_DAYS = Math.max(
-  0,
-  parseInt(process.env.STANDARD_TRIAL_DAYS || "3", 10) || 3
-)
 
 async function customerAlreadyUsedStandardTrial(
   stripe: Stripe,
@@ -254,16 +251,19 @@ export async function POST(request: NextRequest) {
       : 1
 
     // Create Stripe checkout session
-    const isStandardMonthlyTrial =
-      (tierLower === "lite" || tierLower === "standard") &&
-      cycleLower === "monthly" &&
-      STANDARD_TRIAL_DAYS > 0
+    const requestedNoCard = Boolean(trialWithoutCard)
+    const trialDays = resolveStandardTrialDays(requestedNoCard)
+    const isStandardMonthlyTrial = isStandardMonthlyTrialOffer(
+      tierLower,
+      cycleLower,
+      trialDays
+    )
 
     const paymentMode = resolveCheckoutPaymentMode({
       tier: tierLower,
       billingCycle: cycleLower,
-      trialDays: STANDARD_TRIAL_DAYS,
-      trialWithoutCardRequested: Boolean(trialWithoutCard),
+      trialDays,
+      trialWithoutCardRequested: requestedNoCard,
     })
     const noCardTrial = paymentMode === "no_card_trial"
 
@@ -290,7 +290,7 @@ export async function POST(request: NextRequest) {
         ...(isStandardMonthlyTrial ? { is_trial: "true", trial_cap_usd: "3" } : {}),
         ...(noCardTrial ? { trial_without_card: "true" } : {}),
       },
-      ...(isStandardMonthlyTrial ? { trial_period_days: STANDARD_TRIAL_DAYS } : {}),
+      ...(isStandardMonthlyTrial ? { trial_period_days: trialDays } : {}),
       ...(noCardTrial ? { trial_settings: stripeTrialSettingsForNoCard() } : {}),
     }
 

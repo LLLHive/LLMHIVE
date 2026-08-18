@@ -164,6 +164,13 @@ export async function GET(request: NextRequest) {
         value: process.env.STANDARD_TRIAL_DAYS,
         ok: Number(process.env.STANDARD_TRIAL_DAYS || "0") === 3,
       },
+      STANDARD_NO_CARD_TRIAL_DAYS: {
+        set: Boolean(process.env.STANDARD_NO_CARD_TRIAL_DAYS),
+        value: process.env.STANDARD_NO_CARD_TRIAL_DAYS,
+        ok:
+          !process.env.STANDARD_NO_CARD_TRIAL_DAYS ||
+          Number(process.env.STANDARD_NO_CARD_TRIAL_DAYS) === 7,
+      },
       ELITE_SPEND_TRIAL_CAP_USD: {
         set: Boolean(process.env.ELITE_SPEND_TRIAL_CAP_USD),
         value: process.env.ELITE_SPEND_TRIAL_CAP_USD,
@@ -181,6 +188,14 @@ export async function GET(request: NextRequest) {
   } else if (!results.trial_env.STANDARD_TRIAL_DAYS.ok) {
     results.summary.issues.push(
       `STANDARD_TRIAL_DAYS=${process.env.STANDARD_TRIAL_DAYS} (expected 3)`,
+    )
+  }
+  if (
+    results.trial_env.STANDARD_NO_CARD_TRIAL_DAYS.set &&
+    !results.trial_env.STANDARD_NO_CARD_TRIAL_DAYS.ok
+  ) {
+    results.summary.issues.push(
+      `STANDARD_NO_CARD_TRIAL_DAYS=${process.env.STANDARD_NO_CARD_TRIAL_DAYS} (expected 7)`,
     )
   }
   if (!results.trial_env.ELITE_SPEND_TRIAL_CAP_USD.set) {
@@ -299,7 +314,9 @@ export async function GET(request: NextRequest) {
   const allConfigured = results.summary.configured === results.summary.total
   const allValid = results.summary.valid === results.summary.total
   const trialOk =
-    results.trial_env.STANDARD_TRIAL_DAYS.ok && results.trial_env.ELITE_SPEND_TRIAL_CAP_USD.set
+    results.trial_env.STANDARD_TRIAL_DAYS.ok &&
+    results.trial_env.STANDARD_NO_CARD_TRIAL_DAYS.ok &&
+    results.trial_env.ELITE_SPEND_TRIAL_CAP_USD.set
   const status = allConfigured && allValid && trialOk ? 200 : 400
 
   return NextResponse.json(

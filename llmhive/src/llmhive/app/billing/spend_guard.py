@@ -104,7 +104,7 @@ def spend_write_retries() -> int:
 
 
 def trial_spend_cap_usd() -> float:
-    """Fixed elite orchestration cap during Standard 3-day trial."""
+    """Fixed elite orchestration cap during Standard trial."""
     try:
         return max(0.0, float(os.getenv("ELITE_SPEND_TRIAL_CAP_USD", "3.0")))
     except ValueError:

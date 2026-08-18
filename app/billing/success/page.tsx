@@ -103,7 +103,9 @@ export default function BillingSuccessPage() {
             {loading
               ? "Setting up your account..."
               : isTrial
-                ? "Your 3-day free trial is active!"
+                ? isNoCardTrial
+                  ? "Your 7-day free trial is active!"
+                  : "Your 3-day free trial is active!"
                 : "Payment successful!"}
           </CardTitle>
           <CardDescription className="text-base mt-2">
@@ -111,7 +113,7 @@ export default function BillingSuccessPage() {
               ? "Please wait while we confirm your subscription..."
               : isTrial
                 ? isNoCardTrial
-                  ? "You were not charged today. Add a payment method in Billing before day 4 or access ends."
+                  ? "You were not charged today. Add a payment method in Billing before day 8 or access ends."
                   : "You were not charged today. Enjoy premium orchestration for 3 days."
                 : "Thank you for subscribing to LLMHive."}
           </CardDescription>

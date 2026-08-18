@@ -3,11 +3,25 @@
 Card-required trial is the historic default (``payment_method_types=["card"]``).
 No-card trial uses Stripe ``payment_method_collection=if_required`` plus
 ``trial_settings.end_behavior.missing_payment_method=cancel`` so access ends
-after 3 days unless the customer adds a payment method.
+unless the customer adds a payment method (7 days on the no-card campaign).
 """
 from __future__ import annotations
 
+import os
 from typing import Any, Dict, Mapping, MutableMapping
+
+DEFAULT_STANDARD_TRIAL_DAYS = 3
+DEFAULT_NO_CARD_TRIAL_DAYS = 7
+
+
+def resolve_standard_trial_days(*, no_card: bool) -> int:
+    """Card-required Standard monthly trial is 3 days; no-card campaign is 7."""
+    key = "STANDARD_NO_CARD_TRIAL_DAYS" if no_card else "STANDARD_TRIAL_DAYS"
+    default = DEFAULT_NO_CARD_TRIAL_DAYS if no_card else DEFAULT_STANDARD_TRIAL_DAYS
+    try:
+        return max(0, int(os.getenv(key, str(default))))
+    except ValueError:
+        return default
 
 
 def is_standard_monthly_trial(tier: str, billing_cycle: str) -> bool:

@@ -11,14 +11,14 @@ import { sitePath } from "@/lib/site-url"
 export const metadata: Metadata = {
   title: "LLMHive — Premium orchestration for the best AI answers",
   description:
-    "Route your requests across top models instantly. Start a 3-day Standard free trial ($0 today, no card required) or subscribe to Premium for $20/month.",
+    "Route your requests across top models instantly. Start a 7-day Standard free trial ($0 today, no card required) or subscribe to Premium for $20/month.",
   alternates: {
     canonical: sitePath("/landing/grandmother-free"),
   },
   openGraph: {
     title: "LLMHive — Premium orchestration for the best AI answers",
     description:
-      "Better answers, lower cost, zero hassle. Try Standard free for 3 days with no card, or go Premium at $20/month.",
+      "Better answers, lower cost, zero hassle. Try Standard free for 7 days with no card, or go Premium at $20/month.",
     type: "website",
     url: sitePath("/landing/grandmother-free"),
     images: [
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "LLMHive — Premium orchestration for the best AI answers",
     description:
-      "Better answers, lower cost, zero hassle. Try Standard free for 3 days with no card, or go Premium at $20/month.",
+      "Better answers, lower cost, zero hassle. Try Standard free for 7 days with no card, or go Premium at $20/month.",
   },
   robots: { index: true, follow: true },
 }

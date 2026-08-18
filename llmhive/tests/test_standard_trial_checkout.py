@@ -8,6 +8,7 @@ from llmhive.app.billing.standard_trial_checkout import (
     campaign_cancel_url,
     customer_used_standard_trial,
     is_standard_monthly_trial,
+    resolve_standard_trial_days,
 )
 from llmhive.app.billing.pricing import get_pricing_manager, TierName
 from llmhive.app.api.payment_routes import CreateCheckoutRequest
@@ -44,11 +45,25 @@ def test_no_card_trial_uses_if_required_and_omits_card_types():
 
 def test_no_card_trial_cancels_without_payment_method():
     data: dict = {"metadata": {"user_id": "u1", "tier": "lite"}}
-    apply_trial_subscription_data(data, trial_days=3, no_card=True)
-    assert data["trial_period_days"] == 3
+    apply_trial_subscription_data(data, trial_days=7, no_card=True)
+    assert data["trial_period_days"] == 7
     assert data["metadata"]["is_trial"] == "true"
     assert data["metadata"]["trial_without_card"] == "true"
     assert data["trial_settings"]["end_behavior"]["missing_payment_method"] == "cancel"
+
+
+def test_trial_length_defaults_card_three_no_card_seven(monkeypatch):
+    monkeypatch.delenv("STANDARD_TRIAL_DAYS", raising=False)
+    monkeypatch.delenv("STANDARD_NO_CARD_TRIAL_DAYS", raising=False)
+    assert resolve_standard_trial_days(no_card=False) == 3
+    assert resolve_standard_trial_days(no_card=True) == 7
+
+
+def test_trial_length_env_overrides(monkeypatch):
+    monkeypatch.setenv("STANDARD_TRIAL_DAYS", "3")
+    monkeypatch.setenv("STANDARD_NO_CARD_TRIAL_DAYS", "7")
+    assert resolve_standard_trial_days(no_card=False) == 3
+    assert resolve_standard_trial_days(no_card=True) == 7
 
 
 def test_card_trial_does_not_set_missing_payment_cancel():

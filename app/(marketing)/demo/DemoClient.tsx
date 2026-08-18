@@ -47,7 +47,7 @@ const KEY_FEATURES = [
   {
     icon: Layers,
     title: "Plans that stay simple",
-    description: "Standard $10/month or Premium $20/month. Start Standard free for 3 days.",
+    description: "Standard $10/month or Premium $20/month. Start Standard free for 7 days.",
     color: "text-green-400",
     bgColor: "bg-green-400/10",
   },
@@ -87,7 +87,7 @@ export default function DemoClient() {
             </div>
             <h1 className="mb-4 text-4xl font-bold text-foreground md:text-5xl">See LLMHive in action</h1>
             <p className="text-xl text-muted-foreground">
-              One question. Frontier models. One best answer. Watch the 60-second walkthrough, then start a 3-day
+              One question. Frontier models. One best answer. Watch the 60-second walkthrough, then start a 7-day
               Standard trial — no card required.
             </p>
           </div>
@@ -198,12 +198,12 @@ export default function DemoClient() {
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="mb-4 text-3xl font-bold text-foreground">Ready to try it?</h2>
             <p className="mb-8 text-muted-foreground">
-              Start Standard free for 3 days with no card, or go Premium at $20/month.
+              Start Standard free for 7 days with no card, or go Premium at $20/month.
             </p>
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
               <Button asChild size="lg" className="bronze-gradient w-full font-semibold text-[#0a0a0a] sm:w-auto">
                 <Link href="/landing/grandmother-free">
-                  Start 3-day trial
+                  Start 7-day trial
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>

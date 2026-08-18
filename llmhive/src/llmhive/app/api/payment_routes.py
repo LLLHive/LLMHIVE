@@ -6,7 +6,6 @@ and handling payment flows.
 from __future__ import annotations
 
 import logging
-import os
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -23,6 +22,7 @@ from ..billing.standard_trial_checkout import (
     campaign_cancel_url,
     customer_used_standard_trial,
     is_standard_monthly_trial,
+    resolve_standard_trial_days,
 )
 from ..billing.subscription_sync import upsert_subscription_from_checkout_session
 
@@ -228,7 +228,7 @@ def create_checkout_session(
             },
         }
         if is_standard_monthly_trial(tier_lower, request.billing_cycle):
-            trial_days = int(os.getenv("STANDARD_TRIAL_DAYS", "3"))
+            trial_days = resolve_standard_trial_days(no_card=no_card_trial)
             if trial_days > 0:
                 apply_trial_subscription_data(
                     subscription_data,

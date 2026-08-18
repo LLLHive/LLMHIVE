@@ -331,7 +331,7 @@ const CAPTIONS: Array<{ start: number; end: number; text: string }> = [
   { start: 8, end: 16, text: "Stop stacking ChatGPT, Claude, Gemini, and Grok — $90+ a month." },
   { start: 16, end: 24, text: "You ask. The hive routes. One verified answer from 350+ models." },
   { start: 24, end: 32, text: "#1 in 5 out of 8 benchmark categories — May 2026." },
-  { start: 32, end: 40, text: "Standard $10. Premium $20. Start Standard free for 3 days." },
+  { start: 32, end: 40, text: "Standard $10. Premium $20. Start Standard free for 7 days." },
   { start: 40, end: 48, text: "Less time getting things done. More time for what matters." },
 ]
 

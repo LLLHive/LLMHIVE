@@ -366,7 +366,7 @@ export default function BillingPage() {
                   {isFreeTier 
                     ? "Standard plan • Upgrade anytime"
                     : isTrialing
-                      ? "3-day free trial • Continues at $10/mo if a payment method is on file"
+                      ? "Free trial • Continues at $10/mo if a payment method is on file"
                       : `${subscription?.billingCycle === "annual" ? "Annual" : "Monthly"} billing`
                   }
                 </p>
