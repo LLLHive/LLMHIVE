@@ -61,7 +61,6 @@ import { track } from "@/lib/observability/analytics"
 import Image from "next/image"
 import LogoText from "@/components/branding/LogoText"
 import { buildProductStructuredData, organizationNode } from "@/lib/marketing/structured-data"
-import ProductDemoPlayer from "@/components/marketing/product-demo-player"
 import { sitePath } from "@/lib/site-url"
 import { isProductionClerkKeyOnLocalDev } from "@/lib/clerk-local-dev"
 
@@ -544,13 +543,6 @@ export default function GrandmotherFreePricingClient() {
                 />
               </div>
             </div>
-          </div>
-        </section>
-
-        <section className="scroll-mt-20 px-4 pb-10 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-5xl">
-            <SectionRule>See it in 60 seconds</SectionRule>
-            <ProductDemoPlayer compact />
           </div>
         </section>
 
