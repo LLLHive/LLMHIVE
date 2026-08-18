@@ -35,6 +35,7 @@ const isPublicRoute = createRouteMatcher([
   "/cookies(.*)",
   "/contact(.*)",
   "/demo(.*)",
+  "/videos(.*)",
   "/help(.*)",
   "/faq(.*)",
   "/press(.*)",
@@ -153,7 +154,7 @@ export const config = {
   // Match all routes except static files and Next.js internals
   matcher: [
     // Skip Next.js internals and static files
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|mp4|webm|m4v|vtt)).*)",
     // Always run for API routes
     "/(api|trpc)(.*)",
   ],
