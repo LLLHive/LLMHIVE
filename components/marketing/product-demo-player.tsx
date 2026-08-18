@@ -36,7 +36,7 @@ export default function ProductDemoPlayer({
   const [muted, setMuted] = useState(true)
   const [captions, setCaptions] = useState(true)
   const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(DEMO_VIDEO.duration)
+  const [duration, setDuration] = useState<number>(DEMO_VIDEO.duration)
   const [fullscreen, setFullscreen] = useState(false)
   const filmStartedAt = useRef<number | null>(null)
   const filmOffset = useRef(0)
