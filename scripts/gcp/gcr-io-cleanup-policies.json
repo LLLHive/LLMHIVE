@@ -1,0 +1,27 @@
+[
+  {
+    "name": "keep-latest-tag",
+    "action": { "type": "Keep" },
+    "condition": {
+      "tagState": "tagged",
+      "tagPrefixes": ["latest"]
+    }
+  },
+  {
+    "name": "keep-recent-orchestrator",
+    "action": { "type": "Keep" },
+    "mostRecentVersions": {
+      "packageNamePrefixes": ["llmhive-orchestrator"],
+      "keepCount": 50
+    }
+  },
+  {
+    "name": "delete-old-orchestrator",
+    "action": { "type": "Delete" },
+    "condition": {
+      "tagState": "any",
+      "packageNamePrefixes": ["llmhive-orchestrator"],
+      "olderThan": "7d"
+    }
+  }
+]
