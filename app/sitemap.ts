@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/landing",
     "/landing/argentina",
     "/landing/origins",
+    "/landing/origins-free",
     "/landing/spain",
     "/landing/grandmother",
     "/landing/grandmother-free",

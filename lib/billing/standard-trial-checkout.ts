@@ -6,7 +6,7 @@
  * if no payment method was collected.
  *
  * Card-required Standard monthly trial: 3 days.
- * No-card campaign (/landing/grandmother-free): 7 days.
+ * No-card campaigns (/landing/grandmother-free, /landing/origins-free): 7 days.
  */
 
 export type CheckoutPaymentMode = "card_required" | "no_card_trial"
