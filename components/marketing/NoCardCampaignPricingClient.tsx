@@ -467,7 +467,8 @@ export default function NoCardCampaignPricingClient({
             <button
               type="button"
               aria-label="Get 7-day free trial"
-              className="absolute bottom-[6%] left-[3%] z-10 h-12 w-[min(280px,55vw)] rounded-xl bg-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 sm:bottom-[8%] sm:left-[4%] sm:h-14 sm:w-[min(320px,45vw)]"
+              className="absolute z-20 cursor-pointer rounded-xl bg-transparent disabled:cursor-wait focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400"
+              style={config.heroCta}
               onClick={() => void handleSubscribe(pricingTiers[0])}
               disabled={loadingTier === "lite"}
             />
