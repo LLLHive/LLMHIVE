@@ -12,6 +12,9 @@ export function generateStaticParams() {
   return roles.map((item) => ({ slug: item.slug }))
 }
 
+/** Reject crawler junk like /comparisons/best-ai-assistant-for/dbcb5b84.js with a real 404. */
+export const dynamicParams = false
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
   const page = roles.find((item) => item.slug === slug)

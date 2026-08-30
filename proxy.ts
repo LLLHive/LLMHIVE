@@ -151,11 +151,14 @@ export const proxy = clerkMiddleware(async (auth, request) => {
 })
 
 export const config = {
-  // Match all routes except static files and Next.js internals
+  // Match all routes except Next.js internals and binary/static assets.
+  // Do NOT skip .js/.css here: crawlers hit fake paths like
+  // /best-ai-assistant-for/dbcb5b84.js which still render the marketing
+  // layout (MarketingNav calls auth()). Skipping clerkMiddleware for those
+  // requests caused production Sentry "auth() ... can't detect clerkMiddleware()".
+  // Real Next bundles live under /_next and remain excluded.
   matcher: [
-    // Skip Next.js internals and static files
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|mp4|webm|m4v|vtt)).*)",
-    // Always run for API routes
+    "/((?!_next|[^?]*\\.(?:html?|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|mp4|webm|m4v|vtt)).*)",
     "/(api|trpc)(.*)",
   ],
 }

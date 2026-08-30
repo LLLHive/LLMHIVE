@@ -21,7 +21,16 @@ import { getPaidEntitlementFast } from "@/lib/billing/entitlement"
  * through Clerk and bounce off the /app entitlement gate to /pricing.
  */
 export async function MarketingNav() {
-  const { userId } = await auth()
+  // Fake static paths (e.g. /best-ai-assistant-for/dbcb5b84.js) can skip
+  // clerkMiddleware via the static-asset matcher while still rendering this
+  // marketing layout. Treat auth failures as signed-out instead of throwing.
+  let userId: string | null = null
+  try {
+    const authState = await auth()
+    userId = authState.userId
+  } catch {
+    userId = null
+  }
   const isSignedIn = Boolean(userId)
   let hasAppAccess = false
   if (isSignedIn && userId) {
