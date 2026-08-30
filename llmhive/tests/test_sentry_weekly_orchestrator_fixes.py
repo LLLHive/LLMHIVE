@@ -6,7 +6,7 @@ from llmhive.app.intelligence.provider_equivalence import (
     classify_provider_failure,
     is_failover_worthy,
 )
-from llmhive.app.providers.anthropic_models import map_anthropic_model_id
+from llmhive.app.anthropic_models import map_anthropic_model_id
 
 
 def test_empty_provider_response_is_failover_worthy():

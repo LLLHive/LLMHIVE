@@ -36,7 +36,7 @@ _RETRYABLE_EXCEPTIONS = (
 _PROVIDER_RETRY_MAX = 2
 _PROVIDER_RETRY_BACKOFF_BASE = 2
 
-from .providers.anthropic_models import (  # noqa: E402
+from .anthropic_models import (  # noqa: E402
     ANTHROPIC_MODEL_MAPPING,
     map_anthropic_model_id,
 )
