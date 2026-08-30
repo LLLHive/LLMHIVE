@@ -141,6 +141,16 @@ def classify_provider_failure(exc: BaseException) -> str:
     if isinstance(exc, (TimeoutError, ConnectionError, ConnectionResetError, OSError)):
         return ProviderFailureType.TIMEOUT
 
+    # Empty/invalid completions are usually transient provider glitches — allow
+    # same-model failover instead of SAME_MODEL_EXHAUSTED on the first provider.
+    if any(tok in msg for tok in (
+        "invalid/empty provider response",
+        "empty provider response",
+        "empty response",
+        "empty completion",
+    )):
+        return ProviderFailureType.SERVER
+
     return ProviderFailureType.CLIENT
 
 

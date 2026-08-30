@@ -211,6 +211,57 @@ class FirestoreSubscriptionService:
             "current_period_end": period_end,
         })
 
+    def get_user_usage(self, user_id: str) -> Dict[str, Any]:
+        """Return orchestration query counters for the active subscription period.
+
+        Used by QuotaTracker / throttle-status. Counters live on the subscription
+        document so we do not require a separate usage collection for elite quotas.
+        """
+        empty = {
+            "elite_queries_used": 0,
+            "standard_queries_used": 0,
+            "budget_queries_used": 0,
+        }
+        subscription = self.get_user_subscription(user_id)
+        if not subscription:
+            return empty
+        return {
+            "elite_queries_used": int(subscription.get("elite_queries_used", 0) or 0),
+            "standard_queries_used": int(subscription.get("standard_queries_used", 0) or 0),
+            "budget_queries_used": int(subscription.get("budget_queries_used", 0) or 0),
+        }
+
+    def record_query_usage(
+        self,
+        user_id: str,
+        orchestration_tier: str = "standard",
+    ) -> bool:
+        """Increment the matching orchestration counter on the user's subscription."""
+        subscription = self.get_user_subscription(user_id)
+        if not subscription or not subscription.get("id"):
+            return False
+
+        tier = (orchestration_tier or "standard").lower()
+        if tier in ("maximum", "elite", "premium"):
+            field = "elite_queries_used"
+        elif tier in ("budget", "free"):
+            field = "budget_queries_used"
+        else:
+            field = "standard_queries_used"
+
+        if not self.db:
+            return False
+        try:
+            doc_ref = self.db.collection(self.COLLECTION).document(subscription["id"])
+            doc_ref.update({
+                field: firestore.Increment(1),
+                "updated_at": datetime.now(timezone.utc),
+            })
+            return True
+        except Exception as e:
+            logger.error("Failed to record query usage for %s: %s", user_id, e)
+            return False
+
 
 # ==============================================================================
 # Usage Tracking

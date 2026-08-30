@@ -36,6 +36,11 @@ _RETRYABLE_EXCEPTIONS = (
 _PROVIDER_RETRY_MAX = 2
 _PROVIDER_RETRY_BACKOFF_BASE = 2
 
+from .providers.anthropic_models import (  # noqa: E402
+    ANTHROPIC_MODEL_MAPPING,
+    map_anthropic_model_id,
+)
+
 
 def _response_is_valid_infra(text: Any, min_length: int = 10) -> bool:
     """Return True if *text* is a genuine model response, not infra garbage."""
@@ -1150,25 +1155,7 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                 class AnthropicProvider:
                     """Anthropic provider using httpx for reliable async connections."""
                     
-                    # Model mapping for Claude models (handles all formats)
-                    MODEL_MAPPING = {
-                        # Full OpenRouter IDs
-                        "anthropic/claude-sonnet-4": "claude-sonnet-4-20250514",
-                        "anthropic/claude-opus-4": "claude-opus-4-20250514",
-                        "anthropic/claude-3-5-sonnet-20241022": "claude-3-5-sonnet-20241022",
-                        "anthropic/claude-3-5-haiku-20241022": "claude-3-5-haiku-20241022",
-                        # Short names
-                        "claude-sonnet-4.5": "claude-sonnet-4-20250514",
-                        "claude-sonnet-4": "claude-sonnet-4-20250514",
-                        "claude-opus-4": "claude-opus-4-20250514",
-                        "claude-haiku-4": "claude-3-5-haiku-20241022",
-                        "claude-3-5-sonnet": "claude-3-5-sonnet-20241022",
-                        "claude-3-5-haiku": "claude-3-5-haiku-20241022",
-                        "claude-3-sonnet": "claude-3-5-sonnet-20241022",
-                        "claude-3-haiku": "claude-3-5-haiku-20241022",
-                        "claude-sonnet": "claude-3-5-sonnet-20241022",
-                        "claude-haiku": "claude-3-5-haiku-20241022",
-                    }
+                    MODEL_MAPPING = ANTHROPIC_MODEL_MAPPING
                     
                     # Kwargs to filter out
                     ORCHESTRATION_KWARGS = {
@@ -1197,10 +1184,10 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                         self.base_url = "https://api.anthropic.com/v1/messages"
                     
                     def _map_model(self, model):
-                        """Map UI model names to actual Claude model names."""
-                        return self.MODEL_MAPPING.get(model.lower(), model)
+                        """Map UI / OpenRouter model names to Claude Messages API IDs."""
+                        return map_anthropic_model_id(model)
                     
-                    async def generate(self, prompt, model="claude-3-5-haiku-20241022", **kwargs):
+                    async def generate(self, prompt, model="claude-haiku-4-5", **kwargs):
                         """Generate response using Anthropic API via httpx."""
                         # Filter out orchestration kwargs
                         api_kwargs = {k: v for k, v in kwargs.items() if k not in self.ORCHESTRATION_KWARGS}
@@ -1225,6 +1212,30 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                                         "messages": [{"role": "user", "content": prompt}]
                                     }
                                 )
+                                if response.status_code == 404:
+                                    # Model ID unknown/retired — try current Sonnet fallback once
+                                    fallback = "claude-sonnet-4-6"
+                                    if actual_model != fallback:
+                                        logger.warning(
+                                            "Anthropic model %s returned 404; retrying with %s",
+                                            actual_model,
+                                            fallback,
+                                        )
+                                        response = await client.post(
+                                            self.base_url,
+                                            headers={
+                                                "x-api-key": self.api_key,
+                                                "anthropic-version": "2023-06-01",
+                                                "content-type": "application/json",
+                                            },
+                                            json={
+                                                "model": fallback,
+                                                "max_tokens": api_kwargs.get('max_tokens', 2048),
+                                                "system": self.SYSTEM_PROMPT,
+                                                "messages": [{"role": "user", "content": prompt}],
+                                            },
+                                        )
+                                        actual_model = fallback
                                 response.raise_for_status()
                                 data = response.json()
                                 
@@ -1241,10 +1252,15 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                                 tokens=data.get("usage", {}).get("input_tokens", 0) + data.get("usage", {}).get("output_tokens", 0)
                             )
                         except Exception as e:
-                            logger.error(f"Anthropic API error: {e}")
+                            logger.error(
+                                "Anthropic API error model=%s mapped=%s: %s",
+                                model,
+                                actual_model,
+                                e,
+                            )
                             raise
                     
-                    async def complete(self, prompt, model="claude-3-5-haiku-20241022", **kwargs):
+                    async def complete(self, prompt, model="claude-haiku-4-5", **kwargs):
                         """Alias for generate() - used by orchestration components."""
                         return await self.generate(prompt, model=model, **kwargs)
                 
@@ -1683,8 +1699,8 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
     FALLBACK_HIGH_ACCURACY_MODELS = [
         ("openai", "gpt-4o"),           # General accuracy
         ("openai", "gpt-4o-2024-11-20"),
-        ("anthropic", "claude-sonnet-4-20250514"),
-        ("anthropic", "claude-3-5-sonnet-20241022"),
+        ("anthropic", "claude-sonnet-4-6"),
+        ("anthropic", "claude-opus-5"),
         ("openai", "o1"),                # Reasoning model
         ("openai", "o3"),                # Latest reasoning
         ("deepseek", "deepseek-chat"),
