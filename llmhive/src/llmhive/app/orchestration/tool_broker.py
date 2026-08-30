@@ -1676,27 +1676,14 @@ class ToolBroker:
         return query.strip()
     
     def _extract_math_expression(self, query: str) -> Optional[str]:
-        """Extract mathematical expression from query."""
-        # Look for patterns like "calculate 2+2" or "what is 5*3"
-        patterns = [
-            r'calculate\s+(.+)',
-            r'compute\s+(.+)',
-            r'what is\s+([\d\+\-\*\/\.\(\)\%\^\s]+)',
-            r'solve\s+(.+)',
-            r'([\d\+\-\*\/\.\(\)\%\^\s]+\s*=)',
-            r'(\d+\s*[\+\-\*\/\^]\s*\d+(?:\s*[\+\-\*\/\^]\s*\d+)*)',
-        ]
-        
-        for pattern in patterns:
-            match = re.search(pattern, query.lower())
-            if match:
-                expr = match.group(1).strip()
-                # Clean up the expression
-                expr = re.sub(r'[^0-9\+\-\*\/\.\(\)\%\^]', '', expr)
-                if expr:
-                    return expr
-        
-        return None
+        """Extract mathematical expression from query.
+
+        Delegates to the module-level extractor so factorial/sqrt/power
+        prompts (e.g. ``17^3 + sqrt(625) - 12!``) are not truncated to
+        broken fragments like ``17^3+``.
+        """
+        expr = extract_math_expression(query)
+        return expr.strip() if expr and str(expr).strip() else None
     
     def _extract_code_block(self, query: str) -> Optional[str]:
         """Extract code block from query."""

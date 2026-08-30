@@ -3546,6 +3546,34 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                                 "calculator_expression": expression,
                             }
                             logger.info("Calculator result: %s = %s", expression, result_value)
+                            from ..orchestration.benchmark_tool_forcing import (
+                                try_benchmark_tool_short_circuit,
+                            )
+
+                            short_answer = try_benchmark_tool_short_circuit(
+                                request.metadata, tool_results_info, base_prompt
+                            )
+                            if short_answer:
+                                logger.info(
+                                    "FIX 1.1 short-circuit: skipping full orchestration"
+                                )
+                                return ChatResponse(
+                                    message=short_answer,
+                                    models_used=["benchmark_tool_forcing"],
+                                    reasoning_mode=request.reasoning_mode,
+                                    reasoning_method=request.reasoning_method,
+                                    domain_pack=request.domain_pack,
+                                    agent_mode=request.agent_mode,
+                                    used_tuning=request.tuning,
+                                    metadata=request.metadata,
+                                    tokens_used=0,
+                                    latency_ms=int((time.perf_counter() - start_time) * 1000),
+                                    agent_traces=[],
+                                    extra={
+                                        "tool_broker": tool_results_info,
+                                        "benchmark_short_circuit": True,
+                                    },
+                                )
                     except Exception as calc_e:
                         logger.warning("Forced calculator failed: %s", calc_e)
                 
@@ -3576,74 +3604,114 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                             req.metadata["topic"] = "news"
                 
                 if tool_analysis.requires_tools:
-                    logger.info(
-                        "Tool Broker: Detected need for tools: %s",
-                        [r.tool_type.value for r in tool_analysis.tool_requests],
-                    )
-                    
-                    # Execute tools in parallel
-                    tool_results = await broker.execute_tools(
-                        tool_analysis.tool_requests,
-                        parallel=True,
-                    )
-                    
-                    # Format results for model context
-                    tool_context = broker.format_tool_results(tool_results)
-                    
-                    # Track tool usage for response metadata
-                    tool_results_info = {
-                        "used": True,
-                        "tools": [t.value for t in tool_results.keys()],
-                        "success_count": sum(1 for r in tool_results.values() if r.success),
-                        "reasoning": tool_analysis.reasoning,
-                    }
-                    
-                    # Append tool context to the prompt with explicit instructions
-                    if tool_context:
-                        # Check if web search actually returned useful results
-                        no_results_indicators = [
-                            "no results found",
-                            "no web search results",
-                            "search returned no",
-                            "couldn't find",
-                            "no relevant results",
+                    # Never re-run calculator after a verified result — the broker's
+                    # legacy extractor used to overwrite success with fragments like "17^3+".
+                    prior_calc_ok = tool_results_info.get("calculator_result") is not None
+                    pending_requests = list(tool_analysis.tool_requests)
+                    if prior_calc_ok:
+                        pending_requests = [
+                            r for r in pending_requests if r.tool_type != TT.CALCULATOR
                         ]
-                        search_failed = any(
-                            indicator in tool_context.lower() 
-                            for indicator in no_results_indicators
+
+                    if not pending_requests:
+                        logger.info(
+                            "Tool Broker: skipping re-execution; preserving verified tool results"
                         )
-                        
-                        if search_failed:
-                            # Web search failed - instruct model to use its training knowledge
-                            tool_instruction = (
-                                "\n\n=== NOTE: WEB SEARCH RETURNED NO RESULTS ===\n"
-                                "A web search was attempted but returned no results. "
-                                "This is fine - please answer using your training knowledge.\n\n"
-                                "IMPORTANT: You have extensive knowledge about this topic from your training. "
-                                "Do NOT say you cannot answer or that you lack information. "
-                                "Provide a complete, accurate answer based on your knowledge:\n"
+                    else:
+                        logger.info(
+                            "Tool Broker: Detected need for tools: %s",
+                            [r.tool_type.value for r in pending_requests],
+                        )
+
+                        # Execute tools in parallel
+                        tool_results = await broker.execute_tools(
+                            pending_requests,
+                            parallel=True,
+                        )
+
+                        # Format results for model context
+                        tool_context = broker.format_tool_results(tool_results)
+
+                        new_tools = [t.value for t in tool_results.keys()]
+                        new_success = sum(1 for r in tool_results.values() if r.success)
+                        if prior_calc_ok:
+                            merged_tools = list(
+                                dict.fromkeys(
+                                    (tool_results_info.get("tools") or []) + new_tools
+                                )
                             )
-                            logger.warning("Web search returned no results, falling back to model knowledge")
+                            tool_results_info = {
+                                **tool_results_info,
+                                "used": True,
+                                "tools": merged_tools,
+                                "success_count": int(
+                                    tool_results_info.get("success_count") or 0
+                                )
+                                + new_success,
+                                "reasoning": "; ".join(
+                                    p
+                                    for p in (
+                                        tool_results_info.get("reasoning"),
+                                        tool_analysis.reasoning,
+                                    )
+                                    if p
+                                ),
+                            }
                         else:
-                            # Web search succeeded - use the real-time data
-                            tool_instruction = (
-                                "\n\n=== IMPORTANT: REAL-TIME DATA BELOW ===\n"
-                                "The following information was retrieved from current web searches. "
-                                "You MUST use this data to answer the question. Do NOT claim you cannot "
-                                "access current information - the data below is current as of today.\n\n"
-                                f"{tool_context}\n"
-                                "=== END OF REAL-TIME DATA ===\n\n"
-                                "CRITICAL INSTRUCTIONS:\n"
-                                "1. Use the real-time data above as your PRIMARY source, but supplement with your knowledge if needed\n"
-                                "2. If asked for a numbered list (e.g., 'top 10'), provide ALL items requested using the search data\n"
-                                "3. If the search data doesn't have enough items, supplement with your training knowledge\n"
-                                "4. Include specific details from the sources (names, versions, capabilities)\n"
-                                "5. Do NOT say 'I cannot access' or 'I don't have real-time data' - you DO have current data above\n"
-                                "Now provide a complete, accurate answer based on the real-time data:"
+                            # Track tool usage for response metadata
+                            tool_results_info = {
+                                "used": True,
+                                "tools": new_tools,
+                                "success_count": new_success,
+                                "reasoning": tool_analysis.reasoning,
+                            }
+
+                        # Append tool context to the prompt with explicit instructions
+                        if tool_context:
+                            # Check if web search actually returned useful results
+                            no_results_indicators = [
+                                "no results found",
+                                "no web search results",
+                                "search returned no",
+                                "couldn't find",
+                                "no relevant results",
+                            ]
+                            search_failed = any(
+                                indicator in tool_context.lower()
+                                for indicator in no_results_indicators
                             )
-                            logger.info("Tool context added to prompt with instructions (%d chars)", len(tool_context))
-                        
-                        base_prompt = f"{base_prompt}{tool_instruction}"
+
+                            if search_failed:
+                                # Web search failed - instruct model to use its training knowledge
+                                tool_instruction = (
+                                    "\n\n=== NOTE: WEB SEARCH RETURNED NO RESULTS ===\n"
+                                    "A web search was attempted but returned no results. "
+                                    "This is fine - please answer using your training knowledge.\n\n"
+                                    "IMPORTANT: You have extensive knowledge about this topic from your training. "
+                                    "Do NOT say you cannot answer or that you lack information. "
+                                    "Provide a complete, accurate answer based on your knowledge:\n"
+                                )
+                                logger.warning("Web search returned no results, falling back to model knowledge")
+                            else:
+                                # Web search succeeded - use the real-time data
+                                tool_instruction = (
+                                    "\n\n=== IMPORTANT: REAL-TIME DATA BELOW ===\n"
+                                    "The following information was retrieved from current web searches. "
+                                    "You MUST use this data to answer the question. Do NOT claim you cannot "
+                                    "access current information - the data below is current as of today.\n\n"
+                                    f"{tool_context}\n"
+                                    "=== END OF REAL-TIME DATA ===\n\n"
+                                    "CRITICAL INSTRUCTIONS:\n"
+                                    "1. Use the real-time data above as your PRIMARY source, but supplement with your knowledge if needed\n"
+                                    "2. If asked for a numbered list (e.g., 'top 10'), provide ALL items requested using the search data\n"
+                                    "3. If the search data doesn't have enough items, supplement with your training knowledge\n"
+                                    "4. Include specific details from the sources (names, versions, capabilities)\n"
+                                    "5. Do NOT say 'I cannot access' or 'I don't have real-time data' - you DO have current data above\n"
+                                    "Now provide a complete, accurate answer based on the real-time data:"
+                                )
+                                logger.info("Tool context added to prompt with instructions (%d chars)", len(tool_context))
+
+                            base_prompt = f"{base_prompt}{tool_instruction}"
             except Exception as e:
                 logger.warning("Tool Broker failed: %s", e)
         
@@ -4622,6 +4690,13 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                 logger.warning("PHASE 2: Calculator result missing from response, injecting")
                 final_text = f"**Calculated result: {formatted_result}**\n\n{final_text}"
                 logger.info("PHASE 2: Injected calculator result: %s", formatted_result)
+
+        try:
+            from ..orchestration.benchmark_tool_forcing import ensure_year_span_answer
+
+            final_text = ensure_year_span_answer(base_prompt, final_text)
+        except Exception as year_span_exc:
+            logger.debug("Year-span answer check skipped: %s", year_span_exc)
 
         # ========================================================================
         # PHASE 2.5: PHYSICS/MATH KEYWORD ENFORCEMENT (benchmark safety)

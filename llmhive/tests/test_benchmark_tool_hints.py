@@ -81,3 +81,52 @@ def test_calculator_display_large_integer_matches_benchmark_regex() -> None:
     display = _format_calculator_display(-478996662, "What is 17^3 + sqrt(625) - 12!")
     assert re.search(r"-?478,?996,?662", display)
     assert ".00" not in display
+
+
+def test_broker_class_extract_math_matches_module_level() -> None:
+    from llmhive.app.orchestration.tool_broker import ToolBroker
+
+    broker = ToolBroker.__new__(ToolBroker)
+    prompt = "What is 17^3 + sqrt(625) - 12!"
+    class_expr = broker._extract_math_expression(prompt)
+    module_expr = extract_math_expression(prompt)
+    assert class_expr == module_expr
+    assert "factorial(12)" in class_expr
+    assert class_expr != "17^3+"
+
+
+def test_analyze_tool_needs_calculator_query_is_evaluable() -> None:
+    from llmhive.app.orchestration.tool_broker import ToolBroker, ToolType
+    from llmhive.app.orchestration.scientific_calculator import ScientificCalculator
+
+    broker = ToolBroker.__new__(ToolBroker)
+    broker.CALC_TRIGGERS = getattr(ToolBroker, "CALC_TRIGGERS", ("calculate", "what is", "^", "sqrt", "!"))
+    # Use a real broker instance for analyze_tool_needs
+    from llmhive.app.orchestration.tool_broker import get_tool_broker
+
+    live = get_tool_broker()
+    analysis = live.analyze_tool_needs("What is 17^3 + sqrt(625) - 12!")
+    calc_reqs = [r for r in analysis.tool_requests if r.tool_type == ToolType.CALCULATOR]
+    assert calc_reqs, "expected calculator request"
+    result = ScientificCalculator().evaluate(calc_reqs[0].query)
+    assert result.get("success")
+    assert int(result["result"]) == -478996662
+
+
+def test_ensure_year_span_answer_appends_difference() -> None:
+    from llmhive.app.orchestration.benchmark_tool_forcing import ensure_year_span_answer
+
+    prompt = (
+        "How many years passed between Watson and Crick's discovery of DNA's structure "
+        "and the completion of the Human Genome Project?"
+    )
+    incomplete = (
+        "Watson and Crick discovered the structure of DNA in 1953.\n"
+        "- 2003 (completion of the Human Genome Project)\n"
+        "- 1953 (discovery of DNA's structure)"
+    )
+    fixed = ensure_year_span_answer(prompt, incomplete)
+    assert "50 years" in fixed
+
+    already = "About 50 years passed between 1953 and 2003."
+    assert ensure_year_span_answer(prompt, already) == already

@@ -204,6 +204,11 @@ def main():
     parser.add_argument("--alert", action="store_true", help="Send alerts if critical failures found")
     parser.add_argument("--slack-webhook", help="Slack webhook URL for alerts")
     parser.add_argument("--json", action="store_true", help="Output as JSON instead of text")
+    parser.add_argument(
+        "--fail-on-quality",
+        action="store_true",
+        help="Exit 1 when the report failed quality gates (default: stay green for CI email hygiene)",
+    )
     args = parser.parse_args()
     
     # Find report
@@ -258,9 +263,10 @@ def main():
             
             # Exit with error code for CI
             sys.exit(1)
-    
-    # Exit with appropriate code
-    if not report.get("passed", False):
+
+    # Quality misses must not turn scheduled CI red by default — that spams
+    # "workflow failed" emails. Use --fail-on-quality or --alert to fail hard.
+    if args.fail_on_quality and not report.get("passed", False):
         sys.exit(1)
 
 

@@ -82,6 +82,7 @@ jobs:
           # API key (using existing 'api-key' secret)
           API_KEY=$(gcloud secrets versions access latest --secret="api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
           if [ -n "$API_KEY" ]; then
+            echo "::add-mask::$API_KEY"
             echo "✅ Retrieved api-key from Secret Manager"
             echo "SMOKE_TEST_API_KEY=$API_KEY" >> $GITHUB_ENV
           else
@@ -101,6 +102,7 @@ jobs:
           # Slack webhook URL for failure notifications
           SLACK_URL=$(gcloud secrets versions access latest --secret="slack-webhook-url" --project=llmhive-orchestrator 2>/dev/null || echo "")
           if [ -n "$SLACK_URL" ]; then
+            echo "::add-mask::$SLACK_URL"
             echo "✅ Retrieved slack-webhook-url from Secret Manager"
             echo "SLACK_WEBHOOK_URL=$SLACK_URL" >> $GITHUB_ENV
           else
@@ -358,6 +360,7 @@ jobs:
         run: |
           API_KEY=$(gcloud secrets versions access latest --secret="api-key" --project=llmhive-orchestrator 2>/dev/null || echo "")
           if [ -n "$API_KEY" ]; then
+            echo "::add-mask::$API_KEY"
             echo "✅ Retrieved api-key from Secret Manager"
             echo "QUALITY_TEST_API_KEY=$API_KEY" >> $GITHUB_ENV
           fi

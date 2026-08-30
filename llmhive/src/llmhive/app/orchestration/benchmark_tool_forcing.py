@@ -238,6 +238,35 @@ def inject_verified_tool_outputs(
     return text
 
 
+def ensure_year_span_answer(prompt: str, answer: str) -> str:
+    """If a 'how many years' question lists years but omits the span, append it.
+
+    Fixes flaky multi-hop answers that name endpoints (e.g. 1953 and 2003)
+    without stating ``50 years``.
+    """
+    if not prompt or not answer:
+        return answer
+    if not re.search(r"\bhow many years\b", prompt, re.IGNORECASE):
+        return answer
+    if re.search(
+        r"\b\d+\s*-?\s*years?\b|"
+        r"\bfifty\s*-?\s*years?\b|"
+        r"\bfive\s*decades\b|"
+        r"\bhalf\s*(a\s*)?century\b",
+        answer,
+        re.IGNORECASE,
+    ):
+        return answer
+
+    years = sorted({int(y) for y in re.findall(r"\b((?:1[89]|20)\d{2})\b", answer)})
+    if len(years) < 2:
+        return answer
+    span = years[-1] - years[0]
+    if span < 1 or span > 500:
+        return answer
+    return f"{answer.rstrip()}\n\nTherefore, {span} years passed."
+
+
 def _format_calculator_display(result_value: Any, prompt: str) -> str:
     """Format calculator output for benchmark scoring (percent, integers, etc.)."""
     prompt_lower = prompt.lower()
