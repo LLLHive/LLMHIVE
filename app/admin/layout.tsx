@@ -1,9 +1,12 @@
 import type { Metadata } from "next"
+import { redirect } from "next/navigation"
+import { auth } from "@clerk/nextjs/server"
 import { sitePath } from "@/lib/site-url"
+import { isAdminUserId } from "@/lib/admin/is-admin-user"
 
 export const metadata: Metadata = {
-  title: "LLMHive Admin",
-  description: "Administrative dashboards and controls for LLMHive.",
+  title: "LLMHive Command Center",
+  description: "Enterprise administration console for LLMHive operations, providers, and business metrics.",
   alternates: {
     canonical: sitePath('/admin'),
   },
@@ -11,43 +14,22 @@ export const metadata: Metadata = {
     index: false,
     follow: false,
   },
-  openGraph: {
-    title: "LLMHive Admin",
-    description: "Administrative dashboards and controls for LLMHive.",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "LLMHive Admin",
-    description: "Administrative dashboards and controls for LLMHive.",
-  },
 }
 
-const structuredData = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        {
-          "@type": "ListItem",
-          position: 1,
-          name: "Admin",
-          item: sitePath('/admin'),
-        },
-      ],
-    },
-  ],
-}
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const { userId } = await auth()
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  if (!userId) {
+    redirect("/sign-in?redirect_url=/admin/dashboard")
+  }
+
+  if (!isAdminUserId(userId)) {
+    redirect("/?admin=denied")
+  }
+
   return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      />
+    <div className="dark min-h-screen">
       {children}
-    </>
+    </div>
   )
 }

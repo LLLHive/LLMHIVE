@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
+import { isAdminUserId } from "@/lib/admin/is-admin-user"
 import Stripe from "stripe"
 
 /**
@@ -9,11 +10,6 @@ import Stripe from "stripe"
  * Auth: signed-in admin (ADMIN_USER_IDS) OR header `X-API-Key: <LLMHIVE_API_KEY>`.
  * Verifies each current customer-facing Stripe price slot + trial env vars.
  */
-
-const ADMIN_USERS = (process.env.ADMIN_USER_IDS || "")
-  .split(",")
-  .map((id) => id.trim())
-  .filter(Boolean)
 
 function getStripe(): Stripe | null {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -29,7 +25,7 @@ async function authorize(request: NextRequest): Promise<boolean> {
     return true
   }
   const { userId } = await auth()
-  if (userId && (ADMIN_USERS.length === 0 || ADMIN_USERS.includes(userId))) {
+  if (isAdminUserId(userId)) {
     return true
   }
   return false

@@ -233,29 +233,46 @@ export default function FeedbackAnalyticsPage() {
     )
   }
 
-  // Prepare data for charts
+  // Prepare data for charts — defensive defaults if backend returns partial data
+  const totals = stats.totals ?? {
+    thumbs_up: 0,
+    thumbs_down: 0,
+    copies: 0,
+    shares: 0,
+    regenerations: 0,
+    total: 0,
+  }
+  const trends = stats.trends ?? {
+    satisfaction_trend: "stable" as const,
+    engagement_trend: "stable" as const,
+    quality_score: Math.round((stats.overall_satisfaction ?? 0) * 100),
+  }
+  const dailyStats = stats.daily_stats ?? []
+  const modelStats = stats.model_stats ?? []
+  const domainStats = stats.domain_stats ?? []
+
   const feedbackBreakdownData = [
-    { name: "Thumbs Up", value: stats.totals.thumbs_up, color: COLORS.green },
-    { name: "Thumbs Down", value: stats.totals.thumbs_down, color: COLORS.red },
-    { name: "Copies", value: stats.totals.copies, color: COLORS.blue },
-    { name: "Shares", value: stats.totals.shares, color: COLORS.purple },
-    { name: "Regenerations", value: stats.totals.regenerations, color: COLORS.orange },
+    { name: "Thumbs Up", value: totals.thumbs_up, color: COLORS.green },
+    { name: "Thumbs Down", value: totals.thumbs_down, color: COLORS.red },
+    { name: "Copies", value: totals.copies, color: COLORS.blue },
+    { name: "Shares", value: totals.shares, color: COLORS.purple },
+    { name: "Regenerations", value: totals.regenerations, color: COLORS.orange },
   ]
 
-  const modelBarData = stats.model_stats.map(m => ({
+  const modelBarData = modelStats.map(m => ({
     name: m.model.split("/").pop() || m.model,
     satisfaction: Math.round(m.satisfaction * 100),
     thumbsUp: m.thumbs_up,
     thumbsDown: m.thumbs_down,
   })).sort((a, b) => b.satisfaction - a.satisfaction)
 
-  const domainData = stats.domain_stats.map(d => ({
+  const domainData = domainStats.map(d => ({
     name: d.domain.charAt(0).toUpperCase() + d.domain.slice(1),
     count: d.count,
     satisfaction: Math.round(d.satisfaction * 100),
   }))
 
-  const timelineData = stats.daily_stats.map(d => ({
+  const timelineData = dailyStats.map(d => ({
     date: new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     satisfaction: Math.round(d.satisfaction_rate * 100),
     total: d.total,
@@ -301,40 +318,40 @@ export default function FeedbackAnalyticsPage() {
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
         <StatCard
           title="Quality Score"
-          value={`${stats.trends.quality_score}%`}
+          value={`${trends.quality_score}%`}
           icon={Activity}
-          trend={stats.trends.satisfaction_trend}
+          trend={trends.satisfaction_trend}
           description="Overall quality rating"
         />
         <StatCard
           title="Thumbs Up"
-          value={stats.totals.thumbs_up.toLocaleString()}
+          value={totals.thumbs_up.toLocaleString()}
           icon={ThumbsUp}
           description="Positive feedback"
           color="green-500"
         />
         <StatCard
           title="Thumbs Down"
-          value={stats.totals.thumbs_down.toLocaleString()}
+          value={totals.thumbs_down.toLocaleString()}
           icon={ThumbsDown}
           description="Negative feedback"
           color="red-500"
         />
         <StatCard
           title="Copies"
-          value={stats.totals.copies.toLocaleString()}
+          value={totals.copies.toLocaleString()}
           icon={Copy}
           description="Answer copied"
         />
         <StatCard
           title="Shares"
-          value={stats.totals.shares.toLocaleString()}
+          value={totals.shares.toLocaleString()}
           icon={Share2}
           description="Answers shared"
         />
         <StatCard
           title="Regenerations"
-          value={stats.totals.regenerations.toLocaleString()}
+          value={totals.regenerations.toLocaleString()}
           icon={RefreshCw}
           description="Retry requests"
           color="yellow-500"
@@ -360,16 +377,16 @@ export default function FeedbackAnalyticsPage() {
             <div className="mt-4 space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Satisfaction trend</span>
-                <Badge variant={stats.trends.satisfaction_trend === "up" ? "default" : "secondary"}>
-                  <TrendIcon trend={stats.trends.satisfaction_trend} />
-                  <span className="ml-1 capitalize">{stats.trends.satisfaction_trend}</span>
+                <Badge variant={trends.satisfaction_trend === "up" ? "default" : "secondary"}>
+                  <TrendIcon trend={trends.satisfaction_trend} />
+                  <span className="ml-1 capitalize">{trends.satisfaction_trend}</span>
                 </Badge>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Engagement trend</span>
-                <Badge variant={stats.trends.engagement_trend === "up" ? "default" : "secondary"}>
-                  <TrendIcon trend={stats.trends.engagement_trend} />
-                  <span className="ml-1 capitalize">{stats.trends.engagement_trend}</span>
+                <Badge variant={trends.engagement_trend === "up" ? "default" : "secondary"}>
+                  <TrendIcon trend={trends.engagement_trend} />
+                  <span className="ml-1 capitalize">{trends.engagement_trend}</span>
                 </Badge>
               </div>
             </div>
@@ -535,7 +552,7 @@ export default function FeedbackAnalyticsPage() {
                 </tr>
               </thead>
               <tbody>
-                {stats.model_stats.map((model, i) => (
+                {modelStats.map((model, i) => (
                   <tr key={i} className="border-b last:border-0">
                     <td className="py-3 px-4 font-medium">{model.model}</td>
                     <td className="py-3 px-4 text-center text-green-600">{model.thumbs_up}</td>

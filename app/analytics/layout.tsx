@@ -1,5 +1,8 @@
 import type { Metadata } from "next"
+import { redirect } from "next/navigation"
+import { auth } from "@clerk/nextjs/server"
 import { sitePath } from "@/lib/site-url"
+import { isAdminUserId } from "@/lib/admin/is-admin-user"
 
 export const metadata: Metadata = {
   title: "LLMHive Analytics",
@@ -11,43 +14,18 @@ export const metadata: Metadata = {
     index: false,
     follow: false,
   },
-  openGraph: {
-    title: "LLMHive Analytics",
-    description: "Monitor performance, feedback, and usage analytics in LLMHive.",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "LLMHive Analytics",
-    description: "Monitor performance, feedback, and usage analytics in LLMHive.",
-  },
 }
 
-const structuredData = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        {
-          "@type": "ListItem",
-          position: 1,
-          name: "Analytics",
-          item: sitePath('/analytics'),
-        },
-      ],
-    },
-  ],
-}
+export default async function AnalyticsLayout({ children }: { children: React.ReactNode }) {
+  const { userId } = await auth()
 
-export default function AnalyticsLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      />
-      {children}
-    </>
-  )
+  if (!userId) {
+    redirect("/sign-in?redirect_url=/analytics")
+  }
+
+  if (!isAdminUserId(userId)) {
+    redirect("/?admin=denied")
+  }
+
+  return <>{children}</>
 }

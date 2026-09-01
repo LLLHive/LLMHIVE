@@ -8,6 +8,7 @@ import {
   isBusinessOpsProtectedPath,
   verifyBusinessOpsGateCookie,
 } from "@/lib/business-ops-gate"
+import { isAdminUserId } from "@/lib/admin/is-admin-user"
 
 // =============================================================================
 // Route Configuration
@@ -85,6 +86,10 @@ const isPublicRoute = createRouteMatcher([
   "/api/billing/verify-config",
 ])
 
+const isAdminPageRoute = createRouteMatcher(["/admin(.*)", "/analytics(.*)"])
+const isAdminApiRoute = createRouteMatcher(["/api/admin(.*)", "/api/analytics(.*)"])
+const isAdminSetupApiRoute = createRouteMatcher(["/api/admin/me"])
+
 // Check if running in E2E test mode
 const isE2ETest = process.env.PLAYWRIGHT_TEST === "true" || process.env.CI === "true"
 
@@ -138,6 +143,31 @@ export const proxy = clerkMiddleware(async (auth, request) => {
 
   const { userId } = await auth()
   const pathname = request.nextUrl.pathname
+
+  // Admin console + analytics: only explicitly allowlisted Clerk users.
+  const requiresAdmin =
+    isAdminPageRoute(request) ||
+    (isAdminApiRoute(request) && !isAdminSetupApiRoute(request))
+
+  if (requiresAdmin) {
+    if (!userId) {
+      if (isApiRequest(request)) {
+        return NextResponse.json({ error: "Authentication required." }, { status: 401 })
+      }
+      await auth.protect()
+      return
+    }
+
+    if (!isAdminUserId(userId)) {
+      if (isApiRequest(request)) {
+        return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 })
+      }
+      const denied = new URL("/", request.url)
+      denied.searchParams.set("admin", "denied")
+      return NextResponse.redirect(denied)
+    }
+  }
+
   if (
     businessOpsGateConfigured() &&
     userId &&

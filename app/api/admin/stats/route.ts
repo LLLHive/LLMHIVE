@@ -1,8 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-
-// Admin user IDs - in production, use a proper role system
-const ADMIN_USERS = process.env.ADMIN_USER_IDS?.split(",") || [];
+import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/admin/auth";
 
 interface TierStats {
   tier: string;
@@ -107,26 +104,12 @@ function generateMockStats(): AdminStats {
   };
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const { userId } = await auth();
+    const authResult = await requireAdmin();
+    if ("error" in authResult) return authResult.error;
 
-    // Check if user is admin
-    if (!userId || (!ADMIN_USERS.includes(userId) && ADMIN_USERS.length > 0)) {
-      return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
-        { status: 403 }
-      );
-    }
-
-    // Generate dashboard statistics
-    // NOTE: Currently using mock data for demo purposes.
-    // For production, integrate with:
-    // - Firestore: user/subscription counts
-    // - Stripe API: revenue data (MRR, ARR)
-    // - Backend: usage tracking (query counts)
     const stats = generateMockStats();
-
     return NextResponse.json(stats);
   } catch (error) {
     console.error("Error fetching admin stats:", error);
