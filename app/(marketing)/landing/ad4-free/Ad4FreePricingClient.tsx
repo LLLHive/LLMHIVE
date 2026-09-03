@@ -1,8 +1,9 @@
 "use client"
 
 /**
- * Clone of /landing/grandmother-free with Ad4 campaign creatives (hero=Image3, mid=Image2, accent=Image1).
+ * Clone of /landing/grandmother-free with Ad4 campaign creatives.
  * Layout and copy unchanged — only hero, lifestyle, and accent images differ.
+ * Order: hero=lifestyle-scene-v2, mid=hero-scene-v2, accent=accent-orb-v2.
  */
 
 import { useState, useEffect, useRef, useCallback } from "react"
@@ -534,7 +535,7 @@ export default function Ad4FreePricingClient() {
                   aria-hidden
                 />
                 <Image
-                  src="/campaigns/ad4/hero-scene-v2.png"
+                  src="/campaigns/ad4/lifestyle-scene-v2.png"
                   alt="The hive appears — discovery begins"
                   fill
                   priority
@@ -759,7 +760,7 @@ export default function Ad4FreePricingClient() {
               </div>
               <div className="relative min-w-0 flex-1 bg-[#050505]">
                 <Image
-                  src="/campaigns/ad4/lifestyle-scene-v2.png"
+                  src="/campaigns/ad4/hero-scene-v2.png"
                   alt="Less time getting things done. More time for what matters."
                   width={1024}
                   height={576}

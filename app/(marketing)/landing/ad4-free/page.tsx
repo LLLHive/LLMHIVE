@@ -6,7 +6,7 @@ import { sitePath } from "@/lib/site-url"
 
 /**
  * Clone of /landing/grandmother-free for Ad4 campaign creatives.
- * Image order: Ad4 Image3 (hero) → Image2 (lifestyle) → Image1 (accent).
+ * Image order: lifestyle-scene-v2 (hero) → hero-scene-v2 (mid) → accent-orb-v2.
  */
 export const metadata: Metadata = {
   title: "LLMHive — Premium orchestration for the best AI answers",
