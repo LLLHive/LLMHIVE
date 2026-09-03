@@ -534,7 +534,7 @@ export default function Ad4FreePricingClient() {
                   aria-hidden
                 />
                 <Image
-                  src="/campaigns/ad4/hero-scene.png"
+                  src="/campaigns/ad4/hero-scene-v2.png"
                   alt="The hive appears — discovery begins"
                   fill
                   priority
