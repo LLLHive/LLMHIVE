@@ -23,6 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/landing/ad3-free",
     "/landing/ad4-free",
     "/landing/ad5-free",
+    "/landing/ad6-free",
     "/promo",
     "/about",
     "/contact",
