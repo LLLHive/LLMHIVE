@@ -3,7 +3,7 @@
 /**
  * Clone of /landing/grandmother-free with Ad4 campaign creatives.
  * Layout and copy unchanged — only hero, lifestyle, and accent images differ.
- * Order: hero=lifestyle-scene-v2, mid=hero-scene-v2, accent=accent-orb-v2.
+ * Order: hero=altar orb, mid=stone pull, accent=altar orb variant.
  */
 
 import { useState, useEffect, useRef, useCallback } from "react"
@@ -535,7 +535,7 @@ export default function Ad4FreePricingClient() {
                   aria-hidden
                 />
                 <Image
-                  src="/campaigns/ad4/lifestyle-scene-v2.png"
+                  src="/campaigns/ad4/hero-scene-v3.png"
                   alt="The hive appears — discovery begins"
                   fill
                   priority
@@ -760,7 +760,7 @@ export default function Ad4FreePricingClient() {
               </div>
               <div className="relative min-w-0 flex-1 bg-[#050505]">
                 <Image
-                  src="/campaigns/ad4/hero-scene-v2.png"
+                  src="/campaigns/ad4/lifestyle-scene-v3.png"
                   alt="Less time getting things done. More time for what matters."
                   width={1024}
                   height={576}
@@ -834,7 +834,7 @@ export default function Ad4FreePricingClient() {
                     aria-hidden
                   />
                   <Image
-                    src="/campaigns/ad4/accent-orb-v2.png"
+                    src="/campaigns/ad4/accent-orb-v3.png"
                     alt=""
                     fill
                     className="object-cover object-left"

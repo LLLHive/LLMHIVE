@@ -6,7 +6,7 @@ import { sitePath } from "@/lib/site-url"
 
 /**
  * Clone of /landing/grandmother-free for Ad4 campaign creatives.
- * Image order: lifestyle-scene-v2 (hero) → hero-scene-v2 (mid) → accent-orb-v2.
+ * Image order: hero-scene-v3 (altar) → lifestyle-scene-v3 (stone pull) → accent-orb-v3.
  */
 export const metadata: Metadata = {
   title: "LLMHive — Premium orchestration for the best AI answers",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     url: sitePath("/landing/ad4-free"),
     images: [
       {
-        url: sitePath("/campaigns/ad4/lifestyle-scene-v2.png"),
+        url: sitePath("/campaigns/ad4/hero-scene-v3.png"),
         width: 1500,
         height: 1000,
         alt: "LLMHive — less time getting things done, more time for what matters",
