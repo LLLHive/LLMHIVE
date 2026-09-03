@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     url: sitePath("/landing/ad4-free"),
     images: [
       {
-        url: sitePath("/campaigns/ad4/lifestyle-scene.png"),
+        url: sitePath("/campaigns/ad4/lifestyle-scene-v2.png"),
         width: 1500,
         height: 1000,
         alt: "LLMHive — less time getting things done, more time for what matters",

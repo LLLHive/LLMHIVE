@@ -759,7 +759,7 @@ export default function Ad4FreePricingClient() {
               </div>
               <div className="relative min-w-0 flex-1 bg-[#050505]">
                 <Image
-                  src="/campaigns/ad4/lifestyle-scene.png"
+                  src="/campaigns/ad4/lifestyle-scene-v2.png"
                   alt="Less time getting things done. More time for what matters."
                   width={1024}
                   height={576}
@@ -833,7 +833,7 @@ export default function Ad4FreePricingClient() {
                     aria-hidden
                   />
                   <Image
-                    src="/campaigns/ad4/accent-orb.png"
+                    src="/campaigns/ad4/accent-orb-v2.png"
                     alt=""
                     fill
                     className="object-cover object-left"
