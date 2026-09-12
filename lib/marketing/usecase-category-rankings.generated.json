@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-31T18:28:38.000271+00:00",
+  "generated_at": "2026-09-12T04:18:09.477053+00:00",
   "source": "benchmark_rankings_jan2026.py::RANKINGS_MAY_2026",
   "description": "Top 10 per UI category, sorted strictly by benchmark score (API-available models only).",
   "benchmark_mapping": {
@@ -30,6 +30,16 @@
       },
       {
         "rank": 2,
+        "model_id": "openai/gpt-6-astra",
+        "model_name": "GPT-6 Astra",
+        "author": "OpenAI",
+        "score": 90.2,
+        "benchmark": "SWE-Bench",
+        "benchmark_category": "coding",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 3,
         "model_id": "anthropic/claude-sonnet-5",
         "model_name": "Claude Sonnet 5",
         "author": "Anthropic",
@@ -39,9 +49,19 @@
         "is_others_bucket": false
       },
       {
-        "rank": 3,
+        "rank": 4,
+        "model_id": "anthropic/claude-fable-5.1",
+        "model_name": "Claude Fable 5.1",
+        "author": "Anthropic",
+        "score": 89.6,
+        "benchmark": "SWE-Bench",
+        "benchmark_category": "coding",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 5,
         "model_id": "openai/gpt-5.6-sol-pro",
-        "model_name": "Gpt 5.6 Sol Pro",
+        "model_name": "GPT-5.6 Sol Pro",
         "author": "OpenAI",
         "score": 89.5,
         "benchmark": "SWE-Bench",
@@ -49,9 +69,9 @@
         "is_others_bucket": false
       },
       {
-        "rank": 4,
+        "rank": 6,
         "model_id": "openai/gpt-5.6-sol",
-        "model_name": "Gpt 5.6 Sol",
+        "model_name": "GPT-5.6 Sol",
         "author": "OpenAI",
         "score": 89.0,
         "benchmark": "SWE-Bench",
@@ -59,7 +79,7 @@
         "is_others_bucket": false
       },
       {
-        "rank": 5,
+        "rank": 7,
         "model_id": "openai/gpt-5.5",
         "model_name": "GPT-5.5",
         "author": "OpenAI",
@@ -69,7 +89,7 @@
         "is_others_bucket": false
       },
       {
-        "rank": 6,
+        "rank": 8,
         "model_id": "moonshotai/kimi-k3",
         "model_name": "Kimi K3",
         "author": "Moonshot",
@@ -79,7 +99,7 @@
         "is_others_bucket": false
       },
       {
-        "rank": 7,
+        "rank": 9,
         "model_id": "anthropic/claude-opus-4.8",
         "model_name": "Claude Opus 4.8",
         "author": "Anthropic",
@@ -89,31 +109,11 @@
         "is_others_bucket": false
       },
       {
-        "rank": 8,
+        "rank": 10,
         "model_id": "moonshotai/kimi-k2.7-code",
         "model_name": "Kimi K2.7 Code",
         "author": "Moonshot",
         "score": 87.8,
-        "benchmark": "SWE-Bench",
-        "benchmark_category": "coding",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 9,
-        "model_id": "anthropic/claude-opus-4.7",
-        "model_name": "Claude Opus 4.7",
-        "author": "Anthropic",
-        "score": 87.6,
-        "benchmark": "SWE-Bench",
-        "benchmark_category": "coding",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 10,
-        "model_id": "openai/gpt-5.3-codex",
-        "model_name": "GPT-5.3 Codex",
-        "author": "OpenAI",
-        "score": 85.0,
         "benchmark": "SWE-Bench",
         "benchmark_category": "coding",
         "is_others_bucket": false
@@ -122,6 +122,26 @@
     "science": [
       {
         "rank": 1,
+        "model_id": "openai/gpt-6-astra-pro",
+        "model_name": "GPT-6 Astra Pro",
+        "author": "OpenAI",
+        "score": 96.2,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
+        "model_id": "openai/gpt-6-astra",
+        "model_name": "GPT-6 Astra",
+        "author": "OpenAI",
+        "score": 96.0,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 3,
         "model_id": "anthropic/claude-opus-5",
         "model_name": "Claude Opus 5",
         "author": "Anthropic",
@@ -131,9 +151,19 @@
         "is_others_bucket": false
       },
       {
-        "rank": 2,
+        "rank": 4,
+        "model_id": "anthropic/claude-fable-5.1",
+        "model_name": "Claude Fable 5.1",
+        "author": "Anthropic",
+        "score": 95.0,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 5,
         "model_id": "openai/gpt-5.6-sol-pro",
-        "model_name": "Gpt 5.6 Sol Pro",
+        "model_name": "GPT-5.6 Sol Pro",
         "author": "OpenAI",
         "score": 95.0,
         "benchmark": "GPQA",
@@ -141,9 +171,9 @@
         "is_others_bucket": false
       },
       {
-        "rank": 3,
+        "rank": 6,
         "model_id": "openai/gpt-5.6-sol",
-        "model_name": "Gpt 5.6 Sol",
+        "model_name": "GPT-5.6 Sol",
         "author": "OpenAI",
         "score": 94.7,
         "benchmark": "GPQA",
@@ -151,7 +181,7 @@
         "is_others_bucket": false
       },
       {
-        "rank": 4,
+        "rank": 7,
         "model_id": "anthropic/claude-sonnet-5",
         "model_name": "Claude Sonnet 5",
         "author": "Anthropic",
@@ -161,7 +191,17 @@
         "is_others_bucket": false
       },
       {
-        "rank": 5,
+        "rank": 8,
+        "model_id": "x-ai/grok-4.6",
+        "model_name": "Grok 4.6",
+        "author": "xAI",
+        "score": 94.4,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 9,
         "model_id": "openai/gpt-5.5-pro",
         "model_name": "GPT-5.5 Pro",
         "author": "OpenAI",
@@ -171,51 +211,11 @@
         "is_others_bucket": false
       },
       {
-        "rank": 6,
+        "rank": 10,
         "model_id": "openai/gpt-5.4-pro",
         "model_name": "GPT-5.4 Pro",
         "author": "OpenAI",
         "score": 94.4,
-        "benchmark": "GPQA",
-        "benchmark_category": "general_reasoning",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 7,
-        "model_id": "anthropic/claude-opus-4.8",
-        "model_name": "Claude Opus 4.8",
-        "author": "Anthropic",
-        "score": 94.35,
-        "benchmark": "GPQA",
-        "benchmark_category": "general_reasoning",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 8,
-        "model_id": "google/gemini-3.1-pro-preview",
-        "model_name": "Gemini 3.1 Pro",
-        "author": "Google",
-        "score": 94.3,
-        "benchmark": "GPQA",
-        "benchmark_category": "general_reasoning",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 9,
-        "model_id": "x-ai/grok-4.5",
-        "model_name": "Grok 4.5",
-        "author": "xAI",
-        "score": 94.2,
-        "benchmark": "GPQA",
-        "benchmark_category": "general_reasoning",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 10,
-        "model_id": "anthropic/claude-opus-4.7",
-        "model_name": "Claude Opus 4.7",
-        "author": "Anthropic",
-        "score": 94.2,
         "benchmark": "GPQA",
         "benchmark_category": "general_reasoning",
         "is_others_bucket": false
@@ -224,6 +224,26 @@
     "health": [
       {
         "rank": 1,
+        "model_id": "openai/gpt-6-astra-pro",
+        "model_name": "GPT-6 Astra Pro",
+        "author": "OpenAI",
+        "score": 96.2,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
+        "model_id": "openai/gpt-6-astra",
+        "model_name": "GPT-6 Astra",
+        "author": "OpenAI",
+        "score": 96.0,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 3,
         "model_id": "anthropic/claude-opus-5",
         "model_name": "Claude Opus 5",
         "author": "Anthropic",
@@ -233,9 +253,19 @@
         "is_others_bucket": false
       },
       {
-        "rank": 2,
+        "rank": 4,
+        "model_id": "anthropic/claude-fable-5.1",
+        "model_name": "Claude Fable 5.1",
+        "author": "Anthropic",
+        "score": 95.0,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 5,
         "model_id": "openai/gpt-5.6-sol-pro",
-        "model_name": "Gpt 5.6 Sol Pro",
+        "model_name": "GPT-5.6 Sol Pro",
         "author": "OpenAI",
         "score": 95.0,
         "benchmark": "GPQA",
@@ -243,9 +273,9 @@
         "is_others_bucket": false
       },
       {
-        "rank": 3,
+        "rank": 6,
         "model_id": "openai/gpt-5.6-sol",
-        "model_name": "Gpt 5.6 Sol",
+        "model_name": "GPT-5.6 Sol",
         "author": "OpenAI",
         "score": 94.7,
         "benchmark": "GPQA",
@@ -253,7 +283,7 @@
         "is_others_bucket": false
       },
       {
-        "rank": 4,
+        "rank": 7,
         "model_id": "anthropic/claude-sonnet-5",
         "model_name": "Claude Sonnet 5",
         "author": "Anthropic",
@@ -263,7 +293,17 @@
         "is_others_bucket": false
       },
       {
-        "rank": 5,
+        "rank": 8,
+        "model_id": "x-ai/grok-4.6",
+        "model_name": "Grok 4.6",
+        "author": "xAI",
+        "score": 94.4,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 9,
         "model_id": "openai/gpt-5.5-pro",
         "model_name": "GPT-5.5 Pro",
         "author": "OpenAI",
@@ -273,51 +313,11 @@
         "is_others_bucket": false
       },
       {
-        "rank": 6,
+        "rank": 10,
         "model_id": "openai/gpt-5.4-pro",
         "model_name": "GPT-5.4 Pro",
         "author": "OpenAI",
         "score": 94.4,
-        "benchmark": "GPQA",
-        "benchmark_category": "general_reasoning",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 7,
-        "model_id": "anthropic/claude-opus-4.8",
-        "model_name": "Claude Opus 4.8",
-        "author": "Anthropic",
-        "score": 94.35,
-        "benchmark": "GPQA",
-        "benchmark_category": "general_reasoning",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 8,
-        "model_id": "google/gemini-3.1-pro-preview",
-        "model_name": "Gemini 3.1 Pro",
-        "author": "Google",
-        "score": 94.3,
-        "benchmark": "GPQA",
-        "benchmark_category": "general_reasoning",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 9,
-        "model_id": "x-ai/grok-4.5",
-        "model_name": "Grok 4.5",
-        "author": "xAI",
-        "score": 94.2,
-        "benchmark": "GPQA",
-        "benchmark_category": "general_reasoning",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 10,
-        "model_id": "anthropic/claude-opus-4.7",
-        "model_name": "Claude Opus 4.7",
-        "author": "Anthropic",
-        "score": 94.2,
         "benchmark": "GPQA",
         "benchmark_category": "general_reasoning",
         "is_others_bucket": false
@@ -326,6 +326,26 @@
     "legal": [
       {
         "rank": 1,
+        "model_id": "openai/gpt-6-astra-pro",
+        "model_name": "GPT-6 Astra Pro",
+        "author": "OpenAI",
+        "score": 96.2,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
+        "model_id": "openai/gpt-6-astra",
+        "model_name": "GPT-6 Astra",
+        "author": "OpenAI",
+        "score": 96.0,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 3,
         "model_id": "anthropic/claude-opus-5",
         "model_name": "Claude Opus 5",
         "author": "Anthropic",
@@ -335,9 +355,19 @@
         "is_others_bucket": false
       },
       {
-        "rank": 2,
+        "rank": 4,
+        "model_id": "anthropic/claude-fable-5.1",
+        "model_name": "Claude Fable 5.1",
+        "author": "Anthropic",
+        "score": 95.0,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 5,
         "model_id": "openai/gpt-5.6-sol-pro",
-        "model_name": "Gpt 5.6 Sol Pro",
+        "model_name": "GPT-5.6 Sol Pro",
         "author": "OpenAI",
         "score": 95.0,
         "benchmark": "GPQA",
@@ -345,9 +375,9 @@
         "is_others_bucket": false
       },
       {
-        "rank": 3,
+        "rank": 6,
         "model_id": "openai/gpt-5.6-sol",
-        "model_name": "Gpt 5.6 Sol",
+        "model_name": "GPT-5.6 Sol",
         "author": "OpenAI",
         "score": 94.7,
         "benchmark": "GPQA",
@@ -355,7 +385,7 @@
         "is_others_bucket": false
       },
       {
-        "rank": 4,
+        "rank": 7,
         "model_id": "anthropic/claude-sonnet-5",
         "model_name": "Claude Sonnet 5",
         "author": "Anthropic",
@@ -365,7 +395,17 @@
         "is_others_bucket": false
       },
       {
-        "rank": 5,
+        "rank": 8,
+        "model_id": "x-ai/grok-4.6",
+        "model_name": "Grok 4.6",
+        "author": "xAI",
+        "score": 94.4,
+        "benchmark": "GPQA",
+        "benchmark_category": "general_reasoning",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 9,
         "model_id": "openai/gpt-5.5-pro",
         "model_name": "GPT-5.5 Pro",
         "author": "OpenAI",
@@ -375,51 +415,11 @@
         "is_others_bucket": false
       },
       {
-        "rank": 6,
+        "rank": 10,
         "model_id": "openai/gpt-5.4-pro",
         "model_name": "GPT-5.4 Pro",
         "author": "OpenAI",
         "score": 94.4,
-        "benchmark": "GPQA",
-        "benchmark_category": "general_reasoning",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 7,
-        "model_id": "anthropic/claude-opus-4.8",
-        "model_name": "Claude Opus 4.8",
-        "author": "Anthropic",
-        "score": 94.35,
-        "benchmark": "GPQA",
-        "benchmark_category": "general_reasoning",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 8,
-        "model_id": "google/gemini-3.1-pro-preview",
-        "model_name": "Gemini 3.1 Pro",
-        "author": "Google",
-        "score": 94.3,
-        "benchmark": "GPQA",
-        "benchmark_category": "general_reasoning",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 9,
-        "model_id": "x-ai/grok-4.5",
-        "model_name": "Grok 4.5",
-        "author": "xAI",
-        "score": 94.2,
-        "benchmark": "GPQA",
-        "benchmark_category": "general_reasoning",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 10,
-        "model_id": "anthropic/claude-opus-4.7",
-        "model_name": "Claude Opus 4.7",
-        "author": "Anthropic",
-        "score": 94.2,
         "benchmark": "GPQA",
         "benchmark_category": "general_reasoning",
         "is_others_bucket": false
@@ -439,7 +439,7 @@
       {
         "rank": 2,
         "model_id": "openai/gpt-5.6-sol-pro",
-        "model_name": "Gpt 5.6 Sol Pro",
+        "model_name": "GPT-5.6 Sol Pro",
         "author": "OpenAI",
         "score": 1515.0,
         "benchmark": "Arena-Elo",
@@ -551,7 +551,7 @@
       {
         "rank": 3,
         "model_id": "openai/gpt-5.6-sol-pro",
-        "model_name": "Gpt 5.6 Sol Pro",
+        "model_name": "GPT-5.6 Sol Pro",
         "author": "OpenAI",
         "score": 82.5,
         "benchmark": "MCP-Atlas",
@@ -632,8 +632,18 @@
     "finance": [
       {
         "rank": 1,
+        "model_id": "openai/gpt-6-astra",
+        "model_name": "GPT-6 Astra",
+        "author": "OpenAI",
+        "score": 100.3,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
         "model_id": "openai/gpt-5.6-sol-pro",
-        "model_name": "Gpt 5.6 Sol Pro",
+        "model_name": "GPT-5.6 Sol Pro",
         "author": "OpenAI",
         "score": 100.2,
         "benchmark": "AIME2025",
@@ -641,7 +651,7 @@
         "is_others_bucket": false
       },
       {
-        "rank": 2,
+        "rank": 3,
         "model_id": "anthropic/claude-opus-5",
         "model_name": "Claude Opus 5",
         "author": "Anthropic",
@@ -651,9 +661,9 @@
         "is_others_bucket": false
       },
       {
-        "rank": 3,
+        "rank": 4,
         "model_id": "openai/gpt-5.6-sol",
-        "model_name": "Gpt 5.6 Sol",
+        "model_name": "GPT-5.6 Sol",
         "author": "OpenAI",
         "score": 100.1,
         "benchmark": "AIME2025",
@@ -661,7 +671,7 @@
         "is_others_bucket": false
       },
       {
-        "rank": 4,
+        "rank": 5,
         "model_id": "qwen/qwen3.7-max",
         "model_name": "Qwen3.7 Max",
         "author": "Alibaba",
@@ -671,7 +681,17 @@
         "is_others_bucket": false
       },
       {
-        "rank": 5,
+        "rank": 6,
+        "model_id": "deepseek/deepseek-v4.1-flash",
+        "model_name": "DeepSeek V4.1 Flash",
+        "author": "DeepSeek",
+        "score": 100.02,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 7,
         "model_id": "openai/gpt-5.2",
         "model_name": "GPT-5.2",
         "author": "OpenAI",
@@ -681,7 +701,7 @@
         "is_others_bucket": false
       },
       {
-        "rank": 6,
+        "rank": 8,
         "model_id": "google/gemini-3.1-pro-preview",
         "model_name": "Gemini 3.1 Pro",
         "author": "Google",
@@ -691,7 +711,7 @@
         "is_others_bucket": false
       },
       {
-        "rank": 7,
+        "rank": 9,
         "model_id": "moonshotai/kimi-k2.5",
         "model_name": "Kimi K2.5",
         "author": "Moonshot",
@@ -701,31 +721,11 @@
         "is_others_bucket": false
       },
       {
-        "rank": 8,
+        "rank": 10,
         "model_id": "anthropic/claude-opus-4.8",
         "model_name": "Claude Opus 4.8",
         "author": "Anthropic",
         "score": 99.9,
-        "benchmark": "AIME2025",
-        "benchmark_category": "math",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 9,
-        "model_id": "anthropic/claude-opus-4.7",
-        "model_name": "Claude Opus 4.7",
-        "author": "Anthropic",
-        "score": 99.8,
-        "benchmark": "AIME2025",
-        "benchmark_category": "math",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 10,
-        "model_id": "deepseek/deepseek-v4-pro",
-        "model_name": "DeepSeek V4 Pro",
-        "author": "DeepSeek",
-        "score": 99.7,
         "benchmark": "AIME2025",
         "benchmark_category": "math",
         "is_others_bucket": false
@@ -745,7 +745,7 @@
       {
         "rank": 2,
         "model_id": "openai/gpt-5.6-sol-pro",
-        "model_name": "Gpt 5.6 Sol Pro",
+        "model_name": "GPT-5.6 Sol Pro",
         "author": "OpenAI",
         "score": 76.0,
         "benchmark": "RAG-Eval",
@@ -847,7 +847,7 @@
       {
         "rank": 2,
         "model_id": "openai/gpt-5.6-sol-pro",
-        "model_name": "Gpt 5.6 Sol Pro",
+        "model_name": "GPT-5.6 Sol Pro",
         "author": "OpenAI",
         "score": 1515.0,
         "benchmark": "Arena-Elo",
@@ -949,7 +949,7 @@
       {
         "rank": 2,
         "model_id": "openai/gpt-5.6-sol-pro",
-        "model_name": "Gpt 5.6 Sol Pro",
+        "model_name": "GPT-5.6 Sol Pro",
         "author": "OpenAI",
         "score": 1515.0,
         "benchmark": "Arena-Elo",
@@ -1061,7 +1061,7 @@
       {
         "rank": 3,
         "model_id": "openai/gpt-5.6-sol-pro",
-        "model_name": "Gpt 5.6 Sol Pro",
+        "model_name": "GPT-5.6 Sol Pro",
         "author": "OpenAI",
         "score": 92.5,
         "benchmark": "MMMLU",
@@ -1142,8 +1142,18 @@
     "reasoning": [
       {
         "rank": 1,
+        "model_id": "openai/gpt-6-astra",
+        "model_name": "GPT-6 Astra",
+        "author": "OpenAI",
+        "score": 100.3,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 2,
         "model_id": "openai/gpt-5.6-sol-pro",
-        "model_name": "Gpt 5.6 Sol Pro",
+        "model_name": "GPT-5.6 Sol Pro",
         "author": "OpenAI",
         "score": 100.2,
         "benchmark": "AIME2025",
@@ -1151,7 +1161,7 @@
         "is_others_bucket": false
       },
       {
-        "rank": 2,
+        "rank": 3,
         "model_id": "anthropic/claude-opus-5",
         "model_name": "Claude Opus 5",
         "author": "Anthropic",
@@ -1161,9 +1171,9 @@
         "is_others_bucket": false
       },
       {
-        "rank": 3,
+        "rank": 4,
         "model_id": "openai/gpt-5.6-sol",
-        "model_name": "Gpt 5.6 Sol",
+        "model_name": "GPT-5.6 Sol",
         "author": "OpenAI",
         "score": 100.1,
         "benchmark": "AIME2025",
@@ -1171,7 +1181,7 @@
         "is_others_bucket": false
       },
       {
-        "rank": 4,
+        "rank": 5,
         "model_id": "qwen/qwen3.7-max",
         "model_name": "Qwen3.7 Max",
         "author": "Alibaba",
@@ -1181,7 +1191,17 @@
         "is_others_bucket": false
       },
       {
-        "rank": 5,
+        "rank": 6,
+        "model_id": "deepseek/deepseek-v4.1-flash",
+        "model_name": "DeepSeek V4.1 Flash",
+        "author": "DeepSeek",
+        "score": 100.02,
+        "benchmark": "AIME2025",
+        "benchmark_category": "math",
+        "is_others_bucket": false
+      },
+      {
+        "rank": 7,
         "model_id": "openai/gpt-5.2",
         "model_name": "GPT-5.2",
         "author": "OpenAI",
@@ -1191,7 +1211,7 @@
         "is_others_bucket": false
       },
       {
-        "rank": 6,
+        "rank": 8,
         "model_id": "google/gemini-3.1-pro-preview",
         "model_name": "Gemini 3.1 Pro",
         "author": "Google",
@@ -1201,7 +1221,7 @@
         "is_others_bucket": false
       },
       {
-        "rank": 7,
+        "rank": 9,
         "model_id": "moonshotai/kimi-k2.5",
         "model_name": "Kimi K2.5",
         "author": "Moonshot",
@@ -1211,31 +1231,11 @@
         "is_others_bucket": false
       },
       {
-        "rank": 8,
+        "rank": 10,
         "model_id": "anthropic/claude-opus-4.8",
         "model_name": "Claude Opus 4.8",
         "author": "Anthropic",
         "score": 99.9,
-        "benchmark": "AIME2025",
-        "benchmark_category": "math",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 9,
-        "model_id": "anthropic/claude-opus-4.7",
-        "model_name": "Claude Opus 4.7",
-        "author": "Anthropic",
-        "score": 99.8,
-        "benchmark": "AIME2025",
-        "benchmark_category": "math",
-        "is_others_bucket": false
-      },
-      {
-        "rank": 10,
-        "model_id": "deepseek/deepseek-v4-pro",
-        "model_name": "DeepSeek V4 Pro",
-        "author": "DeepSeek",
-        "score": 99.7,
         "benchmark": "AIME2025",
         "benchmark_category": "math",
         "is_others_bucket": false

@@ -22,23 +22,38 @@ logger = logging.getLogger(__name__)
 # NO weaker substitutes. Order = failover priority.
 
 SAME_MODEL_PROVIDER_MATRIX: Dict[str, List[str]] = {
+    "gpt-6-astra":       ["openrouter", "openai"],
+    "gpt-6-astra-pro":   ["openrouter"],
     "gpt-5.5-pro":       ["openrouter", "openai"],
     "gpt-5.5":           ["openrouter", "openai"],
     "gpt-5.2-pro":       ["openrouter", "openai"],
     "gpt-5.2":           ["openrouter", "openai"],
+    "claude-opus-5":     ["openrouter", "anthropic"],
+    "claude-sonnet-5":   ["openrouter", "anthropic"],
+    "claude-fable-5.1":  ["openrouter", "anthropic"],
     "claude-sonnet-4.6": ["openrouter", "anthropic"],
     "gemini-3.1-pro":    ["openrouter", "gemini"],
+    "gemini-3.8-flash":  ["openrouter", "gemini"],
     "gemini-3-pro":      ["openrouter", "gemini"],
     "gemini-2.5-pro":    ["openrouter", "gemini"],
+    "grok-4.6":          ["openrouter", "grok"],
     "grok-4":            ["openrouter", "grok"],
     "grok-3-mini":       ["openrouter", "grok"],
     "deepseek-reasoner": ["openrouter", "deepseek"],
+    "deepseek-flash":    ["openrouter", "deepseek"],
 }
 
 # Maps internal model_id → the model string each provider expects.
 # "openrouter" entry uses the OpenRouter model slug;
 # direct-API entry uses the provider's native model name.
 _MODEL_ID_PER_PROVIDER: Dict[str, Dict[str, str]] = {
+    "gpt-6-astra": {
+        "openrouter": "openai/gpt-6-astra",
+        "openai":     "gpt-6-astra",
+    },
+    "gpt-6-astra-pro": {
+        "openrouter": "openai/gpt-6-astra-pro",
+    },
     "gpt-5.5-pro": {
         "openrouter": "openai/gpt-5.5-pro",
         "openai":     "gpt-5.5-pro",
@@ -59,9 +74,25 @@ _MODEL_ID_PER_PROVIDER: Dict[str, Dict[str, str]] = {
         "openrouter": "anthropic/claude-sonnet-4.6",
         "anthropic":  "claude-sonnet-4.6",
     },
+    "claude-opus-5": {
+        "openrouter": "anthropic/claude-opus-5",
+        "anthropic":  "claude-opus-5",
+    },
+    "claude-sonnet-5": {
+        "openrouter": "anthropic/claude-sonnet-5",
+        "anthropic":  "claude-sonnet-5",
+    },
+    "claude-fable-5.1": {
+        "openrouter": "anthropic/claude-fable-5.1",
+        "anthropic":  "claude-fable-5-1",
+    },
     "gemini-3.1-pro": {
         "openrouter": "google/gemini-3.1-pro-preview",
-        "gemini":     "gemini-3.1-pro",
+        "gemini":     "gemini-3.1-pro-preview",
+    },
+    "gemini-3.8-flash": {
+        "openrouter": "google/gemini-3.8-flash",
+        "gemini":     "gemini-3.8-flash",
     },
     "gemini-3-pro": {
         "openrouter": "google/gemini-3.1-pro-preview",
@@ -70,6 +101,10 @@ _MODEL_ID_PER_PROVIDER: Dict[str, Dict[str, str]] = {
     "gemini-2.5-pro": {
         "openrouter": "google/gemini-2.5-pro-preview",
         "gemini":     "gemini-2.5-pro",
+    },
+    "grok-4.6": {
+        "openrouter": "x-ai/grok-4.6",
+        "grok":       "grok-4.6",
     },
     "grok-4": {
         "openrouter": "x-ai/grok-4",
@@ -82,6 +117,10 @@ _MODEL_ID_PER_PROVIDER: Dict[str, Dict[str, str]] = {
     "deepseek-reasoner": {
         "openrouter": "deepseek/deepseek-r1-0528",
         "deepseek":   "deepseek-reasoner",
+    },
+    "deepseek-flash": {
+        "openrouter": "deepseek/deepseek-v4.1-flash",
+        "deepseek":   "deepseek-flash",
     },
 }
 

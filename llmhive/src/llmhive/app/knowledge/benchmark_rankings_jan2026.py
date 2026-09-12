@@ -54,10 +54,14 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
     # 1. GENERAL REASONING (GPQA Diamond)
     # =========================================================================
     BenchmarkCategory.GENERAL_REASONING: [
+        ModelBenchmark("openai/gpt-6-astra", "OpenAI", 96.0, "GPQA", 5.00, 30.00, True, "GPT-6 Astra flagship"),
+        ModelBenchmark("openai/gpt-6-astra-pro", "OpenAI", 96.2, "GPQA", 6.00, 36.00, True, "GPT-6 Astra Pro"),
         ModelBenchmark("anthropic/claude-opus-5", "Anthropic", 95.1, "GPQA", 5.00, 25.00, True, "Opus 5 flagship"),
+        ModelBenchmark("anthropic/claude-fable-5.1", "Anthropic", 95.0, "GPQA", 5.00, 25.00, True, "Fable 5.1"),
         ModelBenchmark("openai/gpt-5.6-sol-pro", "OpenAI", 95.0, "GPQA", 5.00, 30.00, True, "GPT-5.6 Sol Pro"),
         ModelBenchmark("openai/gpt-5.6-sol", "OpenAI", 94.7, "GPQA", 5.00, 30.00, True),
         ModelBenchmark("anthropic/claude-sonnet-5", "Anthropic", 94.5, "GPQA", 2.00, 10.00, True),
+        ModelBenchmark("x-ai/grok-4.6", "xAI", 94.4, "GPQA", 2.00, 6.00, True),
         ModelBenchmark("x-ai/grok-4.5", "xAI", 94.2, "GPQA", 2.00, 6.00, True),
         ModelBenchmark("moonshotai/kimi-k3", "Moonshot", 94.0, "GPQA", 3.00, 15.00, True),
 
@@ -80,7 +84,9 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
     # =========================================================================
     BenchmarkCategory.CODING: [
         ModelBenchmark("anthropic/claude-opus-5", "Anthropic", 90.5, "SWE-Bench", 5.00, 25.00, True, "Opus 5 coding"),
+        ModelBenchmark("openai/gpt-6-astra", "OpenAI", 90.2, "SWE-Bench", 5.00, 30.00, True, "GPT-6 Astra coding"),
         ModelBenchmark("anthropic/claude-sonnet-5", "Anthropic", 89.8, "SWE-Bench", 2.00, 10.00, True),
+        ModelBenchmark("anthropic/claude-fable-5.1", "Anthropic", 89.6, "SWE-Bench", 5.00, 25.00, True),
         ModelBenchmark("openai/gpt-5.6-sol-pro", "OpenAI", 89.5, "SWE-Bench", 5.00, 30.00, True),
         ModelBenchmark("openai/gpt-5.6-sol", "OpenAI", 89.0, "SWE-Bench", 5.00, 30.00, True),
         ModelBenchmark("moonshotai/kimi-k3", "Moonshot", 88.5, "SWE-Bench", 3.00, 15.00, True),
@@ -103,10 +109,12 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
     # 3. MATH (AIME 2025)
     # =========================================================================
     BenchmarkCategory.MATH: [
+        ModelBenchmark("openai/gpt-6-astra", "OpenAI", 100.3, "AIME2025", 5.00, 30.00, True),
         ModelBenchmark("openai/gpt-5.6-sol-pro", "OpenAI", 100.2, "AIME2025", 5.00, 30.00, True),
         ModelBenchmark("anthropic/claude-opus-5", "Anthropic", 100.15, "AIME2025", 5.00, 25.00, True),
         ModelBenchmark("openai/gpt-5.6-sol", "OpenAI", 100.1, "AIME2025", 5.00, 30.00, True),
         ModelBenchmark("qwen/qwen3.7-max", "Alibaba", 100.05, "AIME2025", 1.48, 4.43, True),
+        ModelBenchmark("deepseek/deepseek-v4.1-flash", "DeepSeek", 100.02, "AIME2025", 0.28, 0.42, True),
 
         ModelBenchmark("openai/gpt-5.2", "OpenAI", 100.0, "AIME2025", 1.75, 14.00, True),
         ModelBenchmark("google/gemini-3.1-pro-preview", "Google", 100.0, "AIME2025", 2.00, 12.00, True, "Vendor-reported"),
@@ -260,8 +268,10 @@ RANKINGS_MAY_2026: Dict[BenchmarkCategory, List[ModelBenchmark]] = {
     # =========================================================================
     BenchmarkCategory.SPEED: [
         ModelBenchmark("openai/gpt-5.6-luna", "OpenAI", 280.0, "tok/s", 0.10, 0.60, True),
+        ModelBenchmark("google/gemini-3.8-flash", "Google", 280.0, "tok/s", 0.20, 0.80, True),
         ModelBenchmark("google/gemini-3.6-flash", "Google", 260.0, "tok/s", 1.50, 7.50, True),
         ModelBenchmark("google/gemini-3.5-flash-lite", "Google", 300.0, "tok/s", 0.30, 2.50, True),
+        ModelBenchmark("deepseek/deepseek-v4.1-flash", "DeepSeek", 250.0, "tok/s", 0.28, 0.42, True),
         ModelBenchmark("deepseek/deepseek-v4-flash-0731", "DeepSeek", 250.0, "tok/s", 0.14, 0.28, True),
         ModelBenchmark("qwen/qwen3.7-flash", "Alibaba", 270.0, "tok/s", 0.03, 0.13, True),
 
@@ -505,6 +515,10 @@ _BENCHMARK_SLUG_FALLBACKS: Dict[str, str] = {
 }
 
 _MODEL_DISPLAY_NAMES: Dict[str, str] = {
+    "openai/gpt-6-astra": "GPT-6 Astra",
+    "openai/gpt-6-astra-pro": "GPT-6 Astra Pro",
+    "openai/gpt-5.6-sol-pro": "GPT-5.6 Sol Pro",
+    "openai/gpt-5.6-sol": "GPT-5.6 Sol",
     "openai/gpt-5.5-pro": "GPT-5.5 Pro",
     "openai/gpt-5.5": "GPT-5.5",
     "openai/gpt-5.4-pro": "GPT-5.4 Pro",
@@ -516,31 +530,40 @@ _MODEL_DISPLAY_NAMES: Dict[str, str] = {
     "openai/o3": "OpenAI o3",
     "openai/o1-pro": "o1-pro",
     "openai/o4-mini": "o4-mini",
+    "anthropic/claude-opus-5": "Claude Opus 5",
+    "anthropic/claude-fable-5.1": "Claude Fable 5.1",
+    "anthropic/claude-sonnet-5": "Claude Sonnet 5",
     "anthropic/claude-opus-4.8": "Claude Opus 4.8",
     "anthropic/claude-opus-4.7": "Claude Opus 4.7",
     "anthropic/claude-opus-4.6": "Claude Opus 4.6",
     "anthropic/claude-opus-4.5": "Claude Opus 4.5",
     "anthropic/claude-sonnet-4.6": "Claude Sonnet 4.6",
     "anthropic/claude-sonnet-4.5": "Claude Sonnet 4.5",
+    "google/gemini-3.8-flash": "Gemini 3.8 Flash",
+    "google/gemini-3.7-flash": "Gemini 3.7 Flash",
     "google/gemini-3.1-pro-preview": "Gemini 3.1 Pro",
     "google/gemini-2.5-pro": "Gemini 2.5 Pro",
     "google/gemini-2.5-pro-preview": "Gemini 2.5 Pro",
     "google/gemini-2.5-flash": "Gemini 2.5 Flash",
+    "deepseek/deepseek-v4.1-flash": "DeepSeek V4.1 Flash",
     "deepseek/deepseek-v4-pro": "DeepSeek V4 Pro",
     "deepseek/deepseek-r1": "DeepSeek R1",
     "deepseek/deepseek-v3.2": "DeepSeek V3.2",
     "meta-llama/llama-4-scout": "Llama 4 Scout",
     "meta-llama/llama-4-maverick": "Llama 4 Maverick",
+    "moonshotai/kimi-k3": "Kimi K3",
     "moonshotai/kimi-k2.6": "Kimi K2.6",
     "moonshotai/kimi-k2.5": "Kimi K2.5",
     "minimax/minimax-m2.5": "MiniMax M2.5",
     "qwen/qwen3.6-plus": "Qwen3.6 Plus",
     "mistralai/mistral-medium-3.1": "Mistral Medium 3.1",
     "mistralai/mistral-large-2512": "Mistral Large 2512",
+    "x-ai/grok-4.6": "Grok 4.6",
+    "x-ai/grok-4.5": "Grok 4.5",
     "x-ai/grok-4.20": "Grok 4 Fast",
     "cohere/command-r-plus-08-2024": "Command R+",
+    "z-ai/glm-5.3": "GLM 5.3",
     "z-ai/glm-4.7": "GLM 4.7",
-    "moonshotai/kimi-k2.5": "Kimi K2.5",
 }
 
 

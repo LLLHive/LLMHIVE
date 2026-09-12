@@ -76,13 +76,18 @@ class DeepSeekClient:
     """Client for DeepSeek API (V3.2 models)."""
     
     BASE_URL = "https://api.deepseek.com"
-    DEFAULT_MODEL = "deepseek-chat"  # V3.2-Speciale
+    DEFAULT_MODEL = "deepseek-flash"  # V4.1 Flash class (Sep 2026)
     
     # Model mappings (OpenRouter ID → DeepSeek native ID)
     MODEL_MAP = {
         "deepseek/deepseek-r1-0528:free": "deepseek-reasoner",
-        "deepseek/deepseek-chat": "deepseek-chat",
-        "deepseek-chat": "deepseek-chat",
+        "deepseek/deepseek-chat": "deepseek-flash",
+        "deepseek/deepseek-v4.1-flash": "deepseek-flash",
+        "deepseek/deepseek-v4-flash": "deepseek-flash",
+        "deepseek/deepseek-v4-pro": "deepseek-v4-pro",
+        "deepseek-chat": "deepseek-flash",
+        "deepseek-flash": "deepseek-flash",
+        "deepseek-v4-pro": "deepseek-v4-pro",
         "deepseek-reasoner": "deepseek-reasoner",
     }
     

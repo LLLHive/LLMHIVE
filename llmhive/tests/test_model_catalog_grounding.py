@@ -55,8 +55,8 @@ def test_paid_model_catalog_grounding_uses_frontier_slugs():
 
     assert info["applied"] is True
     assert info["tier"] == "paid"
+    assert "openai/gpt-6-astra" in context
     assert "anthropic/claude-opus-5" in context
-    assert "openai/gpt-5.6-sol-pro" in context
     assert "google/gemini-3.1-pro-preview" in context
     assert "moonshotai/kimi-k3" in context
     assert "Do not recommend stale paid models like GPT-4 Turbo" in context
@@ -68,8 +68,8 @@ def test_deterministic_paid_catalog_answer_uses_current_frontier_models():
         {},
     )
 
+    assert "openai/gpt-6-astra" in answer or "GPT-6 Astra" in answer
     assert "anthropic/claude-opus-5" in answer or "Claude Opus 5" in answer
-    assert "openai/gpt-5.6-sol-pro" in answer or "GPT-5.6 Sol Pro" in answer
     assert "google/gemini-3.1-pro-preview" in answer or "Gemini 3.1" in answer
     assert "moonshotai/kimi-k3" in answer or "Kimi K3" in answer
     assert "GPT-4 Turbo" in answer
@@ -84,9 +84,9 @@ def test_deterministic_free_catalog_answer_has_public_free_distinction():
         {},
     )
 
-    assert "meta-llama/llama-3.3-70b-instruct:free" in answer
-    assert "qwen/qwen3-next-80b-a3b-instruct:free" in answer
     assert "deepseek/deepseek-chat" in answer
+    assert "nvidia/nemotron-3-super-120b-a12b:free" in answer or "google/gemini-3.8-flash" in answer
+    assert "meta-llama/llama-3.3-70b-instruct:free" in answer or "qwen/qwen3" in answer
     assert "kimi-k2.6" in answer
     assert "public-free" in answer
     assert ".Caveat" not in answer

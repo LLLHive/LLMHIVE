@@ -1045,6 +1045,78 @@ MODEL_CAPABILITIES: Dict[str, Dict[ModelCapability, float]] = {
         ModelCapability.SPEED: 0.94,
         ModelCapability.QUALITY: 0.93,
     },
+    "gemini-3.8-flash": {
+        ModelCapability.CODING: 0.94,
+        ModelCapability.REASONING: 0.95,
+        ModelCapability.MATH: 0.95,
+        ModelCapability.CREATIVE: 0.91,
+        ModelCapability.FACTUAL: 0.94,
+        ModelCapability.ANALYSIS: 0.94,
+        ModelCapability.SUMMARIZATION: 0.93,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.95,
+        ModelCapability.SPEED: 0.96,
+        ModelCapability.QUALITY: 0.94,
+    },
+    "gemini-3.7-flash": {
+        ModelCapability.CODING: 0.935,
+        ModelCapability.REASONING: 0.945,
+        ModelCapability.MATH: 0.945,
+        ModelCapability.CREATIVE: 0.905,
+        ModelCapability.FACTUAL: 0.935,
+        ModelCapability.ANALYSIS: 0.935,
+        ModelCapability.SUMMARIZATION: 0.925,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.945,
+        ModelCapability.SPEED: 0.95,
+        ModelCapability.QUALITY: 0.935,
+    },
+    "gpt-6-astra": {
+        ModelCapability.CODING: 0.995,
+        ModelCapability.REASONING: 0.998,
+        ModelCapability.MATH: 0.995,
+        ModelCapability.CREATIVE: 0.96,
+        ModelCapability.FACTUAL: 0.98,
+        ModelCapability.ANALYSIS: 0.99,
+        ModelCapability.SUMMARIZATION: 0.96,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.99,
+        ModelCapability.SPEED: 0.72,
+        ModelCapability.QUALITY: 0.997,
+    },
+    "gpt-6-astra-pro": {
+        ModelCapability.CODING: 0.997,
+        ModelCapability.REASONING: 0.999,
+        ModelCapability.MATH: 0.997,
+        ModelCapability.CREATIVE: 0.965,
+        ModelCapability.FACTUAL: 0.985,
+        ModelCapability.ANALYSIS: 0.995,
+        ModelCapability.SUMMARIZATION: 0.965,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.995,
+        ModelCapability.SPEED: 0.68,
+        ModelCapability.QUALITY: 0.999,
+    },
+    "claude-fable-5.1": {
+        ModelCapability.CODING: 0.97,
+        ModelCapability.REASONING: 0.985,
+        ModelCapability.MATH: 0.96,
+        ModelCapability.CREATIVE: 0.99,
+        ModelCapability.FACTUAL: 0.97,
+        ModelCapability.ANALYSIS: 0.98,
+        ModelCapability.SUMMARIZATION: 0.97,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.985,
+        ModelCapability.SPEED: 0.6,
+        ModelCapability.QUALITY: 0.985,
+    },
+    "grok-4.6": {
+        ModelCapability.CODING: 0.97,
+        ModelCapability.REASONING: 0.975,
+        ModelCapability.MATH: 0.955,
+        ModelCapability.CREATIVE: 0.93,
+        ModelCapability.FACTUAL: 0.96,
+        ModelCapability.ANALYSIS: 0.96,
+        ModelCapability.SUMMARIZATION: 0.93,
+        ModelCapability.INSTRUCTION_FOLLOWING: 0.96,
+        ModelCapability.SPEED: 0.8,
+        ModelCapability.QUALITY: 0.97,
+    },
     "gemini-3.5-flash": {
         ModelCapability.CODING: 0.92,
         ModelCapability.REASONING: 0.93,
@@ -1248,6 +1320,8 @@ _MODEL_ALIASES = {
     "openai/gpt-5.1-codex-mini": "gpt-5.1",
     "openai/gpt-5.5": "gpt-5.5",
     "openai/gpt-5.5-pro": "gpt-5.5-pro",
+    "openai/gpt-6-astra": "gpt-6-astra",
+    "openai/gpt-6-astra-pro": "gpt-6-astra-pro",
     "openai/gpt-5.6-sol": "gpt-5.6-sol",
     "openai/gpt-5.6-sol-pro": "gpt-5.6-sol-pro",
     "openai/gpt-5.6-terra": "gpt-5.6-terra",
@@ -1277,6 +1351,7 @@ _MODEL_ALIASES = {
     "anthropic/claude-opus-5": "claude-opus-5",
     "anthropic/claude-opus-5-fast": "claude-opus-5",
     "anthropic/claude-sonnet-5": "claude-sonnet-5",
+    "anthropic/claude-fable-5.1": "claude-fable-5.1",
     "anthropic/claude-fable-5": "claude-fable-5",
     # Claude 4.5 series
     "anthropic/claude-opus-4.5": "claude-opus-4.5",  # NEW: Best Anthropic
@@ -1304,7 +1379,9 @@ _MODEL_ALIASES = {
     # ==========================================================================
     # Google Gemini Models (January 2026 Latest)
     # ==========================================================================
-    # Gemini 3.6 / 3.5 Flash (NEWEST — Jul 2026)
+    # Gemini 3.8 / 3.7 / 3.6 / 3.5 Flash (NEWEST — Sep 2026)
+    "google/gemini-3.8-flash": "gemini-3.8-flash",
+    "google/gemini-3.7-flash": "gemini-3.7-flash",
     "google/gemini-3.6-flash": "gemini-3.6-flash",
     "google/gemini-3.5-flash": "gemini-3.5-flash",
     "google/gemini-3.5-flash-lite": "gemini-3.5-flash-lite",
@@ -1328,22 +1405,26 @@ _MODEL_ALIASES = {
     "google/gemini-2.0-flash-exp": "gemini-2.5-flash",
     
     # ==========================================================================
-    # DeepSeek Models (January 2026 Latest)
+    # DeepSeek Models (September 2026 Latest)
     # ==========================================================================
+    "deepseek/deepseek-v4.1-flash": "deepseek-flash",
+    "deepseek/deepseek-v4-flash": "deepseek-flash",
+    "deepseek/deepseek-v4-pro": "deepseek-v4-pro",
     "deepseek/deepseek-v3.2": "deepseek-v3.2",
     "deepseek/deepseek-v3.2-speciale": "deepseek-v3.2-speciale",  # NEW
     "deepseek/deepseek-v3.2-exp": "deepseek-v3.2-speciale",
     "deepseek/deepseek-v3.1-terminus": "deepseek-v3.1-terminus",  # NEW
     "deepseek/deepseek-v3.1-terminus:exacto": "deepseek-v3.1-terminus",
     "deepseek/deepseek-chat-v3.1": "deepseek-chat-v3.1",  # NEW
-    "deepseek/deepseek-chat": "deepseek-chat",
+    "deepseek/deepseek-chat": "deepseek-flash",
     "deepseek/deepseek-r1-0528": "deepseek-r1-0528",
     "deepseek/deepseek-r1": "deepseek-r1-0528",
     "deepseek/deepseek-v3": "deepseek-v3.2",
     
     # ==========================================================================
-    # X.AI Grok Models (January 2026 Latest)
+    # X.AI Grok Models (September 2026 Latest)
     # ==========================================================================
+    "x-ai/grok-4.6": "grok-4.6",
     "x-ai/grok-4": "grok-4",
     "x-ai/grok-4.5": "grok-4.5",
     "x-ai/grok-4.3": "grok-4.3",
@@ -1351,7 +1432,7 @@ _MODEL_ALIASES = {
     "x-ai/grok-4.1-fast": "grok-4.1-fast",  # NEW
     "x-ai/grok-4-fast": "grok-4-fast",  # NEW
     "x-ai/grok-code-fast-1": "grok-code-fast-1",  # NEW: Code specialist
-    "x-ai/grok-3": "grok-4",  # Map older to newer
+    "x-ai/grok-3": "grok-4.6",  # Map older to newer
     "x-ai/grok-3-mini": "grok-4-fast",
     "x-ai/grok-2": "grok-2",
     "moonshotai/kimi-k3": "kimi-k3",

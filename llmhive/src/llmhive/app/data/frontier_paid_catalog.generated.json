@@ -4,6 +4,17 @@
   "paid_catalog": [
     {
       "rank": 1,
+      "model_id": "openai/gpt-6-astra",
+      "display": "GPT-6 Astra",
+      "provider": "OpenAI",
+      "preferred_api": "openai",
+      "native_model_id": "gpt-6-astra",
+      "best_for": "newest OpenAI flagship reasoning, coding, and agentic workflows",
+      "docs": "https://platform.openai.com/docs",
+      "caveat": "Premium direct/provider-paid route."
+    },
+    {
+      "rank": 2,
       "model_id": "anthropic/claude-opus-5",
       "display": "Claude Opus 5",
       "provider": "Anthropic",
@@ -14,7 +25,18 @@
       "caveat": "Premium direct/provider-paid route."
     },
     {
-      "rank": 2,
+      "rank": 3,
+      "model_id": "anthropic/claude-fable-5.1",
+      "display": "Claude Fable 5.1",
+      "provider": "Anthropic",
+      "preferred_api": "anthropic",
+      "native_model_id": "claude-fable-5-1",
+      "best_for": "long-horizon agents, creative synthesis, frontier Anthropic workloads",
+      "docs": "https://docs.anthropic.com/",
+      "caveat": "Premium direct/provider-paid route."
+    },
+    {
+      "rank": 4,
       "model_id": "openai/gpt-5.6-sol-pro",
       "display": "GPT-5.6 Sol Pro",
       "provider": "OpenAI",
@@ -22,10 +44,10 @@
       "native_model_id": "gpt-5.6-sol-pro",
       "best_for": "complex reasoning, coding, and agentic workflows",
       "docs": "https://platform.openai.com/docs",
-      "caveat": "Premium direct/provider-paid route."
+      "caveat": "Premium OpenRouter/pro route when Sol Pro is required."
     },
     {
-      "rank": 3,
+      "rank": 5,
       "model_id": "google/gemini-3.1-pro-preview",
       "display": "Gemini 3.1 Pro Preview",
       "provider": "Google",
@@ -36,18 +58,18 @@
       "caveat": "Paid Google/Gemini API route."
     },
     {
-      "rank": 4,
-      "model_id": "anthropic/claude-sonnet-5",
-      "display": "Claude Sonnet 5",
-      "provider": "Anthropic",
-      "preferred_api": "anthropic",
-      "native_model_id": "claude-sonnet-5",
-      "best_for": "balanced frontier coding, agents, and professional work",
-      "docs": "https://docs.anthropic.com/",
-      "caveat": "Paid direct route; better latency/cost than Opus for many agents."
+      "rank": 6,
+      "model_id": "x-ai/grok-4.6",
+      "display": "Grok 4.6",
+      "provider": "xAI",
+      "preferred_api": "grok",
+      "native_model_id": "grok-4.6",
+      "best_for": "coding, knowledge work, and STEM",
+      "docs": "https://docs.x.ai/docs",
+      "caveat": "Paid xAI/Grok route."
     },
     {
-      "rank": 5,
+      "rank": 7,
       "model_id": "moonshotai/kimi-k3",
       "display": "Kimi K3",
       "provider": "Moonshot",
@@ -58,18 +80,7 @@
       "caveat": "LLMHive direct API via Kimi keys / OpenRouter."
     },
     {
-      "rank": 6,
-      "model_id": "x-ai/grok-4.5",
-      "display": "Grok 4.5",
-      "provider": "xAI",
-      "preferred_api": "grok",
-      "native_model_id": "grok-4.5",
-      "best_for": "coding, knowledge work, and STEM",
-      "docs": "https://docs.x.ai/docs",
-      "caveat": "Paid xAI/Grok route."
-    },
-    {
-      "rank": 7,
+      "rank": 8,
       "model_id": "deepseek/deepseek-v4-pro",
       "display": "DeepSeek V4 Pro",
       "provider": "DeepSeek",
@@ -80,7 +91,18 @@
       "caveat": "Paid/provider route, often strong value per token."
     },
     {
-      "rank": 8,
+      "rank": 9,
+      "model_id": "google/gemini-3.8-flash",
+      "display": "Gemini 3.8 Flash",
+      "provider": "Google",
+      "preferred_api": "google",
+      "native_model_id": "gemini-3.8-flash",
+      "best_for": "high-speed long-context and cost-efficient frontier tasks",
+      "docs": "https://ai.google.dev/gemini-api/docs",
+      "caveat": "Flash class — prefer Pro for hardest workloads."
+    },
+    {
+      "rank": 10,
       "model_id": "qwen/qwen3.7-max",
       "display": "Qwen3.7 Max",
       "provider": "Alibaba",

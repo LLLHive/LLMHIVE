@@ -657,6 +657,12 @@ OPENROUTER_CLAUDE_SONNET_5 = "anthropic/claude-sonnet-5"
 OPENROUTER_CLAUDE_OPUS_4_8 = "anthropic/claude-opus-4.8"
 OPENROUTER_CLAUDE_OPUS_4_7 = "anthropic/claude-opus-4.7"
 OPENROUTER_GPT_5_6_SOL_PRO = "openai/gpt-5.6-sol-pro"
+OPENROUTER_GPT_6_ASTRA = "openai/gpt-6-astra"
+OPENROUTER_GPT_6_ASTRA_PRO = "openai/gpt-6-astra-pro"
+OPENROUTER_CLAUDE_FABLE_5_1 = "anthropic/claude-fable-5.1"
+OPENROUTER_GEMINI_3_8_FLASH = "google/gemini-3.8-flash"
+OPENROUTER_GROK_4_6 = "x-ai/grok-4.6"
+OPENROUTER_DEEPSEEK_V4_1_FLASH = "deepseek/deepseek-v4.1-flash"
 OPENROUTER_GROK_4_5 = "x-ai/grok-4.5"
 OPENROUTER_KIMI_K3 = "moonshotai/kimi-k3"
 OPENROUTER_GROK_4_20 = "x-ai/grok-4.20"
@@ -687,7 +693,9 @@ COST_EFFECTIVE_MODELS = [
     OPENROUTER_GPT_4O,           # ~$5/1M tokens - excellent quality
     OPENROUTER_DEEPSEEK,         # ~$0.14/1M tokens - great for coding
     OPENROUTER_DEEPSEEK_R1,      # ~$0.55/1M tokens - reasoning specialist
+    OPENROUTER_DEEPSEEK_V4_1_FLASH,
     OPENROUTER_GEMINI_2_5_FLASH, # ~$0.075/1M tokens - very fast
+    OPENROUTER_GEMINI_3_8_FLASH,
     OPENROUTER_GEMINI_2_PRO,     # ~$1.25/1M tokens - good for research
     OPENROUTER_GEMINI_3_1_PRO,   # ~$2/1M tokens - newest Google, excellent
     OPENROUTER_CLAUDE_SONNET_4,  # ~$3/1M tokens - good balance
@@ -699,12 +707,20 @@ COST_EFFECTIVE_MODELS = [
 
 # Premium models (require more credits)
 PREMIUM_MODELS = [
+    OPENROUTER_GPT_6_ASTRA,
+    OPENROUTER_GPT_6_ASTRA_PRO,
+    OPENROUTER_GPT_5_6_SOL_PRO,
     OPENROUTER_GPT_5_5_PRO,
     OPENROUTER_GPT_5_5,
     OPENROUTER_GPT_5,
     OPENROUTER_GPT_5_4_PRO,
+    OPENROUTER_CLAUDE_OPUS_5,
+    OPENROUTER_CLAUDE_FABLE_5_1,
     OPENROUTER_CLAUDE_OPUS_4,
     OPENROUTER_CLAUDE_OPUS_4_7,
+    OPENROUTER_CLAUDE_OPUS_4_8,
+    OPENROUTER_GEMINI_3_1_PRO,
+    OPENROUTER_GROK_4_6,
     OPENROUTER_O3,
     OPENROUTER_O1,
     OPENROUTER_DEEPSEEK_V4_PRO,
@@ -1245,19 +1261,23 @@ async def get_intelligent_models(
     # Step 3: Fallback to OpenRouter top-ranked models (May 2026 frontier order)
     if len(selected) < num_models:
         fallback_order = [
-            OPENROUTER_GPT_5_6_SOL_PRO, # #1
+            OPENROUTER_GPT_6_ASTRA,     # #1 Sep 2026 OpenAI flagship
             OPENROUTER_CLAUDE_OPUS_5,   # #2 latest Anthropic
-            OPENROUTER_CLAUDE_OPUS_4_8, # #3
-            OPENROUTER_CLAUDE_SONNET_5, # #4
-            OPENROUTER_GEMINI_3_1_PRO,  # #5 newest Google
-            OPENROUTER_GEMINI_3_PRO,    # #6
-            OPENROUTER_GEMINI_2_PRO,    # #7
-            OPENROUTER_CLAUDE_SONNET_4, # #8
-            OPENROUTER_O3,              # #9 reasoning
-            OPENROUTER_GROK_4_5,        # #10
-            OPENROUTER_GROK_4,          # #11
-            OPENROUTER_LLAMA_4,         # #12
-            OPENROUTER_MISTRAL_LARGE,   # #13
+            OPENROUTER_CLAUDE_FABLE_5_1,# #3 Fable 5.1
+            OPENROUTER_GPT_5_6_SOL_PRO, # #4 Sol Pro
+            OPENROUTER_CLAUDE_SONNET_5, # #5
+            OPENROUTER_GEMINI_3_1_PRO,  # #6 newest Google Pro
+            OPENROUTER_GROK_4_6,        # #7
+            OPENROUTER_GEMINI_3_8_FLASH,# #8 flash
+            OPENROUTER_CLAUDE_OPUS_4_8, # #9
+            OPENROUTER_GEMINI_3_PRO,    # #10
+            OPENROUTER_GEMINI_2_PRO,    # #11
+            OPENROUTER_CLAUDE_SONNET_4, # #12
+            OPENROUTER_O3,              # #13 reasoning
+            OPENROUTER_GROK_4_5,        # #14
+            OPENROUTER_GROK_4,          # #15
+            OPENROUTER_LLAMA_4,         # #16
+            OPENROUTER_MISTRAL_LARGE,   # #17
             OPENROUTER_CLAUDE_OPUS_4,   # legacy Opus fallback
             OPENROUTER_GPT_4O,          # fallback
         ]
@@ -1799,66 +1819,66 @@ def _build_deterministic_model_catalog_answer(prompt: str, metadata: Optional[Di
     free_items = [
         {
             "rank": 1,
-            "display": "Llama 3.3 70B Instruct",
-            "model_id": "meta-llama/llama-3.3-70b-instruct:free",
-            "best_for": "general reasoning, dialogue, multilingual tasks",
-            "connection": "public free OpenRouter slug; in LLMHive select the slug in the model picker or route via Groq with `native_model_id=llama-3.3-70b-versatile` when configured",
-            "docs": "https://ai.meta.com/llama/",
-            "caveat": "Public-free availability can be rate-limited upstream.",
+            "display": "DeepSeek Flash (V4.1)",
+            "model_id": "deepseek/deepseek-chat",
+            "best_for": "fast reasoning, coding, math, general agent tasks",
+            "connection": "LLMHive direct/provider route with `preferred_api=deepseek` and `native_model_id=deepseek-flash`",
+            "docs": "https://api-docs.deepseek.com/",
+            "caveat": "Direct DeepSeek route (V4.1 Flash class); strongest free-tier reliability path.",
         },
         {
             "rank": 2,
-            "display": "Qwen3 Next 80B",
-            "model_id": "qwen/qwen3-next-80b-a3b-instruct:free",
-            "best_for": "math, Chinese language, multilingual, long-context work",
-            "connection": "public free slug; in LLMHive select the exact slug or route through Dashscope when configured",
-            "docs": "https://help.aliyun.com/zh/model-studio/",
-            "caveat": "Use `qwen/qwen3-coder:free` as the coding-specific secondary Qwen option.",
+            "display": "Gemini 3.8 Flash",
+            "model_id": "google/gemini-3.8-flash",
+            "best_for": "fast answers, long context, multilingual work",
+            "connection": "LLMHive Google AI Studio route with `preferred_api=google` and `native_model_id=gemini-3.8-flash`",
+            "docs": "https://ai.google.dev/gemini-api/docs",
+            "caveat": "Uses Google free quota when configured; also available on OpenRouter.",
         },
         {
             "rank": 3,
-            "display": "DeepSeek Chat",
-            "model_id": "deepseek/deepseek-chat",
-            "best_for": "fast reasoning, coding, general agent tasks",
-            "connection": "LLMHive direct/provider route with `preferred_api=deepseek` and `native_model_id=deepseek-chat`",
-            "docs": "https://api-docs.deepseek.com/",
-            "caveat": "Direct/provider route surfaced in LLMHive; not a generic legacy open-weight model.",
+            "display": "NVIDIA Nemotron 3 Super 120B",
+            "model_id": "nvidia/nemotron-3-super-120b-a12b:free",
+            "best_for": "reasoning, coding, long-context RAG",
+            "connection": "public free OpenRouter slug in the LLMHive model picker",
+            "docs": "https://openrouter.ai/nvidia/nemotron-3-super-120b-a12b:free",
+            "caveat": "Live-verified OpenRouter :free route (Sep 2026).",
         },
         {
             "rank": 4,
-            "display": "Mistral Small 3.1 24B Instruct",
-            "model_id": "mistralai/mistral-small-3.1-24b-instruct:free",
-            "best_for": "fast general reasoning",
-            "connection": "public free slug or Mistral direct route with `native_model_id=mistral_small` when configured",
-            "docs": "https://docs.mistral.ai/",
-            "caveat": "Good latency/quality tradeoff.",
+            "display": "NVIDIA Nemotron 3 Ultra 550B",
+            "model_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+            "best_for": "hard reasoning, math, complex coding",
+            "connection": "public free OpenRouter slug in the LLMHive model picker",
+            "docs": "https://openrouter.ai/nvidia/nemotron-3-ultra-550b-a55b:free",
+            "caveat": "Largest current Nemotron free SKU; may be slower.",
         },
         {
             "rank": 5,
-            "display": "Gemma 3 27B IT",
-            "model_id": "google/gemma-3-27b-it:free",
-            "best_for": "multilingual reasoning and math",
-            "connection": "public free slug or Google route with `native_model_id=gemma-3-27b-it` when configured",
-            "docs": "https://openrouter.ai/google/gemma-3-27b-it:free",
-            "caveat": "Public-free availability can be rate-limited upstream.",
+            "display": "Llama 3.3 70B Instruct",
+            "model_id": "meta-llama/llama-3.3-70b-instruct:free",
+            "best_for": "general reasoning, dialogue, multilingual tasks",
+            "connection": "public free OpenRouter slug when listed; in LLMHive prefer Groq with `native_model_id=llama-3.3-70b-versatile`",
+            "docs": "https://ai.meta.com/llama/",
+            "caveat": "OpenRouter :free may 404; Groq direct route is the reliable free path.",
         },
         {
             "rank": 6,
-            "display": "Hermes 3 Llama 3.1 405B",
-            "model_id": "nousresearch/hermes-3-llama-3.1-405b:free",
-            "best_for": "complex reasoning and code generation",
-            "connection": "public free OpenRouter slug in the LLMHive model picker",
-            "docs": "https://ai.meta.com/llama/",
-            "caveat": "Large model; upstream free route may throttle.",
+            "display": "Gemma 4 31B IT",
+            "model_id": "google/gemma-4-31b-it:free",
+            "best_for": "multilingual dialogue and general reasoning",
+            "connection": "public free OpenRouter slug or Google route with `native_model_id=gemma-4-31b-it`",
+            "docs": "https://openrouter.ai/google/gemma-4-31b-it:free",
+            "caveat": "Public-free availability can be rate-limited upstream.",
         },
         {
             "rank": 7,
-            "display": "Arcee Trinity Large",
-            "model_id": "arcee-ai/trinity-large-preview:free",
-            "best_for": "conversation, roleplay, tool use",
-            "connection": "public free OpenRouter slug in the LLMHive model picker",
-            "docs": "https://openrouter.ai/arcee-ai/trinity-large-preview:free",
-            "caveat": "Strong agentic option when available.",
+            "display": "Qwen3 Next 80B",
+            "model_id": "qwen/qwen3-next-80b-a3b-instruct:free",
+            "best_for": "math, Chinese language, multilingual, long-context work",
+            "connection": "OpenRouter :free retired; in LLMHive route through Dashscope when configured",
+            "docs": "https://help.aliyun.com/zh/model-studio/",
+            "caveat": "Use `qwen/qwen3-coder:free` as the coding-specific secondary Qwen option.",
         },
         {
             "rank": 8,

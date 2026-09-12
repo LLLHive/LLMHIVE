@@ -3,6 +3,125 @@
   "_source": "data/generated/frontier_roster.json",
   "registry_additions": [
     {
+      "registry_key": "gpt-6-astra",
+      "provider": "openai",
+      "model_id": "gpt-6-astra",
+      "openrouter_slug": "openai/gpt-6-astra",
+      "display_name": "GPT-6 Astra",
+      "release_date": "2026-09",
+      "context_window": 1000000,
+      "reasoning_strength": 0.995,
+      "coding_strength": 0.99,
+      "math_strength": 0.99,
+      "rag_strength": 0.92,
+      "dialogue_strength": 0.95,
+      "capability_tags": [
+        "elite_reasoning",
+        "code_strong",
+        "agentic",
+        "long_context",
+        "math_strong"
+      ]
+    },
+    {
+      "registry_key": "gpt-6-astra-pro",
+      "provider": "openai",
+      "model_id": "gpt-6-astra-pro",
+      "openrouter_slug": "openai/gpt-6-astra-pro",
+      "display_name": "GPT-6 Astra Pro",
+      "release_date": "2026-09",
+      "context_window": 1000000,
+      "reasoning_strength": 0.998,
+      "coding_strength": 0.995,
+      "math_strength": 0.995,
+      "rag_strength": 0.93,
+      "dialogue_strength": 0.96,
+      "capability_tags": [
+        "elite_reasoning",
+        "code_strong",
+        "agentic",
+        "long_context",
+        "math_strong"
+      ]
+    },
+    {
+      "registry_key": "claude-fable-5.1",
+      "provider": "anthropic",
+      "model_id": "claude-fable-5-1",
+      "openrouter_slug": "anthropic/claude-fable-5.1",
+      "display_name": "Claude Fable 5.1",
+      "release_date": "2026-09",
+      "context_window": 1000000,
+      "reasoning_strength": 0.98,
+      "coding_strength": 0.97,
+      "math_strength": 0.95,
+      "rag_strength": 0.91,
+      "dialogue_strength": 0.97,
+      "capability_tags": [
+        "elite_reasoning",
+        "code_strong",
+        "agentic",
+        "creative"
+      ]
+    },
+    {
+      "registry_key": "gemini-3.8-flash",
+      "provider": "google",
+      "model_id": "gemini-3.8-flash",
+      "openrouter_slug": "google/gemini-3.8-flash",
+      "display_name": "Gemini 3.8 Flash",
+      "release_date": "2026-09",
+      "context_window": 1048576,
+      "reasoning_strength": 0.9,
+      "coding_strength": 0.88,
+      "math_strength": 0.89,
+      "rag_strength": 0.88,
+      "dialogue_strength": 0.87,
+      "capability_tags": [
+        "speed_tier",
+        "long_context",
+        "multimodal"
+      ]
+    },
+    {
+      "registry_key": "grok-4.6",
+      "provider": "xai",
+      "model_id": "grok-4.6",
+      "openrouter_slug": "x-ai/grok-4.6",
+      "display_name": "Grok 4.6",
+      "release_date": "2026-09",
+      "context_window": 256000,
+      "reasoning_strength": 0.95,
+      "coding_strength": 0.94,
+      "math_strength": 0.93,
+      "rag_strength": 0.88,
+      "dialogue_strength": 0.9,
+      "capability_tags": [
+        "elite_reasoning",
+        "code_strong",
+        "stem"
+      ]
+    },
+    {
+      "registry_key": "deepseek-v4.1-flash",
+      "provider": "deepseek",
+      "model_id": "deepseek-flash",
+      "openrouter_slug": "deepseek/deepseek-v4.1-flash",
+      "display_name": "DeepSeek V4.1 Flash",
+      "release_date": "2026-09",
+      "context_window": 163840,
+      "reasoning_strength": 0.9,
+      "coding_strength": 0.91,
+      "math_strength": 0.93,
+      "rag_strength": 0.84,
+      "dialogue_strength": 0.85,
+      "capability_tags": [
+        "speed_tier",
+        "code_strong",
+        "math_strong"
+      ]
+    },
+    {
       "registry_key": "claude-opus-5",
       "provider": "anthropic",
       "model_id": "claude-opus-5",

@@ -1,18 +1,138 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-07-31T17:18:51.327190+00:00",
+  "updated_at": "2026-09-12T04:13:38.843906+00:00",
   "marketing": {
-    "openai_flagship": "GPT-5.6 Sol Pro",
-    "featured_line": "GPT-5.6 Sol Pro \u00b7 Claude Opus 5 \u00b7 Gemini 3.1 Pro \u00b7 Grok 4.5 \u00b7 Kimi K3 \u00b7 350+ more",
-    "featured_orchestration_stack": "GPT-5.6 Sol Pro + Claude Opus 5 + Gemini 3.1 Pro",
-    "meta_description_models": "GPT-5.6 Sol Pro, Claude Opus 5, Gemini 3.1 Pro, Grok 4.5, Kimi K3 and 350+ more"
+    "openai_flagship": "GPT-6 Astra",
+    "featured_line": "GPT-6 Astra · Claude Opus 5 · Claude Fable 5.1 · Gemini 3.1 Pro · Grok 4.6 · Kimi K3 · 350+ more",
+    "featured_orchestration_stack": "GPT-6 Astra + Claude Opus 5 + Gemini 3.1 Pro",
+    "meta_description_models": "GPT-6 Astra, Claude Opus 5, Claude Fable 5.1, Gemini 3.1 Pro, Grok 4.6, Kimi K3 and 350+ more"
   },
   "ui_models": [
+    {
+      "model_id": "openai/gpt-6-astra-pro",
+      "name": "GPT-6 Astra Pro",
+      "provider": "openai",
+      "description": "OpenAI GPT-6 Astra Pro — newest OpenRouter Pro tier for hardest agent and reasoning workloads",
+      "capabilities": {
+        "vision": true,
+        "codeExecution": true,
+        "webSearch": true,
+        "reasoning": true
+      }
+    },
+    {
+      "model_id": "openai/gpt-6-astra",
+      "name": "GPT-6 Astra",
+      "provider": "openai",
+      "description": "OpenAI GPT-6 Astra — current OpenAI flagship for complex reasoning, coding, and agentic workflows",
+      "capabilities": {
+        "vision": true,
+        "codeExecution": true,
+        "webSearch": true,
+        "reasoning": true
+      }
+    },
+    {
+      "model_id": "anthropic/claude-fable-5.1",
+      "name": "Claude Fable 5.1",
+      "provider": "anthropic",
+      "description": "Anthropic Claude Fable 5.1 — newest Fable-class model for long-horizon agentic and creative work",
+      "capabilities": {
+        "vision": true,
+        "codeExecution": true,
+        "webSearch": true,
+        "reasoning": true
+      }
+    },
+    {
+      "model_id": "google/gemini-3.8-flash",
+      "name": "Gemini 3.8 Flash",
+      "provider": "google",
+      "description": "Google Gemini 3.8 Flash — latest Gemini Flash for speed and long-context work",
+      "capabilities": {
+        "vision": true,
+        "codeExecution": true,
+        "webSearch": true,
+        "reasoning": true
+      }
+    },
+    {
+      "model_id": "google/gemini-3.7-flash",
+      "name": "Gemini 3.7 Flash",
+      "provider": "google",
+      "description": "Google Gemini 3.7 Flash — prior Gemini Flash generation still widely available",
+      "capabilities": {
+        "vision": true,
+        "codeExecution": true,
+        "webSearch": true,
+        "reasoning": true
+      }
+    },
+    {
+      "model_id": "x-ai/grok-4.6",
+      "name": "Grok 4.6",
+      "provider": "x-ai",
+      "description": "xAI Grok 4.6 — newest Grok flagship for coding, knowledge work, and STEM",
+      "capabilities": {
+        "vision": true,
+        "codeExecution": true,
+        "webSearch": true,
+        "reasoning": true
+      }
+    },
+    {
+      "model_id": "deepseek/deepseek-v4.1-flash",
+      "name": "DeepSeek V4.1 Flash",
+      "provider": "deepseek",
+      "description": "DeepSeek V4.1 Flash — current DeepSeek flash/reasoning class on OpenRouter",
+      "capabilities": {
+        "vision": true,
+        "codeExecution": true,
+        "webSearch": true,
+        "reasoning": true
+      }
+    },
+    {
+      "model_id": "z-ai/glm-5.3",
+      "name": "GLM 5.3",
+      "provider": "z-ai",
+      "description": "Z.ai GLM 5.3 — strong multilingual and agentic Chinese frontier model",
+      "capabilities": {
+        "vision": true,
+        "codeExecution": true,
+        "webSearch": true,
+        "reasoning": true
+      }
+    },
+    {
+      "model_id": "z-ai/glm-5.3-flash",
+      "name": "GLM 5.3 Flash",
+      "provider": "z-ai",
+      "description": "Z.ai GLM 5.3 Flash — faster GLM 5.3 variant",
+      "capabilities": {
+        "vision": true,
+        "codeExecution": true,
+        "webSearch": true,
+        "reasoning": true
+      }
+    },
+    {
+      "model_id": "tencent/hy4-preview",
+      "name": "Hunyuan HY4 Preview",
+      "provider": "tencent",
+      "description": "Tencent Hunyuan HY4 preview — high-usage OpenRouter frontier model",
+      "capabilities": {
+        "vision": true,
+        "codeExecution": true,
+        "webSearch": true,
+        "reasoning": true
+      }
+    },
     {
       "model_id": "openai/gpt-5.6-sol-pro",
       "name": "GPT-5.6 Sol Pro",
       "provider": "openai",
-      "description": "OpenAI GPT-5.6 Sol Pro \u2014 flagship reasoning mode for complex coding, agents, and hard tasks",
+      "description": "OpenAI GPT-5.6 Sol Pro — flagship reasoning mode for complex coding, agents, and hard tasks",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -24,7 +144,7 @@
       "model_id": "openai/gpt-5.6-sol",
       "name": "GPT-5.6 Sol",
       "provider": "openai",
-      "description": "OpenAI GPT-5.6 Sol \u2014 current GPT-5.6 flagship for complex reasoning, coding, and agentic workflows",
+      "description": "OpenAI GPT-5.6 Sol — current GPT-5.6 flagship for complex reasoning, coding, and agentic workflows",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -36,7 +156,7 @@
       "model_id": "openai/gpt-5.6-terra-pro",
       "name": "GPT-5.6 Terra Pro",
       "provider": "openai",
-      "description": "OpenAI GPT-5.6 Terra Pro \u2014 balanced GPT-5.6 tier with elevated reasoning mode",
+      "description": "OpenAI GPT-5.6 Terra Pro — balanced GPT-5.6 tier with elevated reasoning mode",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -48,7 +168,7 @@
       "model_id": "openai/gpt-5.6-terra",
       "name": "GPT-5.6 Terra",
       "provider": "openai",
-      "description": "OpenAI GPT-5.6 Terra \u2014 balanced everyday GPT-5.6 between Sol and Luna",
+      "description": "OpenAI GPT-5.6 Terra — balanced everyday GPT-5.6 between Sol and Luna",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -60,7 +180,7 @@
       "model_id": "openai/gpt-5.6-luna-pro",
       "name": "GPT-5.6 Luna Pro",
       "provider": "openai",
-      "description": "OpenAI GPT-5.6 Luna Pro \u2014 fast cost-efficient GPT-5.6 with elevated reasoning mode",
+      "description": "OpenAI GPT-5.6 Luna Pro — fast cost-efficient GPT-5.6 with elevated reasoning mode",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -72,7 +192,7 @@
       "model_id": "openai/gpt-5.6-luna",
       "name": "GPT-5.6 Luna",
       "provider": "openai",
-      "description": "OpenAI GPT-5.6 Luna \u2014 fast, cost-efficient GPT-5.6 for high-volume latency-sensitive work",
+      "description": "OpenAI GPT-5.6 Luna — fast, cost-efficient GPT-5.6 for high-volume latency-sensitive work",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -84,7 +204,7 @@
       "model_id": "openai/gpt-5.5-pro",
       "name": "GPT-5.5 Pro",
       "provider": "openai",
-      "description": "OpenAI\u2019s current flagship on OpenRouter \u2014 long context, tools, and multimodal",
+      "description": "OpenAI’s current flagship on OpenRouter — long context, tools, and multimodal",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -96,7 +216,7 @@
       "model_id": "openai/gpt-5.5",
       "name": "GPT-5.5",
       "provider": "openai",
-      "description": "OpenAI GPT-5.5 on OpenRouter \u2014 flagship-class general, coding, and agent workloads",
+      "description": "OpenAI GPT-5.5 on OpenRouter — flagship-class general, coding, and agent workloads",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -108,7 +228,7 @@
       "model_id": "openai/gpt-5.4-pro",
       "name": "GPT-5.4 Pro",
       "provider": "openai",
-      "description": "OpenAI\u2019s top GPT-5.4 tier on OpenRouter for the hardest agent and reasoning workloads",
+      "description": "OpenAI’s top GPT-5.4 tier on OpenRouter for the hardest agent and reasoning workloads",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -240,19 +360,7 @@
       "model_id": "anthropic/claude-opus-5",
       "name": "Claude Opus 5",
       "provider": "anthropic",
-      "description": "Anthropic Claude Opus 5 \u2014 flagship for demanding reasoning, coding, and long-horizon agents",
-      "capabilities": {
-        "vision": true,
-        "codeExecution": true,
-        "webSearch": false,
-        "reasoning": true
-      }
-    },
-    {
-      "model_id": "anthropic/claude-opus-5-fast",
-      "name": "Claude Opus 5 Fast",
-      "provider": "anthropic",
-      "description": "Anthropic Claude Opus 5 Fast \u2014 same Opus 5 capabilities with higher speed at premium pricing",
+      "description": "Anthropic Claude Opus 5 — flagship for demanding reasoning, coding, and long-horizon agents",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -264,7 +372,7 @@
       "model_id": "anthropic/claude-sonnet-5",
       "name": "Claude Sonnet 5",
       "provider": "anthropic",
-      "description": "Anthropic Claude Sonnet 5 \u2014 frontier Sonnet for coding, agents, and professional work",
+      "description": "Anthropic Claude Sonnet 5 — frontier Sonnet for coding, agents, and professional work",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -276,7 +384,7 @@
       "model_id": "anthropic/claude-fable-5",
       "name": "Claude Fable 5",
       "provider": "anthropic",
-      "description": "Anthropic Claude Fable 5 \u2014 Mythos-class model for autonomous knowledge work and coding",
+      "description": "Anthropic Claude Fable 5 — Mythos-class model for autonomous knowledge work and coding",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -288,7 +396,7 @@
       "model_id": "anthropic/claude-opus-4.8",
       "name": "Claude Opus 4.8",
       "provider": "anthropic",
-      "description": "Anthropic's latest Opus on OpenRouter \u2014 agentic orchestration, coding, and long-horizon knowledge work",
+      "description": "Anthropic's latest Opus on OpenRouter — agentic orchestration, coding, and long-horizon knowledge work",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -300,7 +408,7 @@
       "model_id": "anthropic/claude-opus-4.7",
       "name": "Claude Opus 4.7",
       "provider": "anthropic",
-      "description": "Anthropic\u2019s latest Opus on OpenRouter for maximum quality on long, difficult tasks",
+      "description": "Anthropic’s latest Opus on OpenRouter for maximum quality on long, difficult tasks",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -312,7 +420,7 @@
       "model_id": "anthropic/claude-opus-4.5",
       "name": "Claude Opus 4.5",
       "provider": "anthropic",
-      "description": "Anthropic\u2019s strongest model for complex analysis and writing",
+      "description": "Anthropic’s strongest model for complex analysis and writing",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -360,7 +468,7 @@
       "model_id": "google/gemini-3.6-flash",
       "name": "Gemini 3.6 Flash",
       "provider": "google",
-      "description": "Google Gemini 3.6 Flash \u2014 high-efficiency multimodal for coding, agents, and polished app/web work",
+      "description": "Google Gemini 3.6 Flash — high-efficiency multimodal for coding, agents, and polished app/web work",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -372,7 +480,7 @@
       "model_id": "google/gemini-3.5-flash",
       "name": "Gemini 3.5 Flash",
       "provider": "google",
-      "description": "Google Gemini 3.5 Flash \u2014 near-Pro coding/reasoning at Flash-tier cost and speed",
+      "description": "Google Gemini 3.5 Flash — near-Pro coding/reasoning at Flash-tier cost and speed",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -384,7 +492,7 @@
       "model_id": "google/gemini-3.5-flash-lite",
       "name": "Gemini 3.5 Flash Lite",
       "provider": "google",
-      "description": "Google Gemini 3.5 Flash Lite \u2014 efficient subagent and focused-task execution model",
+      "description": "Google Gemini 3.5 Flash Lite — efficient subagent and focused-task execution model",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -396,7 +504,7 @@
       "model_id": "google/gemini-3.1-pro-preview",
       "name": "Gemini 3.1 Pro",
       "provider": "google",
-      "description": "Google\u2019s latest long-context multimodal flagship (preview)",
+      "description": "Google’s latest long-context multimodal flagship (preview)",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -456,7 +564,7 @@
       "model_id": "deepseek/deepseek-v4-flash-0731",
       "name": "DeepSeek V4 Flash 0731",
       "provider": "deepseek",
-      "description": "DeepSeek V4 Flash 0731 \u2014 re-post-trained sparse MoE flash tier for fast coding and math",
+      "description": "DeepSeek V4 Flash 0731 — re-post-trained sparse MoE flash tier for fast coding and math",
       "capabilities": {
         "vision": false,
         "codeExecution": true,
@@ -492,7 +600,7 @@
       "model_id": "deepseek/deepseek-v4-pro",
       "name": "DeepSeek V4 Pro",
       "provider": "deepseek",
-      "description": "DeepSeek V4 flagship on OpenRouter \u2014 strong agent, math, and coding",
+      "description": "DeepSeek V4 flagship on OpenRouter — strong agent, math, and coding",
       "capabilities": {
         "vision": false,
         "codeExecution": true,
@@ -516,7 +624,7 @@
       "model_id": "x-ai/grok-4.5",
       "name": "Grok 4.5",
       "provider": "xai",
-      "description": "xAI Grok 4.5 \u2014 frontier coding, knowledge work, and STEM performance",
+      "description": "xAI Grok 4.5 — frontier coding, knowledge work, and STEM performance",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -552,7 +660,7 @@
       "model_id": "meta-llama/llama-4-maverick",
       "name": "Llama 4 Maverick",
       "provider": "meta",
-      "description": "Meta\u2019s latest open-weights class model on OpenRouter",
+      "description": "Meta’s latest open-weights class model on OpenRouter",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -564,7 +672,7 @@
       "model_id": "meta-llama/llama-4-scout",
       "name": "Llama 4 Scout",
       "provider": "meta",
-      "description": "Meta Llama 4 Scout on OpenRouter \u2014 efficient long-context variant",
+      "description": "Meta Llama 4 Scout on OpenRouter — efficient long-context variant",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -576,7 +684,7 @@
       "model_id": "moonshotai/kimi-k3",
       "name": "Kimi K3",
       "provider": "moonshot",
-      "description": "Moonshot Kimi K3 \u2014 2.8T open-weight multimodal reasoning for complex coding and long-horizon agents",
+      "description": "Moonshot Kimi K3 — 2.8T open-weight multimodal reasoning for complex coding and long-horizon agents",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -588,7 +696,7 @@
       "model_id": "moonshotai/kimi-k2.7-code",
       "name": "Kimi K2.7 Code",
       "provider": "moonshot",
-      "description": "Moonshot Kimi K2.7 Code \u2014 coding-focused long-context model for end-to-end programming tasks",
+      "description": "Moonshot Kimi K2.7 Code — coding-focused long-context model for end-to-end programming tasks",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -600,7 +708,7 @@
       "model_id": "moonshotai/kimi-k2.6",
       "name": "Kimi K2.6",
       "provider": "moonshot",
-      "description": "Moonshot Kimi K2.6 on OpenRouter \u2014 long-context agent and coding",
+      "description": "Moonshot Kimi K2.6 on OpenRouter — long-context agent and coding",
       "capabilities": {
         "vision": false,
         "codeExecution": true,
@@ -612,7 +720,7 @@
       "model_id": "qwen/qwen3.7-max",
       "name": "Qwen3.7 Max",
       "provider": "qwen",
-      "description": "Alibaba Qwen3.7 Max \u2014 flagship agent-centric text model for hard multilingual and coding workloads",
+      "description": "Alibaba Qwen3.7 Max — flagship agent-centric text model for hard multilingual and coding workloads",
       "capabilities": {
         "vision": false,
         "codeExecution": true,
@@ -624,7 +732,7 @@
       "model_id": "qwen/qwen3.7-plus",
       "name": "Qwen3.7 Plus",
       "provider": "qwen",
-      "description": "Alibaba Qwen3.7 Plus \u2014 cost-effective multimodal Qwen3.7 for agents and general work",
+      "description": "Alibaba Qwen3.7 Plus — cost-effective multimodal Qwen3.7 for agents and general work",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -636,7 +744,7 @@
       "model_id": "qwen/qwen3.7-flash",
       "name": "Qwen3.7 Flash",
       "provider": "qwen",
-      "description": "Alibaba Qwen3.7 Flash \u2014 vision-language reasoning for multimodal agents and visual coding",
+      "description": "Alibaba Qwen3.7 Flash — vision-language reasoning for multimodal agents and visual coding",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -672,7 +780,7 @@
       "model_id": "mistralai/mistral-medium-3-5",
       "name": "Mistral Medium 3.5",
       "provider": "mistralai",
-      "description": "Mistral Medium 3.5 \u2014 dense 128B multimodal instruction model for agentic workflows",
+      "description": "Mistral Medium 3.5 — dense 128B multimodal instruction model for agentic workflows",
       "capabilities": {
         "vision": true,
         "codeExecution": true,
@@ -684,7 +792,7 @@
       "model_id": "z-ai/glm-5.2",
       "name": "GLM 5.2",
       "provider": "zhipu",
-      "description": "Z.ai GLM 5.2 \u2014 large-scale long-horizon reasoning with 1M context",
+      "description": "Z.ai GLM 5.2 — large-scale long-horizon reasoning with 1M context",
       "capabilities": {
         "vision": false,
         "codeExecution": true,
@@ -696,7 +804,7 @@
       "model_id": "z-ai/glm-5.1",
       "name": "GLM 5.1",
       "provider": "zhipu",
-      "description": "Z.ai GLM 5.1 \u2014 major coding leap for long-horizon programming tasks",
+      "description": "Z.ai GLM 5.1 — major coding leap for long-horizon programming tasks",
       "capabilities": {
         "vision": false,
         "codeExecution": true,
@@ -708,7 +816,7 @@
       "model_id": "mistralai/mistral-large-2512",
       "name": "Mistral Large 2512",
       "provider": "mistralai",
-      "description": "Mistral\u2019s latest large instruct model",
+      "description": "Mistral’s latest large instruct model",
       "capabilities": {
         "vision": false,
         "codeExecution": true,
@@ -720,7 +828,7 @@
       "model_id": "mistralai/mistral-medium-3.1",
       "name": "Mistral Medium 3.1",
       "provider": "mistralai",
-      "description": "Mistral Medium 3.1 on OpenRouter \u2014 balanced quality and cost",
+      "description": "Mistral Medium 3.1 on OpenRouter — balanced quality and cost",
       "capabilities": {
         "vision": false,
         "codeExecution": true,
@@ -744,6 +852,17 @@
   "paid_catalog": [
     {
       "rank": 1,
+      "model_id": "openai/gpt-6-astra",
+      "display": "GPT-6 Astra",
+      "provider": "OpenAI",
+      "preferred_api": "openai",
+      "native_model_id": "gpt-6-astra",
+      "best_for": "newest OpenAI flagship reasoning, coding, and agentic workflows",
+      "docs": "https://platform.openai.com/docs",
+      "caveat": "Premium direct/provider-paid route."
+    },
+    {
+      "rank": 2,
       "model_id": "anthropic/claude-opus-5",
       "display": "Claude Opus 5",
       "provider": "Anthropic",
@@ -754,7 +873,18 @@
       "caveat": "Premium direct/provider-paid route."
     },
     {
-      "rank": 2,
+      "rank": 3,
+      "model_id": "anthropic/claude-fable-5.1",
+      "display": "Claude Fable 5.1",
+      "provider": "Anthropic",
+      "preferred_api": "anthropic",
+      "native_model_id": "claude-fable-5-1",
+      "best_for": "long-horizon agents, creative synthesis, frontier Anthropic workloads",
+      "docs": "https://docs.anthropic.com/",
+      "caveat": "Premium direct/provider-paid route."
+    },
+    {
+      "rank": 4,
       "model_id": "openai/gpt-5.6-sol-pro",
       "display": "GPT-5.6 Sol Pro",
       "provider": "OpenAI",
@@ -762,10 +892,10 @@
       "native_model_id": "gpt-5.6-sol-pro",
       "best_for": "complex reasoning, coding, and agentic workflows",
       "docs": "https://platform.openai.com/docs",
-      "caveat": "Premium direct/provider-paid route."
+      "caveat": "Premium OpenRouter/pro route when Sol Pro is required."
     },
     {
-      "rank": 3,
+      "rank": 5,
       "model_id": "google/gemini-3.1-pro-preview",
       "display": "Gemini 3.1 Pro Preview",
       "provider": "Google",
@@ -776,18 +906,18 @@
       "caveat": "Paid Google/Gemini API route."
     },
     {
-      "rank": 4,
-      "model_id": "anthropic/claude-sonnet-5",
-      "display": "Claude Sonnet 5",
-      "provider": "Anthropic",
-      "preferred_api": "anthropic",
-      "native_model_id": "claude-sonnet-5",
-      "best_for": "balanced frontier coding, agents, and professional work",
-      "docs": "https://docs.anthropic.com/",
-      "caveat": "Paid direct route; better latency/cost than Opus for many agents."
+      "rank": 6,
+      "model_id": "x-ai/grok-4.6",
+      "display": "Grok 4.6",
+      "provider": "xAI",
+      "preferred_api": "grok",
+      "native_model_id": "grok-4.6",
+      "best_for": "coding, knowledge work, and STEM",
+      "docs": "https://docs.x.ai/docs",
+      "caveat": "Paid xAI/Grok route."
     },
     {
-      "rank": 5,
+      "rank": 7,
       "model_id": "moonshotai/kimi-k3",
       "display": "Kimi K3",
       "provider": "Moonshot",
@@ -798,18 +928,7 @@
       "caveat": "LLMHive direct API via Kimi keys / OpenRouter."
     },
     {
-      "rank": 6,
-      "model_id": "x-ai/grok-4.5",
-      "display": "Grok 4.5",
-      "provider": "xAI",
-      "preferred_api": "grok",
-      "native_model_id": "grok-4.5",
-      "best_for": "coding, knowledge work, and STEM",
-      "docs": "https://docs.x.ai/docs",
-      "caveat": "Paid xAI/Grok route."
-    },
-    {
-      "rank": 7,
+      "rank": 8,
       "model_id": "deepseek/deepseek-v4-pro",
       "display": "DeepSeek V4 Pro",
       "provider": "DeepSeek",
@@ -820,7 +939,18 @@
       "caveat": "Paid/provider route, often strong value per token."
     },
     {
-      "rank": 8,
+      "rank": 9,
+      "model_id": "google/gemini-3.8-flash",
+      "display": "Gemini 3.8 Flash",
+      "provider": "Google",
+      "preferred_api": "google",
+      "native_model_id": "gemini-3.8-flash",
+      "best_for": "high-speed long-context and cost-efficient frontier tasks",
+      "docs": "https://ai.google.dev/gemini-api/docs",
+      "caveat": "Flash class — prefer Pro for hardest workloads."
+    },
+    {
+      "rank": 10,
       "model_id": "qwen/qwen3.7-max",
       "display": "Qwen3.7 Max",
       "provider": "Alibaba",
@@ -832,6 +962,125 @@
     }
   ],
   "registry_additions": [
+    {
+      "registry_key": "gpt-6-astra",
+      "provider": "openai",
+      "model_id": "gpt-6-astra",
+      "openrouter_slug": "openai/gpt-6-astra",
+      "display_name": "GPT-6 Astra",
+      "release_date": "2026-09",
+      "context_window": 1000000,
+      "reasoning_strength": 0.995,
+      "coding_strength": 0.99,
+      "math_strength": 0.99,
+      "rag_strength": 0.92,
+      "dialogue_strength": 0.95,
+      "capability_tags": [
+        "elite_reasoning",
+        "code_strong",
+        "agentic",
+        "long_context",
+        "math_strong"
+      ]
+    },
+    {
+      "registry_key": "gpt-6-astra-pro",
+      "provider": "openai",
+      "model_id": "gpt-6-astra-pro",
+      "openrouter_slug": "openai/gpt-6-astra-pro",
+      "display_name": "GPT-6 Astra Pro",
+      "release_date": "2026-09",
+      "context_window": 1000000,
+      "reasoning_strength": 0.998,
+      "coding_strength": 0.995,
+      "math_strength": 0.995,
+      "rag_strength": 0.93,
+      "dialogue_strength": 0.96,
+      "capability_tags": [
+        "elite_reasoning",
+        "code_strong",
+        "agentic",
+        "long_context",
+        "math_strong"
+      ]
+    },
+    {
+      "registry_key": "claude-fable-5.1",
+      "provider": "anthropic",
+      "model_id": "claude-fable-5-1",
+      "openrouter_slug": "anthropic/claude-fable-5.1",
+      "display_name": "Claude Fable 5.1",
+      "release_date": "2026-09",
+      "context_window": 1000000,
+      "reasoning_strength": 0.98,
+      "coding_strength": 0.97,
+      "math_strength": 0.95,
+      "rag_strength": 0.91,
+      "dialogue_strength": 0.97,
+      "capability_tags": [
+        "elite_reasoning",
+        "code_strong",
+        "agentic",
+        "creative"
+      ]
+    },
+    {
+      "registry_key": "gemini-3.8-flash",
+      "provider": "google",
+      "model_id": "gemini-3.8-flash",
+      "openrouter_slug": "google/gemini-3.8-flash",
+      "display_name": "Gemini 3.8 Flash",
+      "release_date": "2026-09",
+      "context_window": 1048576,
+      "reasoning_strength": 0.9,
+      "coding_strength": 0.88,
+      "math_strength": 0.89,
+      "rag_strength": 0.88,
+      "dialogue_strength": 0.87,
+      "capability_tags": [
+        "speed_tier",
+        "long_context",
+        "multimodal"
+      ]
+    },
+    {
+      "registry_key": "grok-4.6",
+      "provider": "xai",
+      "model_id": "grok-4.6",
+      "openrouter_slug": "x-ai/grok-4.6",
+      "display_name": "Grok 4.6",
+      "release_date": "2026-09",
+      "context_window": 256000,
+      "reasoning_strength": 0.95,
+      "coding_strength": 0.94,
+      "math_strength": 0.93,
+      "rag_strength": 0.88,
+      "dialogue_strength": 0.9,
+      "capability_tags": [
+        "elite_reasoning",
+        "code_strong",
+        "stem"
+      ]
+    },
+    {
+      "registry_key": "deepseek-v4.1-flash",
+      "provider": "deepseek",
+      "model_id": "deepseek-flash",
+      "openrouter_slug": "deepseek/deepseek-v4.1-flash",
+      "display_name": "DeepSeek V4.1 Flash",
+      "release_date": "2026-09",
+      "context_window": 163840,
+      "reasoning_strength": 0.9,
+      "coding_strength": 0.91,
+      "math_strength": 0.93,
+      "rag_strength": 0.84,
+      "dialogue_strength": 0.85,
+      "capability_tags": [
+        "speed_tier",
+        "code_strong",
+        "math_strong"
+      ]
+    },
     {
       "registry_key": "claude-opus-5",
       "provider": "anthropic",

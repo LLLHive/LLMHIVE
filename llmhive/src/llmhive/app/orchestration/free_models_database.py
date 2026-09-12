@@ -8,10 +8,11 @@ characteristics, strengths, limitations, and optimal use cases.
 This enables intelligent model selection for the FREE tier orchestration,
 allowing us to leverage the right models for each task type.
 
-IMPORTANT: All model IDs here MUST match EXACTLY what OpenRouter expects.
-Use the `:free` suffix for free-tier access.
+IMPORTANT: Prefer live OpenRouter `:free` IDs when present. Direct-provider
+entries (DeepSeek, Google AI Studio, Groq, DashScope, Mistral) may omit `:free`
+and set preferred_api + native_model_id for ROUTING_V2.
 
-Last Updated: January 30, 2026
+Last Updated: September 12, 2026
 """
 
 from dataclasses import dataclass, field
@@ -86,37 +87,205 @@ class FreeModelInfo:
 FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
     # =========================================================================
     # ORDERING: reliably-available models FIRST, rate-limited models later.
-    # _filter_free_models() uses list(FREE_MODELS_DB.keys())[:3] as fallback,
-    # so the first entries must be models that respond consistently.
-    # Live-tested Feb 28, 2026 against OpenRouter.
+    # _filter_free_models() uses list(FREE_MODELS_DB.keys())[:3] as fallback.
+    # Live-verified Sep 12, 2026 (OpenRouter + DeepSeek + Google AI Studio).
     # =========================================================================
-    # DISABLED (404): tngtech/deepseek-r1t2-chimera:free, google/gemini-2.0-flash-exp:free,
-    #   meta-llama/llama-3.1-405b-instruct:free, meta-llama/llama-3.2-3b-instruct:free,
-    #   deepseek/deepseek-r1-0528:free, moonshotai/kimi-k2:free
+    # OpenRouter :free is now a short list (~19). Most Jan/Feb 2026 free slugs
+    # 404. Prefer direct APIs for free-tier reliability; keep live OR free as
+    # spillover.
 
     # =========================================================================
-    # RELIABLY AVAILABLE (200 OK on Feb 28 2026) — put first
+    # DIRECT / RELIABLE (put first)
     # =========================================================================
     "deepseek/deepseek-chat": FreeModelInfo(
         model_id="deepseek/deepseek-chat",
-        display_name="DeepSeek Chat (V3.2-Speciale)",
+        display_name="DeepSeek Flash (V4.1)",
         provider="DeepSeek",
         context_window=163840,
         speed_tier=SpeedTier.FAST,
         strengths=[
             ModelStrength.REASONING,
             ModelStrength.CODING,
+            ModelStrength.MATH,
             ModelStrength.SPEED,
         ],
-        best_for=["Fast reasoning", "Code generation", "General tasks"],
-        notes="Fast general-purpose model, 90% on HMMT 2025, routes to direct API",
+        best_for=["Fast reasoning", "Code generation", "Math", "General tasks"],
+        notes="Routes to DeepSeek direct deepseek-flash (V4.1 Flash class); deepseek-chat still accepted",
         verified_working=True,
         preferred_api="deepseek",
-        native_model_id="deepseek-chat",
+        native_model_id="deepseek-flash",
+        performance_score=78.0,
+        capability_score=75.0,
+        supports_tools=True,
     ),
-    
+
+    "google/gemini-3.8-flash": FreeModelInfo(
+        model_id="google/gemini-3.8-flash",
+        display_name="Gemini 3.8 Flash",
+        provider="Google",
+        context_window=1048576,
+        speed_tier=SpeedTier.FAST,
+        strengths=[
+            ModelStrength.SPEED,
+            ModelStrength.LONG_CONTEXT,
+            ModelStrength.REASONING,
+            ModelStrength.MULTILINGUAL,
+        ],
+        best_for=["Fast answers", "Long context", "Multimodal text tasks"],
+        notes="Google AI Studio free quota via ROUTING_V2; also on OpenRouter",
+        verified_working=True,
+        preferred_api="google",
+        native_model_id="gemini-3.8-flash",
+        performance_score=76.0,
+        capability_score=74.0,
+        supports_tools=True,
+    ),
+
+    "meta-llama/llama-3.3-70b-instruct:free": FreeModelInfo(
+        model_id="meta-llama/llama-3.3-70b-instruct:free",
+        display_name="Llama 3.3 70B Instruct",
+        provider="Meta",
+        context_window=131072,
+        speed_tier=SpeedTier.FAST,
+        strengths=[
+            ModelStrength.REASONING,
+            ModelStrength.DIALOGUE,
+            ModelStrength.CODING,
+            ModelStrength.MULTILINGUAL,
+        ],
+        best_for=["Dialogue", "General reasoning", "Coding"],
+        notes="OpenRouter :free may 404; routes to Groq llama-3.3-70b-versatile",
+        verified_working=True,
+        preferred_api="groq",
+        native_model_id="llama-3.3-70b-versatile",
+        performance_score=68.0,
+        capability_score=60.0,
+        supports_tools=True,
+    ),
+
     # =========================================================================
-    # QWEN MODELS
+    # LIVE OPENROUTER :free (chat-probed Sep 12 2026)
+    # =========================================================================
+    "nvidia/nemotron-3-super-120b-a12b:free": FreeModelInfo(
+        model_id="nvidia/nemotron-3-super-120b-a12b:free",
+        display_name="NVIDIA Nemotron 3 Super 120B",
+        provider="NVIDIA",
+        context_window=262144,
+        speed_tier=SpeedTier.MEDIUM,
+        strengths=[
+            ModelStrength.REASONING,
+            ModelStrength.CODING,
+            ModelStrength.LONG_CONTEXT,
+            ModelStrength.RAG,
+        ],
+        best_for=["Reasoning", "Coding", "Long context"],
+        notes="Live OpenRouter free — verified 200 OK Sep 12 2026",
+        verified_working=True,
+        performance_score=72.0,
+        capability_score=70.0,
+        supports_tools=True,
+    ),
+
+    "nvidia/nemotron-3-ultra-550b-a55b:free": FreeModelInfo(
+        model_id="nvidia/nemotron-3-ultra-550b-a55b:free",
+        display_name="NVIDIA Nemotron 3 Ultra 550B",
+        provider="NVIDIA",
+        context_window=262144,
+        speed_tier=SpeedTier.SLOW,
+        strengths=[
+            ModelStrength.REASONING,
+            ModelStrength.MATH,
+            ModelStrength.CODING,
+            ModelStrength.LONG_CONTEXT,
+        ],
+        best_for=["Hard reasoning", "Math", "Complex coding"],
+        notes="Live OpenRouter free — largest Nemotron free SKU",
+        verified_working=True,
+        performance_score=74.0,
+        capability_score=72.0,
+        supports_tools=True,
+    ),
+
+    "nvidia/nemotron-3.5-lightning:free": FreeModelInfo(
+        model_id="nvidia/nemotron-3.5-lightning:free",
+        display_name="NVIDIA Nemotron 3.5 Lightning",
+        provider="NVIDIA",
+        context_window=131072,
+        speed_tier=SpeedTier.FAST,
+        strengths=[
+            ModelStrength.SPEED,
+            ModelStrength.REASONING,
+            ModelStrength.CODING,
+        ],
+        best_for=["Fast inference", "Quick coding"],
+        notes="Live OpenRouter free — speed-oriented Nemotron",
+        verified_working=True,
+        performance_score=70.0,
+        capability_score=68.0,
+        supports_tools=True,
+    ),
+
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": FreeModelInfo(
+        model_id="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+        display_name="NVIDIA Nemotron 3 Nano Omni Reasoning",
+        provider="NVIDIA",
+        context_window=256000,
+        speed_tier=SpeedTier.MEDIUM,
+        strengths=[
+            ModelStrength.REASONING,
+            ModelStrength.MATH,
+            ModelStrength.LONG_CONTEXT,
+        ],
+        best_for=["Reasoning", "Math", "RAG"],
+        notes="Live OpenRouter free — reasoning-tuned nano",
+        verified_working=True,
+        performance_score=69.0,
+        capability_score=66.0,
+    ),
+
+    "google/gemma-4-31b-it:free": FreeModelInfo(
+        model_id="google/gemma-4-31b-it:free",
+        display_name="Gemma 4 31B IT",
+        provider="Google",
+        context_window=131072,
+        speed_tier=SpeedTier.MEDIUM,
+        strengths=[
+            ModelStrength.REASONING,
+            ModelStrength.MULTILINGUAL,
+            ModelStrength.DIALOGUE,
+            ModelStrength.MATH,
+        ],
+        best_for=["Multilingual", "Dialogue", "General reasoning"],
+        notes="Live OpenRouter free (may throttle); Google Studio also has gemma-4-31b-it",
+        verified_working=True,
+        preferred_api="google",
+        native_model_id="gemma-4-31b-it",
+        performance_score=71.0,
+        capability_score=68.0,
+    ),
+
+    "google/gemma-4-26b-a4b-it:free": FreeModelInfo(
+        model_id="google/gemma-4-26b-a4b-it:free",
+        display_name="Gemma 4 26B A4B IT",
+        provider="Google",
+        context_window=131072,
+        speed_tier=SpeedTier.FAST,
+        strengths=[
+            ModelStrength.SPEED,
+            ModelStrength.MULTILINGUAL,
+            ModelStrength.DIALOGUE,
+        ],
+        best_for=["Fast multilingual", "Dialogue"],
+        notes="Live OpenRouter free; Google Studio gemma-4-26b-a4b-it",
+        verified_working=True,
+        preferred_api="google",
+        native_model_id="gemma-4-26b-a4b-it",
+        performance_score=67.0,
+        capability_score=64.0,
+    ),
+
+    # =========================================================================
+    # DIRECT FALLBACKS (OR :free gone; keep preferred_api routes)
     # =========================================================================
     "qwen/qwen3-next-80b-a3b-instruct:free": FreeModelInfo(
         model_id="qwen/qwen3-next-80b-a3b-instruct:free",
@@ -130,13 +299,15 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
             ModelStrength.MULTILINGUAL,
             ModelStrength.LONG_CONTEXT,
         ],
-        best_for=["Math", "Chinese language", "Long context tasks"],
-        notes="Strong math and multilingual support, 262K context",
+        best_for=["Math", "Chinese language", "Long context"],
+        notes="OpenRouter :free retired; routes to DashScope when configured",
         verified_working=True,
         preferred_api="dashscope",
         native_model_id="qwen3-next-80b-a3b-instruct",
+        performance_score=70.0,
+        capability_score=68.0,
     ),
-    
+
     "qwen/qwen3-coder:free": FreeModelInfo(
         model_id="qwen/qwen3-coder:free",
         display_name="Qwen3 Coder",
@@ -149,162 +320,13 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
             ModelStrength.LONG_CONTEXT,
         ],
         best_for=["Code generation", "Code review", "Tool calling"],
-        notes="🏆 RANK #3 - Best free coding model (74.2), specialized for programming",
+        notes="OpenRouter :free retired; routes to DashScope qwen3-coder-plus",
         verified_working=True,
-        performance_score=74.2,
-        capability_score=67.9,
-        supports_tools=True,
         preferred_api="dashscope",
         native_model_id="qwen3-coder-plus",
-    ),
-    
-    # =========================================================================
-    # ARCEE MODELS
-    # =========================================================================
-    "arcee-ai/trinity-large-preview:free": FreeModelInfo(
-        model_id="arcee-ai/trinity-large-preview:free",
-        display_name="Arcee Trinity Large",
-        provider="Arcee AI",
-        context_window=131072,
-        speed_tier=SpeedTier.MEDIUM,
-        strengths=[
-            ModelStrength.DIALOGUE,
-            ModelStrength.TOOL_USE,
-            ModelStrength.CREATIVE,
-        ],
-        best_for=["Conversation", "Roleplay", "Tool use"],
-        notes="🏆 RANK #9 - Excellent agentic model (61.9) with tool support",
-        verified_working=True,
-        performance_score=61.9,
-        capability_score=71.0,
+        performance_score=74.0,
+        capability_score=68.0,
         supports_tools=True,
-    ),
-    
-    "arcee-ai/trinity-mini:free": FreeModelInfo(
-        model_id="arcee-ai/trinity-mini:free",
-        display_name="Arcee Trinity Mini",
-        provider="Arcee AI",
-        context_window=131072,
-        speed_tier=SpeedTier.FAST,
-        strengths=[
-            ModelStrength.SPEED,
-            ModelStrength.CODING,
-        ],
-        best_for=["Fast responses", "Quick coding tasks"],
-        notes="Fast and capable for quick tasks",
-        verified_working=True,
-    ),
-    
-    # =========================================================================
-    # NVIDIA MODELS
-    # =========================================================================
-    "nvidia/nemotron-3-nano-30b-a3b:free": FreeModelInfo(
-        model_id="nvidia/nemotron-3-nano-30b-a3b:free",
-        display_name="NVIDIA Nemotron 3 Nano 30B",
-        provider="NVIDIA",
-        context_window=256000,
-        speed_tier=SpeedTier.MEDIUM,
-        strengths=[
-            ModelStrength.LONG_CONTEXT,
-            ModelStrength.RAG,
-        ],
-        best_for=["Long context", "Document analysis"],
-        notes="256K context - good for RAG",
-        verified_working=True,
-    ),
-    
-    "nvidia/nemotron-nano-12b-v2-vl:free": FreeModelInfo(
-        model_id="nvidia/nemotron-nano-12b-v2-vl:free",
-        display_name="NVIDIA Nemotron Nano 12B VL",
-        provider="NVIDIA",
-        context_window=128000,
-        speed_tier=SpeedTier.FAST,
-        strengths=[
-            ModelStrength.SPEED,
-        ],
-        best_for=["Fast inference", "Vision-language (limited)"],
-        notes="Fast nano model with some vision capability",
-        verified_working=True,
-    ),
-    
-    # =========================================================================
-    # OTHER MODELS
-    # =========================================================================
-    "nousresearch/hermes-3-llama-3.1-405b:free": FreeModelInfo(
-        model_id="nousresearch/hermes-3-llama-3.1-405b:free",
-        display_name="Hermes 3 Llama 3.1 405B",
-        provider="NousResearch",
-        context_window=131072,
-        speed_tier=SpeedTier.SLOW,
-        strengths=[
-            ModelStrength.REASONING,
-            ModelStrength.DIALOGUE,
-        ],
-        best_for=["Complex reasoning", "Extended dialogue"],
-        notes="🏆 RANK #7 - Massive model (62.0), thorough reasoning",
-        verified_working=True,
-        performance_score=62.0,
-        capability_score=0.0,
-        supports_tools=False,
-    ),
-    
-    "z-ai/glm-4.5-air:free": FreeModelInfo(
-        model_id="z-ai/glm-4.5-air:free",
-        display_name="GLM 4.5 Air",
-        provider="Zhipu AI",
-        context_window=131072,
-        speed_tier=SpeedTier.MEDIUM,
-        strengths=[
-            ModelStrength.MULTILINGUAL,
-            ModelStrength.DIALOGUE,
-        ],
-        best_for=["Multilingual tasks", "Chinese language"],
-        notes="Strong multilingual support, especially Chinese",
-        verified_working=True,
-    ),
-    
-    "upstage/solar-pro-3:free": FreeModelInfo(
-        model_id="upstage/solar-pro-3:free",
-        display_name="Solar Pro 3",
-        provider="Upstage",
-        context_window=128000,
-        speed_tier=SpeedTier.MEDIUM,
-        strengths=[
-            ModelStrength.MULTILINGUAL,
-            ModelStrength.DIALOGUE,
-        ],
-        best_for=["Korean language", "Dialogue"],
-        notes="🏆 RANK #6 - Strong multilingual model (66.0)",
-        verified_working=True,
-        performance_score=66.0,
-        capability_score=77.0,
-        supports_tools=True,
-    ),
-    
-    # =========================================================================
-    # RATE-LIMITED MODELS (429 on Feb 28 2026 — exist but throttled upstream)
-    # Placed after reliable models so _filter_free_models fallback picks
-    # working models first via list(FREE_MODELS_DB.keys())[:3]
-    # =========================================================================
-    "meta-llama/llama-3.3-70b-instruct:free": FreeModelInfo(
-        model_id="meta-llama/llama-3.3-70b-instruct:free",
-        display_name="Llama 3.3 70B Instruct",
-        provider="Meta",
-        context_window=131072,
-        speed_tier=SpeedTier.MEDIUM,
-        strengths=[
-            ModelStrength.REASONING,
-            ModelStrength.DIALOGUE,
-            ModelStrength.MULTILINGUAL,
-        ],
-        best_for=["General reasoning", "Dialogue", "Multilingual tasks"],
-        notes="GPT-4 level, 131K context — rate-limited upstream Feb 28 2026",
-        verified_working=True,
-        preferred_api="groq",
-        native_model_id="llama-3.3-70b-versatile",
-        performance_score=68.0,
-        capability_score=60.0,
-        supports_tools=False,
     ),
 
     "mistralai/mistral-small-3.1-24b-instruct:free": FreeModelInfo(
@@ -313,77 +335,36 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
         provider="Mistral",
         context_window=96000,
         speed_tier=SpeedTier.FAST,
-        strengths=[ModelStrength.REASONING, ModelStrength.SPEED],
+        strengths=[ModelStrength.REASONING, ModelStrength.SPEED, ModelStrength.CODING],
         best_for=["Fast reasoning", "General tasks"],
-        notes="Mistral direct API — avoids OpenRouter :free throttle",
+        notes="Mistral direct API — avoids OpenRouter :free churn",
         verified_working=True,
         preferred_api="mistral",
         native_model_id="mistral_small",
-        performance_score=67.9,
+        performance_score=67.0,
         capability_score=60.0,
     ),
 
-    "google/gemma-3-12b-it:free": FreeModelInfo(
-        model_id="google/gemma-3-12b-it:free",
-        display_name="Gemma 3 12B IT",
+    "google/gemini-2.5-flash": FreeModelInfo(
+        model_id="google/gemini-2.5-flash",
+        display_name="Gemini 2.5 Flash",
         provider="Google",
-        context_window=131072,
-        speed_tier=SpeedTier.MEDIUM,
-        strengths=[ModelStrength.MULTILINGUAL, ModelStrength.REASONING],
-        best_for=["Efficient multilingual tasks"],
-        notes="HF Inference or Google direct via ROUTING_V2",
-        verified_working=True,
-        preferred_api="huggingface",
-        native_model_id="google/gemma-3-12b-it",
-        performance_score=60.0,
-        capability_score=55.0,
-    ),
-
-    "google/gemma-3-27b-it:free": FreeModelInfo(
-        model_id="google/gemma-3-27b-it:free",
-        display_name="Gemma 3 27B IT",
-        provider="Google",
-        context_window=131072,
-        speed_tier=SpeedTier.MEDIUM,
+        context_window=1048576,
+        speed_tier=SpeedTier.FAST,
         strengths=[
-            ModelStrength.MULTILINGUAL,
-            ModelStrength.REASONING,
-            ModelStrength.MATH,
+            ModelStrength.SPEED,
+            ModelStrength.LONG_CONTEXT,
+            ModelStrength.RAG,
         ],
-        best_for=["Multilingual (140+ languages)", "Reasoning", "Math"],
-        notes="Google Gemma 3, 131K context — rate-limited upstream Feb 28 2026",
+        best_for=["Fast fallback", "Long context"],
+        notes="Stable Google AI Studio free-quota fallback behind 3.8 Flash",
         verified_working=True,
         preferred_api="google",
-        native_model_id="gemma-3-27b-it",
-        performance_score=65.0,
-        capability_score=58.0,
-        supports_tools=False,
+        native_model_id="gemini-2.5-flash",
+        performance_score=72.0,
+        capability_score=70.0,
+        supports_tools=True,
     ),
-
-    "nousresearch/hermes-3-llama-3.1-405b:free": FreeModelInfo(
-        model_id="nousresearch/hermes-3-llama-3.1-405b:free",
-        display_name="Hermes 3 Llama 3.1 405B",
-        provider="NousResearch",
-        context_window=131072,
-        speed_tier=SpeedTier.SLOW,
-        strengths=[
-            ModelStrength.REASONING,
-            ModelStrength.CODING,
-        ],
-        best_for=["Complex reasoning", "Code generation"],
-        notes="405B parameter model — rate-limited upstream Feb 28 2026",
-        verified_working=True,
-        preferred_api="openrouter",
-        performance_score=62.0,
-        capability_score=55.0,
-        supports_tools=False,
-    ),
-
-    # DISABLED (404 on OpenRouter):
-    # openai/gpt-oss-20b:free, openai/gpt-oss-120b:free,
-    # tngtech/deepseek-r1t-chimera:free, tngtech/deepseek-r1t2-chimera:free,
-    # tngtech/tng-r1t-chimera:free, deepseek/deepseek-r1-0528:free,
-    # moonshotai/kimi-k2:free
 }
 
 

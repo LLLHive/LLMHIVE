@@ -138,96 +138,93 @@ def get_models_for_category(category: str, use_free: bool = False) -> List[str]:
 # Key insight: Multi-model consensus + calculator + reranker = great quality even with free models
 # UPDATED: January 27, 2026 - Weekly optimization sync from OpenRouter API
 # =============================================================================
-# VERIFIED FREE MODELS from OpenRouter (January 30, 2026)
+# VERIFIED FREE MODELS — September 12, 2026
 # =============================================================================
-# Source: https://openrouter.ai/collections/free-models
-# Includes TOP-TIER models: DeepSeek R1, Llama 3.3 70B, Gemma 3 27B, Qwen3
+# Mix of direct free-quota routes (DeepSeek/Google/Groq) + live OpenRouter :free.
+# Most Feb 2026 :free slugs are gone; do not resurrect hermes/trinity/solar/glm-4.5-air.
 # =============================================================================
 FREE_MODELS = {
-    # TOP FREE MODELS — live-verified on OpenRouter (Feb 28 2026):
-    # OK:  nvidia/nemotron-3-nano-30b-a3b:free, arcee-ai/trinity-large-preview:free,
-    #      arcee-ai/trinity-mini:free, nvidia/nemotron-nano-12b-v2-vl:free,
-    #      z-ai/glm-4.5-air:free, upstage/solar-pro-3:free, deepseek/deepseek-chat
-    # 429: meta-llama/llama-3.3-70b-instruct:free, google/gemma-3-27b-it:free,
-    #      qwen/qwen3-coder:free, qwen/qwen3-next-80b-a3b-instruct:free,
-    #      nousresearch/hermes-3-llama-3.1-405b:free
-    # 404: deepseek/deepseek-r1-0528:free, moonshotai/kimi-k2:free
+    # Live-verified Sep 12 2026:
+    # Direct OK: deepseek-flash/chat, google gemini-3.8-flash, groq llama-3.3-70b
+    # OR free OK: nemotron-3-super/ultra/3.5-lightning
+    # OR free listed (may 429): gemma-4-31b-it:free
 
     "math": [
-        "deepseek/deepseek-chat",                      # 164K - DeepSeek V3, fast
-        "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - strong math
-        "meta-llama/llama-3.3-70b-instruct:free",      # 131K - GPT-4 level
-        "google/gemma-3-27b-it:free",                  # 131K - solid math
-        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K - reliable
+        "deepseek/deepseek-chat",
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+        "google/gemini-3.8-flash",
+        "qwen/qwen3-next-80b-a3b-instruct:free",
     ],
     "reasoning": [
-        "deepseek/deepseek-chat",                      # 164K - strong reasoning
-        "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - strong reasoning
-        "meta-llama/llama-3.3-70b-instruct:free",      # 131K - GPT-4 level
-        "google/gemma-3-27b-it:free",                  # 131K - solid reasoning
-        "arcee-ai/trinity-large-preview:free",         # 131K - agentic reasoning
+        "deepseek/deepseek-chat",
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "nvidia/nemotron-3-super-120b-a12b:free",
+        "google/gemini-3.8-flash",
+        "meta-llama/llama-3.3-70b-instruct:free",
     ],
     "coding": [
-        "qwen/qwen3-coder:free",                       # 262K - BEST for coding!
-        "deepseek/deepseek-chat",                      # 164K - excellent at code
-        "meta-llama/llama-3.3-70b-instruct:free",      # 131K - good coding
-        "arcee-ai/trinity-large-preview:free",         # 131K - agentic coding
-        "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - code capable
+        "deepseek/deepseek-chat",
+        "qwen/qwen3-coder:free",
+        "nvidia/nemotron-3-super-120b-a12b:free",
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "google/gemini-3.8-flash",
     ],
     "rag": [
-        "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - LONGEST for RAG!
-        "qwen/qwen3-coder:free",                       # 262K - long context
-        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K - long context
-        "deepseek/deepseek-chat",                      # 164K - great comprehension
-        "meta-llama/llama-3.3-70b-instruct:free",      # 131K - solid context
+        "google/gemini-3.8-flash",
+        "nvidia/nemotron-3-super-120b-a12b:free",
+        "qwen/qwen3-next-80b-a3b-instruct:free",
+        "deepseek/deepseek-chat",
+        "google/gemini-2.5-flash",
     ],
     "multilingual": [
-        "z-ai/glm-4.5-air:free",                       # 131K - strong multilingual
-        "google/gemma-3-27b-it:free",                  # 131K - 140+ languages
-        "meta-llama/llama-3.3-70b-instruct:free",      # 131K - 8 languages
-        "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - Chinese + others
-        "upstage/solar-pro-3:free",                    # 128K - Korean/multilingual
+        "google/gemma-4-31b-it:free",
+        "qwen/qwen3-next-80b-a3b-instruct:free",
+        "google/gemini-3.8-flash",
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "google/gemma-4-26b-a4b-it:free",
     ],
     "long_context": [
-        "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - LONGEST!
-        "qwen/qwen3-coder:free",                       # 262K context
-        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K context
-        "deepseek/deepseek-chat",                      # 164K context
-        "meta-llama/llama-3.3-70b-instruct:free",      # 131K context
+        "google/gemini-3.8-flash",
+        "nvidia/nemotron-3-super-120b-a12b:free",
+        "qwen/qwen3-next-80b-a3b-instruct:free",
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "google/gemini-2.5-flash",
     ],
     "speed": [
-        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K - fast & reliable
-        "arcee-ai/trinity-mini:free",                  # 131K - fast
-        "arcee-ai/trinity-large-preview:free",         # 131K - fast
-        "deepseek/deepseek-chat",                      # 164K - good speed
-        "google/gemma-3-27b-it:free",                  # 131K - fast inference
+        "google/gemini-3.8-flash",
+        "nvidia/nemotron-3.5-lightning:free",
+        "deepseek/deepseek-chat",
+        "google/gemini-2.5-flash",
+        "mistralai/mistral-small-3.1-24b-instruct:free",
     ],
     "dialogue": [
-        "meta-llama/llama-3.3-70b-instruct:free",      # 131K - BEST conversational
-        "arcee-ai/trinity-large-preview:free",         # 131K - chat/roleplay
-        "z-ai/glm-4.5-air:free",                       # 131K - good alignment
-        "google/gemma-3-27b-it:free",                  # 131K - natural dialogue
-        "deepseek/deepseek-chat",                      # 164K - thoughtful responses
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "google/gemma-4-31b-it:free",
+        "google/gemini-3.8-flash",
+        "deepseek/deepseek-chat",
+        "nvidia/nemotron-3-super-120b-a12b:free",
     ],
     "multimodal": [
-        "google/gemma-3-27b-it:free",                  # 131K - vision-language!
-        "nvidia/nemotron-3-nano-30b-a3b:free",         # 256K - capable
-        "nvidia/nemotron-nano-12b-v2-vl:free",         # 128K - vision
-        "meta-llama/llama-3.3-70b-instruct:free",      # Text fallback
+        "google/gemini-3.8-flash",
+        "google/gemma-4-31b-it:free",
+        "google/gemini-2.5-flash",
+        "google/gemma-4-26b-a4b-it:free",
+        "meta-llama/llama-3.3-70b-instruct:free",
     ],
     "tool_use": [
-        "arcee-ai/trinity-large-preview:free",         # 131K - agentic harness
-        "qwen/qwen3-coder:free",                       # 262K - tool capable
-        "deepseek/deepseek-chat",                      # 164K - tool capable
-        "meta-llama/llama-3.3-70b-instruct:free",      # 131K - function calling
-        "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - tool use
+        "deepseek/deepseek-chat",
+        "qwen/qwen3-coder:free",
+        "nvidia/nemotron-3-super-120b-a12b:free",
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "google/gemini-3.8-flash",
     ],
     "general": [
-        "deepseek/deepseek-chat",                      # 164K - strong overall
-        "meta-llama/llama-3.3-70b-instruct:free",      # 131K - GPT-4 level
-        "qwen/qwen3-next-80b-a3b-instruct:free",       # 262K - strong
-        "google/gemma-3-27b-it:free",                  # 131K - versatile
-        "arcee-ai/trinity-large-preview:free",         # 131K - balanced
+        "deepseek/deepseek-chat",
+        "google/gemini-3.8-flash",
+        "nvidia/nemotron-3-super-120b-a12b:free",
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "google/gemma-4-31b-it:free",
     ],
 }
 
@@ -254,70 +251,73 @@ BUDGET_MODELS = {
 # Uses most expensive models + multiple rounds + consensus for maximum margin
 MAXIMUM_MODELS = {
     "math": [
+        "openai/gpt-6-astra",
         "openai/gpt-5.6-sol-pro",
-        "openai/o3",               # 98.4% AIME
-        "openai/gpt-5.5-pro",
-        "openai/gpt-5",
+        "openai/o3",
+        "anthropic/claude-opus-5",
+        "deepseek/deepseek-v4.1-flash",
         # Calculator is AUTHORITATIVE - these just verify/explain
     ],
     "reasoning": [
+        "openai/gpt-6-astra",
         "anthropic/claude-opus-5",
+        "anthropic/claude-fable-5.1",
         "openai/gpt-5.6-sol-pro",
-        "openai/gpt-5.5-pro",
-        "openai/o3",               # Native reasoning
-        # 2-model consensus = 95%+ expected
+        "openai/o3",
     ],
     "coding": [
         "anthropic/claude-opus-5",
+        "openai/gpt-6-astra",
         "anthropic/claude-sonnet-5",
         "openai/gpt-5.6-sol-pro",
-        "anthropic/claude-sonnet-4", # 82% SWE-Bench
-        "anthropic/claude-opus-4",   # 80.9%
-        # 3-round challenge-refine = 97%+ expected
+        "moonshotai/kimi-k3",
     ],
     "rag": [
-        "openai/gpt-5.6-sol-pro",
+        "openai/gpt-6-astra",
+        "google/gemini-3.1-pro-preview",
         "anthropic/claude-opus-5",
-        "openai/gpt-5.5-pro",
-        "anthropic/claude-opus-4", # 94%
-        # With Pinecone rerank = 97%+ expected
+        "openai/gpt-5.6-sol-pro",
+        "moonshotai/kimi-k3",
     ],
     "multilingual": [
         "anthropic/claude-opus-5",
+        "anthropic/claude-fable-5.1",
         "qwen/qwen3.7-max",
-        "anthropic/claude-opus-4", # 90.8% MMMLU
-        "openai/gpt-5.5-pro",
-        # 2-model consensus = 93%+ expected
+        "openai/gpt-6-astra",
+        "z-ai/glm-5.3",
     ],
     "long_context": [
-        "openai/gpt-5.6-sol-pro",
-        "google/gemini-3.1-pro-preview", # 1.05M tokens - newest, best
+        "google/gemini-3.1-pro-preview",
+        "openai/gpt-6-astra",
+        "google/gemini-3.8-flash",
         "moonshotai/kimi-k3",
-        "anthropic/claude-sonnet-4",      # 1M tokens
+        "openai/gpt-5.6-sol-pro",
     ],
     "speed": [
-        "google/gemini-3.6-flash",
+        "google/gemini-3.8-flash",
+        "deepseek/deepseek-v4.1-flash",
+        "google/gemini-3.7-flash",
         "openai/gpt-5.6-luna",
-        "anthropic/claude-sonnet-4", # Fast + capable
-        # Parallel execution = 2200+ tok/s expected
+        "x-ai/grok-4.6",
     ],
     "dialogue": [
+        "anthropic/claude-fable-5.1",
         "anthropic/claude-opus-5",
+        "openai/gpt-6-astra",
         "openai/gpt-5.6-sol-pro",
-        "openai/gpt-5.5-pro",
-        # + Reflection loop = 97%+ expected
     ],
     "multimodal": [
         "anthropic/claude-opus-5",
+        "openai/gpt-6-astra",
+        "google/gemini-3.1-pro-preview",
         "openai/gpt-5.6-sol-pro",
-        "anthropic/claude-opus-4", # 378 ARC-AGI 2 - ALREADY #1!
-        "openai/gpt-5.5-pro",
     ],
     "tool_use": [
         "anthropic/claude-opus-5",
+        "openai/gpt-6-astra",
         "anthropic/claude-sonnet-5",
-        "anthropic/claude-sonnet-4", # 82% SWE-Bench
-        # + Full tools + verification = 96%+ expected
+        "anthropic/claude-fable-5.1",
+        "moonshotai/kimi-k3",
     ],
 }
 
@@ -348,17 +348,18 @@ _ELITE_BENCHMARK_MODELS = _build_elite_models()
 ELITE_MODELS = {
     **_ELITE_BENCHMARK_MODELS,
     "long_context": [
-        "google/gemini-3.1-pro-preview", # 1M+ tokens - LATEST
-        "google/gemini-3-pro",     # 1M tokens
-        "anthropic/claude-opus-4.6", # 1M tokens (beta)
-        "moonshot/kimi-k2.5-thinking", # 256K context
-        "alibaba/qwen3-max",       # 262K context
+        "google/gemini-3.1-pro-preview",
+        "openai/gpt-6-astra",
+        "google/gemini-3.8-flash",
+        "moonshotai/kimi-k3",
+        "openai/gpt-5.6-sol-pro",
     ],
     "speed": [
-        "x-ai/grok-3-mini",        # Ultra-fast with reasoning, ~2-3s
-        "openai/gpt-4o-mini",      # 0.35s TTFT, API available
-        "google/gemini-2.5-flash", # Fast, API available
-        "anthropic/claude-3-haiku", # Fast variant
+        "google/gemini-3.8-flash",
+        "deepseek/deepseek-v4.1-flash",
+        "google/gemini-3.7-flash",
+        "x-ai/grok-4.6",
+        "openai/gpt-5.6-luna",
     ],
     "dialogue": _ELITE_BENCHMARK_MODELS["dialogue"],
     "multimodal": _ELITE_BENCHMARK_MODELS["multimodal"],

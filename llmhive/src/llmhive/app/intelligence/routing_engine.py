@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional, Set
 
 from .elite_policy import ELITE_POLICY, is_benchmark_mode
 from .model_registry_2026 import ModelEntry, get_model_registry_2026
+from .tier_routing import FRONTIER_INTERNAL_IDS, should_use_frontier_primary
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +89,76 @@ class RoutingEngine:
         scored = [self._score(m, category) for m in candidates]
         scored.sort(key=lambda s: s.total_score, reverse=True)
         return scored[:top_n]
+
+    def select_tier_appropriate(
+        self,
+        category: str,
+        *,
+        use_elite_tier: bool,
+        accuracy_level: int = 3,
+        prefer_cheaper: bool = False,
+        orchestrator_task: str = "",
+        required_tags: Optional[Set[str]] = None,
+        min_context: int = 0,
+        require_tools: bool = False,
+        top_n: int = 1,
+    ) -> List[ScoredModel]:
+        """Select models with frontier primary only when elite demand warrants it."""
+        if is_benchmark_mode():
+            return self.select(
+                category,
+                required_tags=required_tags,
+                min_context=min_context,
+                require_tools=require_tools,
+                top_n=top_n,
+            )
+
+        use_frontier = should_use_frontier_primary(
+            category,
+            use_elite_tier=use_elite_tier,
+            accuracy_level=accuracy_level,
+            prefer_cheaper=prefer_cheaper,
+            orchestrator_task=orchestrator_task,
+        )
+        if not use_frontier:
+            return self.select(
+                category,
+                required_tags=required_tags,
+                min_context=min_context,
+                require_tools=require_tools,
+                top_n=top_n,
+            )
+
+        elite_id = ELITE_POLICY.get(category)
+        selected: List[ScoredModel] = []
+        if elite_id:
+            entry = self._registry.get(elite_id)
+            if entry:
+                selected.append(self._score(entry, category))
+
+        if top_n <= 1:
+            return selected[:1]
+
+        # Secondary picks: prefer non-frontier cost-efficient models.
+        rest = [
+            s for s in self.select(
+                category,
+                required_tags=required_tags,
+                min_context=min_context,
+                require_tools=require_tools,
+                top_n=max(top_n * 3, 6),
+            )
+            if s.model_id not in {m.model_id for m in selected}
+            and s.model_id not in FRONTIER_INTERNAL_IDS
+        ]
+        selected.extend(rest[: max(0, top_n - len(selected))])
+        if len(selected) < top_n:
+            extras = [
+                s for s in self.select(category, top_n=top_n * 3)
+                if s.model_id not in {m.model_id for m in selected}
+            ]
+            selected.extend(extras[: max(0, top_n - len(selected))])
+        return selected[:top_n]
 
     def _score(self, entry: ModelEntry, category: str) -> ScoredModel:
         strength = entry.strength_for_category(category)
