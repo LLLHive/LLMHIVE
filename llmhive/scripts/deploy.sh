@@ -152,7 +152,7 @@ gcloud run deploy "${SERVICE_NAME}" \
     --min-instances=0 \
     --max-instances=10 \
     --timeout=300 \
-    --set-env-vars="ALLOW_STUB_PROVIDER=true,LOG_LEVEL=INFO" \
+    --set-env-vars="ALLOW_STUB_PROVIDER=false,LOG_LEVEL=INFO" \
     --set-secrets="OPENAI_API_KEY=openai-api-key:latest,ANTHROPIC_API_KEY=anthropic-api-key:latest,GROK_API_KEY=grok-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,DEEPSEEK_API_KEY=deepseek-api-key:latest,TAVILY_API_KEY=tavily-api-key:latest,PINECONE_API_KEY=pinecone-api-key:latest,API_KEY=api-key:latest,STRIPE_SECRET_KEY=stripe-secret-key:latest,STRIPE_WEBHOOK_SECRET=stripe-webhook-secret:latest"
 
 log_success "Deployment complete!"

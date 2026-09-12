@@ -45,9 +45,9 @@ class GroqClient:
     # Model mappings (OpenRouter ID → Groq native ID)
     MODEL_MAP = {
         "meta-llama/llama-3.3-70b-instruct:free": "llama-3.3-70b-versatile",
-        "meta-llama/llama-3.1-8b-instruct:free": "llama-3.1-8b-instant",
+        "meta-llama/llama-3.1-8b-instruct:free": "llama-3.3-70b-versatile",
         "llama-3.3-70b-versatile": "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant": "llama-3.1-8b-instant",
+        "llama-3.1-8b-instant": "llama-3.3-70b-versatile",
     }
 
     def __init__(self, api_key: Optional[str] = None):

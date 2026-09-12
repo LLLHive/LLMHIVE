@@ -8,8 +8,9 @@
  */
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
+import { getOrchestratorApiBaseUrl } from "@/lib/orchestrator-api-base"
 
-const BACKEND_URL = process.env.ORCHESTRATOR_API_BASE_URL || "https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app"
+const BACKEND_URL = getOrchestratorApiBaseUrl()
 
 interface SupportTicketRequest {
   name: string

@@ -1,7 +1,6 @@
-const BACKEND_URL =
-  process.env.ORCHESTRATOR_API_BASE_URL ||
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://llmhive-orchestrator-7h6b36l7ta-ue.a.run.app"
+import { getOrchestratorApiBaseUrl } from "@/lib/orchestrator-api-base"
+
+const BACKEND_URL = getOrchestratorApiBaseUrl()
 
 const PAID_TIERS = new Set(["lite", "basic", "starter", "standard", "pro", "premium", "enterprise", "maximum"])
 

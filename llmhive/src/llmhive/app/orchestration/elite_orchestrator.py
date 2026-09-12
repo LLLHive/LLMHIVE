@@ -1322,10 +1322,10 @@ _MODEL_ALIASES = {
     "google/gemini-2.5-flash-image": "gemini-2.5-flash",
     "google/gemini-2.5-flash-image-preview": "gemini-2.5-flash",
     # Gemini 2.0 series
-    "google/gemini-2.0-pro": "gemini-2.0-pro",
-    "google/gemini-2.0-flash": "gemini-2.0-flash",
-    "google/gemini-2.0-pro-exp": "gemini-2.0-pro",
-    "google/gemini-2.0-flash-exp": "gemini-2.0-flash",
+    "google/gemini-2.0-pro": "gemini-2.5-pro",
+    "google/gemini-2.0-flash": "gemini-2.5-flash",
+    "google/gemini-2.0-pro-exp": "gemini-2.5-pro",
+    "google/gemini-2.0-flash-exp": "gemini-2.5-flash",
     
     # ==========================================================================
     # DeepSeek Models (January 2026 Latest)

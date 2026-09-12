@@ -33,20 +33,12 @@ export async function GET() {
     },
   }
 
-  // Test Slack webhook
+  // Presence/format only — do not POST the webhook (this route is polled).
   if (checks.slack.configured) {
-    try {
-      const response = await fetch(process.env.SLACK_WEBHOOK_URL!, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: "🔍 LLMHive Integration Health Check - Slack is working!"
-        }),
-      })
-      checks.slack.status = response.ok ? "healthy" : `error: ${response.status}`
-    } catch (error) {
-      checks.slack.status = `error: ${error}`
-    }
+    const url = process.env.SLACK_WEBHOOK_URL || ""
+    checks.slack.status = url.startsWith("https://hooks.slack.com/")
+      ? "configured (format valid)"
+      : "configured (format unknown)"
   } else {
     checks.slack.status = "not configured"
   }
@@ -76,10 +68,9 @@ export async function GET() {
   }
 
   // Determine overall health
-  const allHealthy = 
-    checks.slack.status === "healthy" &&
-    (checks.resend.status === "configured (format valid)" || checks.resend.status === "healthy") &&
-    checks.backend.status === "healthy"
+  const slackOk = checks.slack.status === "configured (format valid)" || checks.slack.status === "healthy"
+  const resendOk = checks.resend.status === "configured (format valid)" || checks.resend.status === "healthy"
+  const allHealthy = slackOk && resendOk && checks.backend.status === "healthy"
 
   return NextResponse.json({
     overall: allHealthy ? "healthy" : "degraded",
@@ -88,9 +79,9 @@ export async function GET() {
     recommendations: {
       slack: !checks.slack.configured ? 
         "⚠️ SLACK_WEBHOOK_URL not set. Support tickets will not send Slack notifications." : 
-        checks.slack.status !== "healthy" ? 
-        "⚠️ Slack webhook test failed. Check the webhook URL in Vercel settings." : 
-        "✅ Slack integration working",
+        checks.slack.status !== "configured (format valid)" && checks.slack.status !== "healthy" ? 
+        "⚠️ Slack webhook URL is set but does not look like a Slack incoming webhook." : 
+        "✅ Slack webhook configured",
       resend: !checks.resend.configured ? 
         "⚠️ RESEND_API_KEY not set. Email confirmations will not be sent." : 
         "✅ Resend API key configured",

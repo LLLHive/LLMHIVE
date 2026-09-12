@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import time
+import urllib.request
 from typing import Any, Dict, List, Optional
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -18,8 +19,8 @@ ORCHESTRATOR_URL = os.environ.get(
 ).rstrip("/")
 WWW_BASE = os.environ.get("LAUNCH_WWW_BASE", "https://www.llmhive.ai").rstrip("/")
 
-# Certified serving revision — update when intentionally changing launch basis.
-EXPECTED_REVISION = os.environ.get("LAUNCH_CERTIFIED_REVISION", "llmhive-orchestrator-02461-2h4")
+# Optional pin. Empty means "whatever is actually serving" (read from /health).
+EXPECTED_REVISION = os.environ.get("LAUNCH_CERTIFIED_REVISION", "").strip()
 
 PUBLIC_PATHS = (
     "/",
@@ -35,22 +36,30 @@ PUBLIC_PATHS = (
 )
 
 
+class _Redirect308(urllib.request.HTTPRedirectHandler):
+    def http_error_308(self, req, fp, code, msg, headers):
+        return self.http_error_302(req, fp, code, msg, headers)
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if code in (301, 302, 303, 307, 308):
+            return Request(
+                newurl,
+                headers={"User-Agent": "LLMHive-launch-gate-verify/1.0"},
+                method="GET",
+            )
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
 def _get(url: str, timeout: float = 20.0, follow: bool = True) -> tuple[int, str]:
+    handlers = [_Redirect308()] if follow else []
+    opener = urllib.request.build_opener(*handlers) if follow else urllib.request.build_opener(
+        urllib.request.HTTPHandler, urllib.request.HTTPSHandler
+    )
     req = Request(url, headers={"User-Agent": "LLMHive-launch-gate-verify/1.0"})
     try:
-        with urlopen(req, timeout=timeout) as resp:
-            code = resp.getcode()
-            if follow and code in (301, 302, 303, 307, 308):
-                loc = resp.headers.get("Location", "")
-                if loc:
-                    if loc.startswith("/"):
-                        from urllib.parse import urlparse
-
-                        p = urlparse(url)
-                        loc = f"{p.scheme}://{p.netloc}{loc}"
-                    return _get(loc, timeout=timeout, follow=True)
+        with opener.open(req, timeout=timeout) as resp:
             body = resp.read(512).decode("utf-8", errors="replace")
-            return code, body
+            return resp.getcode(), body
     except HTTPError as exc:
         return exc.code, str(exc.reason)
     except URLError as exc:
@@ -124,22 +133,38 @@ def run_checks() -> Dict[str, Any]:
             )
         )
 
-    # Revision note (manual gcloud unless CLOUD_RUN_REVISION env set)
-    rev = os.environ.get("CLOUD_RUN_REVISION", "")
-    if rev:
+    # Serving revision: live /health is source of truth. Pin only if LAUNCH_CERTIFIED_REVISION is set.
+    health_code, health_body = _get(health_url)
+    live_rev = ""
+    try:
+        live_rev = str(json.loads(health_body).get("revision") or "")
+    except json.JSONDecodeError:
+        live_rev = ""
+    traffic_rev = os.environ.get("CLOUD_RUN_REVISION", "").strip()
+    if EXPECTED_REVISION:
+        got = traffic_rev or live_rev
         checks.append(
             _check(
                 "certified_revision",
-                rev == EXPECTED_REVISION,
-                f"traffic revision {rev} (expected {EXPECTED_REVISION})",
+                got == EXPECTED_REVISION,
+                f"traffic revision {got or 'unknown'} (expected {EXPECTED_REVISION})",
+            )
+        )
+    elif live_rev:
+        match = (not traffic_rev) or traffic_rev == live_rev
+        checks.append(
+            _check(
+                "certified_revision",
+                health_code == 200 and match,
+                f"serving {live_rev}" + (f" (traffic {traffic_rev})" if traffic_rev else ""),
             )
         )
     else:
         checks.append(
             _check(
                 "certified_revision",
-                True,
-                f"set CLOUD_RUN_REVISION from gcloud; certified basis documents {EXPECTED_REVISION}",
+                False,
+                "could not read revision from /health",
             )
         )
 

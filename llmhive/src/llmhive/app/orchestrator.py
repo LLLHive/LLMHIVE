@@ -1486,17 +1486,19 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
             self.benchmark_snapshot = {}
             logger.debug("Benchmark table not loaded: %s", e)
         
-        # Always add stub provider as fallback
-        if STUB_AVAILABLE and StubProvider:
+        # Stub answers are a local/dev fallback only — never a production reply path.
+        allow_stub = os.getenv("ALLOW_STUB_PROVIDER", "false").lower() == "true"
+        if allow_stub and STUB_AVAILABLE and StubProvider:
             try:
                 self.providers["stub"] = StubProvider()
                 logger.info("Stub provider initialized (fallback)")
             except Exception as e:
                 logger.warning(f"Failed to instantiate StubProvider: {e}, creating minimal stub")
                 self._create_minimal_stub()
-        else:
-            # Create minimal stub if import failed
+        elif allow_stub:
             self._create_minimal_stub()
+        else:
+            logger.info("Stub provider disabled (ALLOW_STUB_PROVIDER is not true)")
         
         # Initialize local model provider if configured
         self._initialize_local_models()

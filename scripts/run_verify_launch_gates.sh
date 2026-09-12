@@ -5,7 +5,13 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 PROJECT="${GCP_PROJECT:-llmhive-orchestrator}"
-export CLOUD_RUN_REVISION="${CLOUD_RUN_REVISION:-llmhive-orchestrator-02461-2h4}"
+# Live traffic revision. Override with CLOUD_RUN_REVISION / LAUNCH_CERTIFIED_REVISION if pinning.
+if [[ -z "${CLOUD_RUN_REVISION:-}" ]]; then
+  CLOUD_RUN_REVISION="$(gcloud run services describe llmhive-orchestrator \
+    --region us-east1 --project "${PROJECT}" \
+    --format="value(status.traffic[0].revisionName)" 2>/dev/null || true)"
+fi
+export CLOUD_RUN_REVISION
 
 echo "Loading secrets from GCP (${PROJECT})..."
 export API_KEY

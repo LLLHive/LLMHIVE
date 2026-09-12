@@ -2,8 +2,8 @@
   "base_url": "https://api.fireworks.ai/inference/v1",
   "default_chat": "deepseek_v4_flash",
   "chat": {
-    "deepseek_v4_flash": "accounts/fireworks/models/deepseek-v4-flash",
-    "gpt_oss_20b": "accounts/fireworks/models/gpt-oss-20b",
+    "deepseek_v4_flash": "accounts/fireworks/models/deepseek-v4-flash-0731",
+    "gpt_oss_20b": "accounts/fireworks/models/gpt-oss-120b",
     "minimax_m27": "accounts/fireworks/models/minimax-m2p7",
     "minimax_m25": "accounts/fireworks/models/minimax-m2p5",
     "qwen36_plus": "accounts/fireworks/models/qwen3p6-plus",

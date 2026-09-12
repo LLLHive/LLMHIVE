@@ -179,7 +179,8 @@ async def probe_google(client: httpx.AsyncClient, chat: bool) -> ProbeResult:
     key = _key(env) or _key("GEMINI_API_KEY")
     if not key:
         return ProbeResult("Google AI Studio", "direct", env, False, "skip", None, None, "no key")
-    model = "gemini-2.0-flash"
+    # 2.0-flash is retired on many keys; 2.5-flash is the live default.
+    model = "gemini-2.5-flash"
     url = (
         f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
         f"?key={key}"
@@ -279,11 +280,12 @@ async def probe_mistral(client: httpx.AsyncClient, chat: bool) -> ProbeResult:
     ) if chat else (0, "", 0.0)
     if not chat:
         code, body, ms = await _get(client, "https://api.mistral.ai/v1/models", headers)
-    ok = code == 200
+    st = _classify_http(code, body)
     return ProbeResult(
         "Mistral", "direct", env, True,
-        "ok" if ok else "fail", code, ms,
-        "ok" if ok else body[:200], model,
+        st, code, ms,
+        "chat ok" if st == "ok" else ("rate limited" if st == "throttled" else body[:200]),
+        model,
     )
 
 
@@ -413,7 +415,7 @@ async def probe_fireworks(client: httpx.AsyncClient, chat: bool) -> ProbeResult:
     key = _key(env) or _key("FIREWORKS_KEY")
     if not key:
         return ProbeResult("Fireworks", "aggregator", env, False, "skip", None, None, "no key")
-    model = "accounts/fireworks/models/deepseek-v4-flash"
+    model = "accounts/fireworks/models/deepseek-v4-flash-0731"
     raw = os.environ.get("FIREWORKS_MODELS", "").strip()
     if raw:
         try:
@@ -444,7 +446,7 @@ async def probe_groq(client: httpx.AsyncClient, chat: bool) -> ProbeResult:
     if not key:
         return ProbeResult("Groq", "aggregator", env, False, "skip", None, None, "no key")
     headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-    model = "llama-3.1-8b-instant"
+    model = "llama-3.3-70b-versatile"
     code, body, ms = await _post_json(
         client,
         "https://api.groq.com/openai/v1/chat/completions",
@@ -736,17 +738,27 @@ async def probe_huggingface(client: httpx.AsyncClient, chat: bool) -> ProbeResul
     key = _key(env) or _key("HUGGINGFACE_TOKEN")
     if not key:
         return ProbeResult("HuggingFace", "aggregator", env, False, "skip", None, None, "no key")
-    headers = {"Authorization": f"Bearer {key}"}
-    code, body, ms = await _get(
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    # Classic whoami often 401s for inference tokens; the router is the live path.
+    model = "meta-llama/Llama-3.3-70B-Instruct"
+    code, body, ms = await _post_json(
         client,
-        "https://huggingface.co/api/whoami-v2",
+        "https://router.huggingface.co/v1/chat/completions",
         headers,
+        {"model": model, "messages": [{"role": "user", "content": "ping"}], "max_tokens": 1},
     )
-    ok = code == 200
+    st = _classify_http(code, body)
+    if st == "ok":
+        return ProbeResult("HuggingFace", "aggregator", env, True, "ok", code, ms, "router chat ok", model)
+    code2, body2, ms2 = await _get(client, "https://huggingface.co/api/whoami-v2", headers)
+    if code2 == 200 and st != "auth_fail":
+        return ProbeResult("HuggingFace", "aggregator", env, True, "ok", code2, ms2, "whoami ok", model)
     return ProbeResult(
         "HuggingFace", "aggregator", env, True,
-        "ok" if ok else "fail", code, ms,
-        "whoami ok" if ok else body[:200], None,
+        "auth_fail" if code in (401, 403) or code2 in (401, 403) else st,
+        code, ms,
+        "token rejected by HuggingFace router" if code in (401, 403) else body[:200],
+        model,
     )
 
 
