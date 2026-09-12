@@ -66,7 +66,7 @@ export const CURATED_MODEL_ENTRIES: Model[] = [
   {
     id: "x-ai/grok-4.6",
     name: "Grok 4.6",
-    provider: "x-ai",
+    provider: "xai",
     description: "xAI Grok 4.6 — newest Grok flagship for coding, knowledge work, and STEM",
     capabilities: {
       vision: true,
@@ -90,7 +90,7 @@ export const CURATED_MODEL_ENTRIES: Model[] = [
   {
     id: "z-ai/glm-5.3",
     name: "GLM 5.3",
-    provider: "z-ai",
+    provider: "zhipu",
     description: "Z.ai GLM 5.3 — strong multilingual and agentic Chinese frontier model",
     capabilities: {
       vision: true,
@@ -102,7 +102,7 @@ export const CURATED_MODEL_ENTRIES: Model[] = [
   {
     id: "z-ai/glm-5.3-flash",
     name: "GLM 5.3 Flash",
-    provider: "z-ai",
+    provider: "zhipu",
     description: "Z.ai GLM 5.3 Flash — faster GLM 5.3 variant",
     capabilities: {
       vision: true,

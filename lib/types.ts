@@ -112,6 +112,7 @@ export type ModelProvider =
   | "qwen"
   | "moonshot"
   | "zhipu"
+  | "tencent"
 
 export interface Model {
   id: string

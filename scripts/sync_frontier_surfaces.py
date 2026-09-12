@@ -57,6 +57,17 @@ FLAGSHIP_FAMILY_PATTERNS = [
     r"^z-ai/glm-5\.3(-flash)?$",
 ]
 
+# Map roster provider labels onto lib/types.ts ModelProvider union.
+_PROVIDER_NORMALIZE = {
+    "x-ai": "xai",
+    "xai": "xai",
+    "xAI": "xai",
+    "z-ai": "zhipu",
+    "zhipu": "zhipu",
+    "Z.ai": "zhipu",
+    "tencent": "tencent",
+}
+
 
 def _ts_string(value: str) -> str:
     return json.dumps(value, ensure_ascii=False)
@@ -103,12 +114,14 @@ def _generate_models_ts(ui_models: List[Dict[str, Any]]) -> str:
     ]
     for m in ui_models:
         caps = m.get("capabilities") or {}
+        provider = str(m.get("provider") or "")
+        provider = _PROVIDER_NORMALIZE.get(provider, provider)
         lines.extend(
             [
                 "  {",
                 f"    id: {_ts_string(m['model_id'])},",
                 f"    name: {_ts_string(m['name'])},",
-                f"    provider: {_ts_string(m['provider'])},",
+                f"    provider: {_ts_string(provider)},",
                 f"    description: {_ts_string(m['description'])},",
                 "    capabilities: {",
                 f"      vision: {'true' if caps.get('vision') else 'false'},",
