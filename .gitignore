@@ -136,7 +136,7 @@ llmhive/test.db
 benchmark_reports/
 artifacts/checkpoints/
 artifacts/snapshots/
-artifacts/benchmarks/debug_*/
+artifacts/benchmarks/
 
 # Source stills for scripts/render_demo_video.py (generated locally)
 public/videos/stills/

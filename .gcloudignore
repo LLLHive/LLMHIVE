@@ -35,3 +35,6 @@ benchmark_reports/
 coverage/
 test-results/
 playwright-report/
+
+# Local backups are multi-GB and must never be uploaded to Cloud Build.
+backups/
