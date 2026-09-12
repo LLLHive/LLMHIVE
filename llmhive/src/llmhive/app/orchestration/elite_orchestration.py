@@ -175,7 +175,7 @@ FREE_MODELS = {
         "nvidia/nemotron-3-super-120b-a12b:free",
         "qwen/qwen3-next-80b-a3b-instruct:free",
         "deepseek/deepseek-chat",
-        "google/gemini-2.5-flash",
+        "google/gemma-4-31b-it:free",
     ],
     "multilingual": [
         "google/gemma-4-31b-it:free",
@@ -189,14 +189,14 @@ FREE_MODELS = {
         "nvidia/nemotron-3-super-120b-a12b:free",
         "qwen/qwen3-next-80b-a3b-instruct:free",
         "nvidia/nemotron-3-ultra-550b-a55b:free",
-        "google/gemini-2.5-flash",
+        "meta-llama/llama-3.3-70b-instruct:free",
     ],
     "speed": [
         "google/gemini-3.8-flash",
         "nvidia/nemotron-3.5-lightning:free",
         "deepseek/deepseek-chat",
-        "google/gemini-2.5-flash",
         "mistralai/mistral-small-3.1-24b-instruct:free",
+        "meta-llama/llama-3.3-70b-instruct:free",
     ],
     "dialogue": [
         "meta-llama/llama-3.3-70b-instruct:free",
@@ -208,9 +208,9 @@ FREE_MODELS = {
     "multimodal": [
         "google/gemini-3.8-flash",
         "google/gemma-4-31b-it:free",
-        "google/gemini-2.5-flash",
         "google/gemma-4-26b-a4b-it:free",
         "meta-llama/llama-3.3-70b-instruct:free",
+        "nvidia/nemotron-3-super-120b-a12b:free",
     ],
     "tool_use": [
         "deepseek/deepseek-chat",
@@ -228,23 +228,22 @@ FREE_MODELS = {
     ],
 }
 
-# BUDGET TIER: Claude Sonnet as primary (~$0.0036/query) - still #1 in most categories!
-# Key insight: Calculator is authoritative for math, Pinecone for RAG, Sonnet beats others in coding
+# BUDGET TIER: cost-efficient paid models (aligned with tier_cost_caps prefer_cheaper).
+# Long context stays Gemini-first single-model. Do not expand to Opus (spend guard).
 BUDGET_MODELS = {
-    "math": ["anthropic/claude-sonnet-4"],       # Calculator is AUTHORITATIVE, Sonnet just explains
-    "reasoning": ["anthropic/claude-sonnet-4"],  # 89.1% GPQA - competitive
-    "coding": ["anthropic/claude-sonnet-4"],     # 82% SWE-Bench - ALREADY #1!
-    "rag": ["anthropic/claude-sonnet-4"],        # Pinecone reranker does the heavy lifting
-    "multilingual": ["anthropic/claude-sonnet-4"], # 89.1% MMMLU - #2 among API
+    "math": ["deepseek/deepseek-v4.1-flash"],
+    "reasoning": ["deepseek/deepseek-v4.1-flash"],
+    "coding": ["anthropic/claude-sonnet-5"],
+    "rag": ["google/gemini-3.8-flash"],
+    "multilingual": ["google/gemini-3.8-flash"],
     "long_context": [
-        "google/gemini-3.1-pro-preview",  # 1.05M tokens - newest Google, excellent
-        "google/gemini-3-flash-preview",  # 1M tokens - Direct Gemini API, FREE!
-        "anthropic/claude-sonnet-4"       # 1M tokens - Fallback if Gemini fails
+        "google/gemini-3.1-pro-preview",  # single primary — serial failover only
+        "google/gemini-3.8-flash",
     ],
-    "speed": ["openai/gpt-4o-mini"],              # Fast and cheap
-    "dialogue": ["anthropic/claude-sonnet-4"],   # 89.1% - excellent
-    "multimodal": ["anthropic/claude-sonnet-4"], # Vision capable
-    "tool_use": ["anthropic/claude-sonnet-4"],   # 82% SWE-Bench - ALREADY #1!
+    "speed": ["google/gemini-3.8-flash"],
+    "dialogue": ["google/gemini-3.8-flash"],
+    "multimodal": ["google/gemini-3.8-flash"],
+    "tool_use": ["anthropic/claude-sonnet-5"],
 }
 
 # MAXIMUM TIER: Full power orchestration - no cost consideration, CRUSH competition
@@ -253,7 +252,6 @@ MAXIMUM_MODELS = {
     "math": [
         "openai/gpt-6-astra",
         "openai/gpt-5.6-sol-pro",
-        "openai/o3",
         "anthropic/claude-opus-5",
         "deepseek/deepseek-v4.1-flash",
         # Calculator is AUTHORITATIVE - these just verify/explain
@@ -263,7 +261,7 @@ MAXIMUM_MODELS = {
         "anthropic/claude-opus-5",
         "anthropic/claude-fable-5.1",
         "openai/gpt-5.6-sol-pro",
-        "openai/o3",
+        "deepseek/deepseek-v4.1-flash",
     ],
     "coding": [
         "anthropic/claude-opus-5",
@@ -347,6 +345,22 @@ _ELITE_BENCHMARK_MODELS = _build_elite_models()
 
 ELITE_MODELS = {
     **_ELITE_BENCHMARK_MODELS,
+    # Override academia MRCR mix (stale gemini-2.5-pro-preview) with MAXIMUM rag stack.
+    # Keep gpt-6-astra present so ELITE_POLICY rag lock does not hard-drift.
+    "rag": [
+        "openai/gpt-6-astra",
+        "google/gemini-3.1-pro-preview",
+        "anthropic/claude-opus-5",
+        "openai/gpt-5.6-sol-pro",
+        "moonshotai/kimi-k3",
+    ],
+    "tool_use": [
+        "anthropic/claude-opus-5",
+        "openai/gpt-6-astra",
+        "anthropic/claude-sonnet-5",
+        "anthropic/claude-fable-5.1",
+        "moonshotai/kimi-k3",
+    ],
     "long_context": [
         "google/gemini-3.1-pro-preview",
         "openai/gpt-6-astra",
@@ -851,7 +865,7 @@ def get_optimal_team_for_query(
     
     # PRIMARY: Top 2-3 performers for category (80+ score preferred)
     try:
-        elite_pool = get_top_performers(category, min_score=80.0, n=3)
+        elite_pool = get_top_performers(category, min_score=72.0, n=3)
         if len(elite_pool) >= 2:
             team['primary'] = elite_pool[:2]
         else:
@@ -977,7 +991,7 @@ async def hierarchical_consensus(
     """
     Multi-tier consensus strategy for complex queries.
     
-    Stage 1: Elite models (80+) generate candidates
+    Stage 1: Elite models (72+) generate candidates
     Stage 2: If elite disagree, bring in verifiers (65+)
     Stage 3: Weighted voting with performance scores
     """
@@ -985,13 +999,13 @@ async def hierarchical_consensus(
     
     metadata = {"strategy": "hierarchical_consensus", "stages": []}
     
-    # STAGE 1: Elite models (80+ score)
+    # STAGE 1: Top free performers (scores historically ≤78 — 80 never fired)
     try:
-        elite_models = get_top_performers(category, min_score=80.0, n=2)
+        elite_models = get_top_performers(category, min_score=72.0, n=2)
         
         if not elite_models:
-            # Fallback to 70+ if no 80+
-            elite_models = get_top_performers(category, min_score=70.0, n=2)
+            # Fallback to 65+ if no 72+
+            elite_models = get_top_performers(category, min_score=65.0, n=2)
         
         if elite_models:
             logger.info("Stage 1: Elite models %s", elite_models)
@@ -2779,9 +2793,14 @@ Format your response with the final answer clearly stated: **Final Answer: {calc
                 }
         
         elif category == "reasoning":
-            # GPT-5.2 + o3 consensus with debate
-            models = MAXIMUM_MODELS["reasoning"][:2]  # GPT-5.2 + o3
+            # Phase 1: Astra ∥ Fable dual specialty (not o3).
+            models = [
+                MAXIMUM_MODELS["reasoning"][0],  # openai/gpt-6-astra
+                MAXIMUM_MODELS["reasoning"][2] if len(MAXIMUM_MODELS["reasoning"]) > 2
+                else MAXIMUM_MODELS["reasoning"][1],  # claude-fable-5.1
+            ]
             metadata["models_used"] = models
+            metadata["strategy"] = "astra_fable_debate"
             
             # Round 1: Get initial answers
             tasks = [
@@ -2803,7 +2822,7 @@ If they disagree, explain why one is more correct."""
                 
                 synthesis = await orchestrator.orchestrate(
                     prompt=debate_prompt,
-                    models=[models[0]],  # Use GPT-5.2 for synthesis
+                    models=[models[0]],
                     skip_injection_check=True,
                 )
                 answer = synthesis.get("response", answers[0])
@@ -2819,19 +2838,18 @@ If they disagree, explain why one is more correct."""
             }
         
         elif category == "coding":
-            # Claude Sonnet × 3-round challenge-refine
-            model = MAXIMUM_MODELS["coding"][0]  # Claude Sonnet
-            metadata["models_used"] = [model]
+            # Phase 1: Opus draft + Astra challenge (not same-model 3-round).
+            primary = MAXIMUM_MODELS["coding"][0]  # claude-opus-5
+            challenger = MAXIMUM_MODELS["coding"][1] if len(MAXIMUM_MODELS["coding"]) > 1 else primary
+            metadata["models_used"] = [primary, challenger]
             
-            # Round 1: Initial code
             r1 = await orchestrator.orchestrate(
                 prompt=prompt,
-                models=[model],
+                models=[primary],
                 skip_injection_check=True,
             )
             code_v1 = r1.get("response", "")
             
-            # Round 2: Self-critique
             critique_prompt = f"""Review this code for bugs, edge cases, and improvements:
 
 {code_v1}
@@ -2840,27 +2858,31 @@ Identify any issues and provide an improved version."""
             
             r2 = await orchestrator.orchestrate(
                 prompt=critique_prompt,
-                models=[model],
+                models=[challenger],
                 skip_injection_check=True,
             )
-            code_v2 = r2.get("response", code_v1)
+            critique = r2.get("response", "")
             
-            # Round 3: Final polish
-            polish_prompt = f"""Finalize this code with:
-1. Clear documentation
-2. Type hints
-3. Error handling
-4. Edge case handling
+            polish_prompt = f"""Finalize this code incorporating the review feedback.
+Return ONLY the improved code with clear documentation, type hints, and error handling.
 
-{code_v2}"""
+Original request: {prompt}
+
+Draft:
+{code_v1}
+
+Review feedback:
+{critique[:1500]}
+"""
             
             r3 = await orchestrator.orchestrate(
                 prompt=polish_prompt,
-                models=[model],
+                models=[primary],
                 skip_injection_check=True,
             )
-            answer = r3.get("response", code_v2)
+            answer = r3.get("response", code_v1)
             metadata["rounds"] = 3
+            metadata["strategy"] = "opus_astra_challenge_refine"
             
             return {
                 "response": answer,

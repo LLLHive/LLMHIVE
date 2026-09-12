@@ -338,15 +338,17 @@ CATEGORY_CONFIGS: Dict[OptimizationCategory, CategoryConfig] = {
     
     OptimizationCategory.LONG_CONTEXT: CategoryConfig(
         category=OptimizationCategory.LONG_CONTEXT,
-        # Keep Claude Sonnet - 1M tokens is the key differentiator
-        primary_model=CLAUDE_SONNET,  # 1M tokens, #1 API
+        # Single Gemini specialty — orchestration hurts long_context (LongBench doctrine).
+        primary_model="google/gemini-3.1-pro-preview",
         secondary_models=[],
-        fallback_model="google/gemini-2.5-pro",  # 2M context fallback
+        fallback_model="google/gemini-3.8-flash",
         default_strategy="single_best",
         escalation_strategies=[],
         confidence_threshold=0.85,
-        target_cost_multiplier=1.2,  # TARGET: $0.005/query (was $0.012)
+        target_cost_multiplier=1.2,
         complex_indicators=["summarize document", "analyze report"],
+        max_escalation_rounds=0,
+        enable_verification=False,
     ),
     
     OptimizationCategory.SPEED: CategoryConfig(

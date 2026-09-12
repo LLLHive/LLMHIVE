@@ -2470,8 +2470,13 @@ Please provide an accurate, well-verified response."""
                 # Continue with original prompt
         
         # Phase 0.5: Shared Memory Retrieval (cross-session context)
+        # Long context: NEVER inject shared memory into the document path
+        # (protected-bench doctrine — injection fragments needle/LongBench).
         shared_memory_context = ""
-        if self.shared_memory and SHARED_MEMORY_AVAILABLE and user_id:
+        disable_shared_memory = bool(kwargs.get("disable_shared_memory", False))
+        if disable_shared_memory:
+            logger.info("Shared memory disabled for this request (long_context / explicit)")
+        elif self.shared_memory and SHARED_MEMORY_AVAILABLE and user_id:
             try:
                 shared_memory_context = await self.shared_memory.build_context_string(
                     user_id=user_id,

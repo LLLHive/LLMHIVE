@@ -2523,6 +2523,56 @@ def _filter_free_models(actual_models: List[str]) -> List[str]:
     return filtered
 
 
+def _phase1_specialty_mesh_models(
+    task_type: str,
+    *,
+    use_free_models: bool,
+    accuracy_level: int,
+    prefer_cheaper: bool,
+) -> Optional[List[str]]:
+    """Return specialty dual-model mesh for Phase 1 (accuracy≥4, non-LC only).
+
+    Regression / spend guards:
+    - Caller must skip long_context entirely.
+    - accuracy < 4 → None (no mesh, no extra spend).
+    - prefer_cheaper on paid → None.
+    - Free tier → free catalog only (no paid frontier).
+    """
+    if accuracy_level < 4:
+        return None
+    if prefer_cheaper and not use_free_models:
+        return None
+
+    task = (task_type or "general").lower().strip()
+    coding_tasks = {"code_generation", "debugging", "coding", "frontend"}
+    reasoning_tasks = {
+        "reasoning", "multi_step", "science_research", "health_medical",
+        "legal_analysis", "high_quality", "research_analysis",
+    }
+    math_tasks = {"math_problem", "financial_analysis", "math"}
+
+    if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
+        if task in coding_tasks:
+            cat = "coding"
+        elif task in math_tasks:
+            cat = "math"
+        elif task in reasoning_tasks:
+            cat = "reasoning"
+        else:
+            return None
+        mesh = list(FREE_MODELS.get(cat) or [])[:2]
+        return mesh if len(mesh) >= 2 else None
+
+    if task in coding_tasks:
+        return [OPENROUTER_CLAUDE_OPUS_5, OPENROUTER_GPT_6_ASTRA]
+    if task in reasoning_tasks:
+        return [OPENROUTER_GPT_6_ASTRA, OPENROUTER_CLAUDE_FABLE_5_1]
+    if task in math_tasks:
+        # Calculator remains authoritative elsewhere; dual only for non-calc explain/verify.
+        return [OPENROUTER_GPT_6_ASTRA, OPENROUTER_DEEPSEEK_V4_1_FLASH]
+    return None
+
+
 def _auto_select_reasoning_method(prompt: str, domain_pack: str) -> RouterReasoningMethod | None:
     """Heuristic selection of reasoning strategy when none provided."""
     plower = prompt.lower()
@@ -2672,6 +2722,9 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         # =========================================================================
         use_free_models = False  # Default to premium models
         requested_tier = "auto"
+        force_long_context_single = False  # LC anti-orchestration hard gate
+        phase1_specialty_mesh = False  # accuracy≥4 dual specialists (never LC)
+        selected_strategy = None
         
         # DEBUG: Log tier detection
         logger.info(
@@ -2737,6 +2790,15 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 request.models,
                 actual_models,
             )
+            # Even with explicit models: long_context must stay n=1 (spend + quality).
+            if is_long_context_query(request.prompt, threshold=30000) and actual_models:
+                actual_models = actual_models[:1]
+                user_model_names = user_model_names[:1]
+                force_long_context_single = True
+                logger.info(
+                    "Long context SINGLE-MODEL gate (user models): n=1 -> %s",
+                    actual_models[0],
+                )
         else:
             # Auto-select models with intelligent routing
             # Step 1: Check if query requires advanced reasoning
@@ -2792,15 +2854,32 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             # Optimize for: Long Context, Multilingual, Speed, Math, RAG
             # =========================================================================
             category_override = False
+            force_long_context_single = False
             
-            # 5a: Long Context Routing (#10 -> #3)
+            # 5a: Long Context — SINGLE best model only (orchestration hurts LC).
+            # Historical: multi-model LC → 0%; single Gemini → LongBench 100%.
+            # Spend-safe: n=1 reduces provider calls vs ensemble.
             prompt_tokens = estimate_token_count(request.prompt)
             if is_long_context_query(request.prompt, threshold=30000):
-                long_context_model = get_long_context_model(prompt_tokens, available_models)
+                long_context_model = get_long_context_model(
+                    prompt_tokens,
+                    available_models,
+                    prefer_free=bool(use_free_models),
+                )
+                if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
+                    free_lc = list(FREE_MODELS.get("long_context") or [])
+                    if free_lc:
+                        long_context_model = free_lc[0]
                 if long_context_model:
-                    selected_models = [long_context_model] + [m for m in selected_models if m != long_context_model]
+                    # Hard gate: replace ensemble — do NOT prepend-and-keep.
+                    selected_models = [long_context_model]
+                    force_long_context_single = True
                     category_override = True
-                    logger.info("Long context routing: %d tokens -> %s", prompt_tokens, long_context_model)
+                    logger.info(
+                        "Long context SINGLE-MODEL gate: %d tokens -> %s (n=1)",
+                        prompt_tokens,
+                        long_context_model,
+                    )
             
             # 5b: Multilingual Routing (#6 -> #3)
             elif is_multilingual_query(request.prompt):
@@ -2861,37 +2940,67 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
                 category_override = True
             
             # ── 2026 Intelligence Layer: Authority-based model selection ──
-            if INTELLIGENCE_2026_AVAILABLE:
+            # Use select_tier_appropriate so free/prefer_cheaper never force
+            # frontier spend; accuracy≤2 stays cost-efficient.
+            if INTELLIGENCE_2026_AVAILABLE and not force_long_context_single:
                 try:
+                    from ..intelligence.tier_routing import map_orchestrator_task_to_category
+
                     _intel_mode = _get_intelligence_mode_2026()
                     _task = _detect_task_type(request.prompt) or "reasoning"
+                    _cat = map_orchestrator_task_to_category(_task)
+                    _acc = int(getattr(request.orchestration, "accuracy_level", 3) or 3)
+                    _prefer = bool(
+                        getattr(request.orchestration, "prefer_cheaper_models", False)
+                        or use_free_models
+                    )
 
                     if _intel_mode == "benchmark_locked":
-                        _elite_id = _get_elite_model_2026(_task)
+                        try:
+                            _elite_id = _get_elite_model_2026(_cat)
+                        except Exception:
+                            _elite_id = _get_elite_model_2026("reasoning")
                         selected_models = [_elite_id]
                         category_override = True
-                        logger.info("2026 benchmark_locked: %s -> %s", _task, _elite_id)
+                        logger.info("2026 benchmark_locked: %s -> %s", _cat, _elite_id)
 
                     elif _intel_mode == "controlled" and not category_override:
-                        _scored = _get_routing_engine_2026().select(_task, top_n=2)
+                        _scored = _get_routing_engine_2026().select_tier_appropriate(
+                            _cat,
+                            use_elite_tier=not use_free_models,
+                            accuracy_level=_acc,
+                            prefer_cheaper=_prefer,
+                            orchestrator_task=_task,
+                            top_n=2,
+                        )
                         if _scored:
                             selected_models = [s.model_id for s in _scored]
                             category_override = True
                             logger.info(
-                                "2026 controlled routing: %s -> %s "
-                                "(score=%.4f, str=%.3f, reas=%.3f, lat=%.3f, cost=%.3f)",
-                                _task, selected_models[0],
-                                _scored[0].total_score, _scored[0].strength_score,
-                                _scored[0].reasoning_score, _scored[0].latency_score,
-                                _scored[0].cost_score,
+                                "2026 controlled tier-routing: %s -> %s "
+                                "(score=%.4f, elite_tier=%s, prefer_cheaper=%s)",
+                                _cat,
+                                selected_models[0],
+                                _scored[0].total_score,
+                                not use_free_models,
+                                _prefer,
                             )
 
                     else:
-                        _scored = _get_routing_engine_2026().select(_task, top_n=2)
+                        _scored = _get_routing_engine_2026().select_tier_appropriate(
+                            _cat,
+                            use_elite_tier=not use_free_models,
+                            accuracy_level=_acc,
+                            prefer_cheaper=_prefer,
+                            orchestrator_task=_task,
+                            top_n=2,
+                        )
                         if _scored:
                             logger.info(
-                                "2026 advisory: %s -> %s (score=%.4f, not overriding)",
-                                _task, _scored[0].model_id, _scored[0].total_score,
+                                "2026 advisory tier-routing: %s -> %s (score=%.4f, not overriding)",
+                                _cat,
+                                _scored[0].model_id,
+                                _scored[0].total_score,
                             )
                 except Exception as _re:
                     logger.debug("2026 routing skipped: %s", _re)
@@ -2930,6 +3039,25 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             logger.info("TIER FILTERING APPLIED: FREE tier -> models=%s", actual_models)
         elif use_free_models and not ELITE_ORCHESTRATION_AVAILABLE:
             logger.warning("TIER FILTERING SKIPPED: use_free_models=True but ELITE_ORCHESTRATION_AVAILABLE=False!")
+
+        # Re-assert LC n=1 after any filtering (FREE filter can expand to 3).
+        if force_long_context_single or is_long_context_query(request.prompt, threshold=30000):
+            force_long_context_single = True
+            if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
+                free_lc = list(FREE_MODELS.get("long_context") or [])
+                if free_lc:
+                    actual_models = [free_lc[0]]
+                elif actual_models:
+                    actual_models = actual_models[:1]
+                else:
+                    actual_models = ["google/gemini-3.8-flash"]
+            else:
+                if not actual_models:
+                    actual_models = ["google/gemini-3.1-pro-preview"]
+                else:
+                    actual_models = actual_models[:1]
+            user_model_names = list(actual_models)
+            logger.info("Long context post-filter hard gate: n=1 models=%s", actual_models)
         
         logger.info(
             "Final models for orchestration: %s (display: %s)",
@@ -3737,6 +3865,8 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
         
         # ========================================================================
         # STEP 2: INTELLIGENT MODEL SELECTION (Based on agent_mode and task)
+        # Skip when long_context single-model gate is active — LC must stay on
+        # Gemini specialty (orchestration / intelligent re-pick hurts LC).
         # ========================================================================
         # Check agent_mode: "team" = multi-model ensemble, "single" = best single model
         agent_mode = orchestration_config.get("agent_mode", "team")
@@ -3749,7 +3879,27 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             (len(request.models) == 1 and request.models[0].lower() in ["automatic", "auto"])
         )
         
-        if is_automatic_mode:
+        if force_long_context_single:
+            # Preserve LC specialty model chosen in Step 5 / user flagship path.
+            if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
+                free_lc = list(FREE_MODELS.get("long_context") or [])
+                actual_models = [free_lc[0]] if free_lc else (actual_models[:1] if actual_models else ["google/gemini-3.8-flash"])
+            else:
+                preferred = get_long_context_model(
+                    estimate_token_count(request.prompt),
+                    prefer_free=False,
+                )
+                # Keep user-explicit LC-capable pick if present; else Gemini specialty.
+                if request.models and actual_models and "gemini" in str(actual_models[0]).lower():
+                    actual_models = actual_models[:1]
+                else:
+                    actual_models = [preferred]
+            user_model_names = list(actual_models)
+            logger.info(
+                "STEP 2 skipped (long_context single-model): n=1 -> %s",
+                actual_models[0],
+            )
+        elif is_automatic_mode:
             logger.info(
                 "Intelligent model selection: agent_mode=%s, task_type='%s'",
                 agent_mode, detected_task_type
@@ -3849,10 +3999,62 @@ async def run_orchestration(request: ChatRequest) -> ChatResponse:
             user_model_names = list(actual_models)
             logger.info("FREE TIER: Re-filtered after intelligent selection -> models=%s", actual_models)
 
+        # Long context: force Gemini specialty primary (not merely truncate an ensemble).
+        if force_long_context_single:
+            if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
+                free_lc = list(FREE_MODELS.get("long_context") or [])
+                actual_models = [free_lc[0]] if free_lc else ["google/gemini-3.8-flash"]
+            else:
+                preferred = get_long_context_model(
+                    estimate_token_count(request.prompt),
+                    prefer_free=False,
+                )
+                if actual_models and "gemini" in str(actual_models[0]).lower():
+                    actual_models = actual_models[:1]
+                else:
+                    actual_models = [preferred]
+            user_model_names = list(actual_models)
+            logger.info("Long context re-assert after selection: n=1 -> %s", actual_models[0])
+        else:
+            # Phase 1 specialty mesh: accuracy≥4 dual specialists (never LC).
+            # Spend-safe: skipped when prefer_cheaper; free uses FREE_MODELS only.
+            _acc_mesh = int(orchestration_config.get("accuracy_level", 3) or 3)
+            _prefer_mesh = bool(getattr(request.orchestration, "prefer_cheaper_models", False))
+            _task_mesh = detected_task_type if detected_task_type != "general" else _detect_task_type(request.prompt)
+            mesh = _phase1_specialty_mesh_models(
+                _task_mesh,
+                use_free_models=use_free_models,
+                accuracy_level=_acc_mesh,
+                prefer_cheaper=_prefer_mesh,
+            )
+            if mesh:
+                phase1_specialty_mesh = True
+                actual_models = list(mesh)
+                if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
+                    actual_models = _filter_free_models(actual_models)
+                user_model_names = list(actual_models)
+                # Prefer challenge-refine for dual specialists (coding/reasoning);
+                # math stays best_of_n-friendly via strategy selector below.
+                if _task_mesh in {
+                    "code_generation", "debugging", "coding", "frontend",
+                    "reasoning", "multi_step", "science_research", "health_medical",
+                    "legal_analysis", "high_quality", "research_analysis",
+                }:
+                    selected_strategy = "challenge_and_refine"
+                elif _task_mesh in {"math_problem", "financial_analysis", "math"}:
+                    selected_strategy = "best_of_n"
+                logger.info(
+                    "Phase1 specialty mesh: task=%s accuracy=%d strategy=%s -> %s",
+                    _task_mesh,
+                    _acc_mesh,
+                    selected_strategy,
+                    actual_models,
+                )
+
         pack_key = normalize_domain_pack(request.domain_pack.value)
         # Domain packs are quality tuners only: reorder within tier-allowed models.
         # They must NOT bypass use_free_models, spend guard, access guard, or Safe Mode.
-        if pack_key and actual_models:
+        if pack_key and actual_models and not force_long_context_single:
             actual_models = filter_models_by_domain(actual_models, pack_key)
             logger.info("Domain pack '%s': prioritized models=%s", pack_key, actual_models)
 
@@ -4161,9 +4363,19 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                                     kb_strategy[0],
                                     kb_strategy[1],
                                 )
-                                selected_strategy = kb_strategy[0]
-                                if kb_strategy[1]:
-                                    actual_models = kb_strategy[1]
+                                if force_long_context_single:
+                                    logger.info("KB strategy ignored for long_context single-model gate")
+                                elif phase1_specialty_mesh:
+                                    # Keep specialty dual mesh + strategy; do not let KB overwrite.
+                                    logger.info(
+                                        "KB strategy ignored for Phase1 specialty mesh (models=%s strategy=%s)",
+                                        actual_models,
+                                        selected_strategy,
+                                    )
+                                else:
+                                    selected_strategy = kb_strategy[0]
+                                    if kb_strategy[1]:
+                                        actual_models = kb_strategy[1]
                     
                     # =========================================================================
                     # TIER FILTERING - FINAL PASS (after KB strategy override)
@@ -4172,10 +4384,17 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                     if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
                         actual_models = _filter_free_models(actual_models)
                         logger.info("TIER FILTERING (post-KB): FREE tier -> models=%s", actual_models)
+
+                    if force_long_context_single and actual_models:
+                        actual_models = actual_models[:1]
+                        user_model_names = list(actual_models)
                     
                     # User-selected elite strategy takes precedence when valid
                     user_elite_strategy = getattr(request.orchestration, "elite_strategy", None)
-                    if user_elite_strategy and user_elite_strategy not in ("automatic", "auto", None):
+                    if force_long_context_single:
+                        strategy = "single_best"
+                        logger.info("Long context: forcing strategy=single_best (n=1)")
+                    elif user_elite_strategy and user_elite_strategy not in ("automatic", "auto", None):
                         strategy = user_elite_strategy
                         logger.info("Using user-selected elite strategy: %s", strategy)
                     else:
@@ -4194,17 +4413,19 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                     # normal orchestration strategies. Just avoid "auto/dynamic" which would
                     # try to fetch models from OpenRouter.
                     elite_strategy = strategy
-                    if use_free_models and strategy in ("auto", "automatic", "dynamic"):
+                    if force_long_context_single:
+                        elite_strategy = "single_best"
+                    elif use_free_models and strategy in ("auto", "automatic", "dynamic"):
                         elite_strategy = "parallel_race"  # Fast multi-model, avoids dynamic selection
                         logger.info("FREE tier: using parallel_race to avoid dynamic model selection")
                     
                     elite_result = await elite.orchestrate(
                         enhanced_prompt,
                         task_type=task_type,
-                        available_models=actual_models,
+                        available_models=actual_models[:1] if force_long_context_single else actual_models,
                         strategy=elite_strategy,
                         quality_threshold=0.7,
-                        max_parallel=min(3, len(actual_models)),
+                        max_parallel=1 if force_long_context_single else min(3, len(actual_models)),
                     )
                     
                     final_text = elite_result.final_answer
@@ -4235,23 +4456,29 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                 actual_models = orchestrator_models
                 user_model_names = list(orchestrator_models)
                 logger.info("TIER FILTERING (pre-orchestrator): FREE tier -> models=%s", orchestrator_models)
+
+            if force_long_context_single and orchestrator_models:
+                orchestrator_models = orchestrator_models[:1]
+                actual_models = orchestrator_models
+                user_model_names = list(orchestrator_models)
             
             artifacts = await _orchestrator.orchestrate(
                 enhanced_prompt,
                 orchestrator_models,
                 use_hrm=False if use_free_models else orchestration_config.get("use_hrm", False),
                 use_adaptive_routing=False if use_free_models else orchestration_config.get("use_adaptive_routing", False),
-                use_deep_consensus=orchestration_config.get("use_deep_consensus", False),
-                use_prompt_diffusion=orchestration_config.get("use_prompt_diffusion", False),
+                use_deep_consensus=False if force_long_context_single else orchestration_config.get("use_deep_consensus", False),
+                use_prompt_diffusion=False if force_long_context_single else orchestration_config.get("use_prompt_diffusion", False),
                 accuracy_level=accuracy_level,
                 skip_injection_check=True,  # Already checked on raw prompt
+                disable_shared_memory=bool(force_long_context_single),
             )
             final_text = artifacts.final_response.content
         
         # Apply quality boosting for high accuracy requests
         # FIX: Quality booster now has min-length guard + keyword preservation
         # Safe to re-enable at level 4+ (Feb 2026 fix)
-        if QUALITY_BOOSTER_AVAILABLE and accuracy_level >= 4:
+        if QUALITY_BOOSTER_AVAILABLE and accuracy_level >= 4 and not force_long_context_single:
             booster = _get_quality_booster()
             if booster:
                 try:
@@ -4939,10 +5166,32 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
             extra["tier_violation"] = _tier_violation
             logger.warning("TIER VIOLATION: %s", _tier_violation)
         
-        # Build response with models_used
+        # Build response with models_used = models that actually ran (attribution fidelity).
+        # Prefer executed IDs over display aliases so soaks never mislabel as GPT-4o.
+        _attribution_models = []
+        if "actual_models_used" in locals() and actual_models_used:
+            _attribution_models = list(actual_models_used)
+        elif actual_models:
+            _attribution_models = list(actual_models)
+        elif user_model_names:
+            _attribution_models = list(user_model_names)
+        extra["model_attribution"] = {
+            "requested_display": list(user_model_names or []),
+            "executed": list(_attribution_models),
+            "long_context_single": bool(force_long_context_single),
+            "phase1_specialty_mesh": bool(phase1_specialty_mesh),
+            "use_free_models": bool(use_free_models),
+            "ensemble_n": len(_attribution_models),
+        }
+        if force_long_context_single:
+            extra["long_context_policy"] = "single_best_n1"
+            _attribution_models = _attribution_models[:1]
+        elif phase1_specialty_mesh:
+            extra["phase1_policy"] = "specialty_mesh_acc_ge_4"
+
         response = ChatResponse(
             message=final_text,
-            models_used=user_model_names,
+            models_used=_attribution_models,
             reasoning_mode=request.reasoning_mode,
             reasoning_method=request.reasoning_method,
             domain_pack=request.domain_pack,

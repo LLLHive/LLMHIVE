@@ -602,8 +602,12 @@ def get_diverse_ensemble(
 # =============================================================================
 
 # Models with large context windows (for Long Context ranking)
+# Prefer Gemini specialty windows — long_context is single-model only (no ensemble).
+FALLBACK_GEMINI_3_8_FLASH = "google/gemini-3.8-flash"
 LONG_CONTEXT_MODELS = {
-    FALLBACK_GEMINI_3_1_PRO: 1050000,    # 1.05M tokens
+    FALLBACK_GEMINI_3_1_PRO: 2000000,    # 2M tokens — ELITE LC primary
+    FALLBACK_GEMINI_3_8_FLASH: 1048576,  # 1M — FREE LC primary
+    FALLBACK_GEMINI_2_5_FLASH: 1048576,  # 1M — FREE serial failover
     FALLBACK_GEMINI_3_PRO: 1000000,      # 1M tokens
     FALLBACK_CLAUDE_SONNET_4: 1000000,   # 1M tokens
     FALLBACK_GEMINI_2_5: 1000000,        # 1M tokens
@@ -653,32 +657,41 @@ RAG_OPTIMIZED_MODELS = [
 def get_long_context_model(
     prompt_length: int,
     available_models: Optional[List[str]] = None,
+    *,
+    prefer_free: bool = False,
 ) -> str:
-    """Select best model for long context based on prompt length.
-    
-    Args:
-        prompt_length: Estimated token count of prompt
-        available_models: Available models to choose from
-        
-    Returns:
-        Best model for the context length
+    """Select the single best long-context model (never an ensemble).
+
+    Long context is the anti-orchestration category: return exactly one model ID.
+    Elite prefers Gemini 3.1 Pro (2M); free prefers Gemini 3.8 Flash (1M).
     """
-    # Find models that can handle the length
+    # Preferred primaries by tier (serial failover only — caller must keep n=1)
+    preferred = (
+        [FALLBACK_GEMINI_3_8_FLASH, FALLBACK_GEMINI_2_5_FLASH, FALLBACK_GEMINI_3_1_PRO]
+        if prefer_free
+        else [FALLBACK_GEMINI_3_1_PRO, FALLBACK_GEMINI_3_8_FLASH, FALLBACK_GEMINI_2_5_FLASH]
+    )
+    for model in preferred:
+        if model not in LONG_CONTEXT_MODELS:
+            continue
+        if available_models is not None and model not in available_models:
+            continue
+        if LONG_CONTEXT_MODELS[model] >= max(prompt_length, 1):
+            logger.info("Long context routing: %d tokens -> %s (tier=%s)", prompt_length, model, "free" if prefer_free else "elite")
+            return model
+
     suitable = []
     for model, context_size in LONG_CONTEXT_MODELS.items():
-        if context_size >= prompt_length * 1.5:  # 1.5x buffer for output
+        if context_size >= prompt_length * 1.5:
             if available_models is None or model in available_models:
                 suitable.append((model, context_size))
-    
+
     if not suitable:
-        # Fallback to largest available
-        logger.warning("No model can handle %d tokens, using largest available", prompt_length)
-        return FALLBACK_CLAUDE_SONNET_4  # 1M tokens
-    
-    # Sort by context size (prefer larger for safety)
+        logger.warning("No model can handle %d tokens, using Gemini LC fallback", prompt_length)
+        return FALLBACK_GEMINI_3_8_FLASH if prefer_free else FALLBACK_GEMINI_3_1_PRO
+
     suitable.sort(key=lambda x: x[1], reverse=True)
     selected = suitable[0][0]
-    
     logger.info("Long context routing: %d tokens -> %s", prompt_length, selected)
     return selected
 
@@ -805,8 +818,40 @@ def is_multilingual_query(text: str) -> bool:
 
 
 def is_long_context_query(text: str, threshold: int = 50000) -> bool:
-    """Check if query needs long context handling."""
-    return estimate_token_count(text) > threshold
+    """Check if query needs long-context specialty routing (single large-window model).
+
+    Triggers on:
+    - estimated tokens above ``threshold`` (adapter uses 30k)
+    - mid-size prompts that look like in-document / haystack tasks (≥8k tokens)
+    """
+    if not text:
+        return False
+    tokens = estimate_token_count(text)
+    if tokens > threshold:
+        return True
+    # Document / needle / long-form analysis — don't wait for 30k+ to engage Gemini.
+    if tokens >= 8000:
+        lower = text.lower()
+        markers = (
+            "document:",
+            "haystack",
+            "needle",
+            "according to the passage",
+            "based on the following",
+            "in the text above",
+            "in the document",
+            "long context",
+            "full transcript",
+            "attached file",
+            "===== begin",
+            "----- begin",
+        )
+        if any(m in lower for m in markers):
+            return True
+        # Very long undifferentiated blob (paste) — treat as LC specialty
+        if tokens >= 16000:
+            return True
+    return False
 
 
 def is_speed_critical(request_metadata: Optional[dict] = None) -> bool:
