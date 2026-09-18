@@ -883,10 +883,24 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                             content = ""
                             if response.get("choices") and len(response["choices"]) > 0:
                                 choice = response["choices"][0]
-                                if choice.get("message"):
-                                    # Handle both missing key and null value
-                                    raw_content = choice["message"].get("content")
-                                    content = raw_content if raw_content is not None else ""
+                                message = choice.get("message") or {}
+                                # Handle missing/null content; some models put text in reasoning.
+                                raw_content = message.get("content")
+                                if raw_content is None or (
+                                    isinstance(raw_content, str) and not raw_content.strip()
+                                ):
+                                    raw_content = (
+                                        message.get("reasoning")
+                                        or message.get("reasoning_content")
+                                        or choice.get("text")
+                                        or ""
+                                    )
+                                content = raw_content if raw_content is not None else ""
+
+                            if not str(content).strip():
+                                raise ValueError(
+                                    f"OpenRouter returned empty content for model {model}"
+                                )
                             
                             usage = response.get("usage", {})
                             total_tokens = usage.get("total_tokens", 0)
@@ -3286,12 +3300,21 @@ Please provide an accurate, well-verified response."""
 
                 if fallback_result:
                     logger.info("Fallback succeeded via %s for %s", fallback_provider, first_model)
+                    # Keep a real model ID for any downstream API calls (refinement,
+                    # adaptive learning). Synthetic "fallback-*-for-*" strings cause
+                    # OpenRouter 400s when reused as model slugs.
                     result = LLMResult(
                         content=fallback_result,
-                        model=f"fallback-{fallback_provider}-for-{first_model}",
+                        model=first_model,
                         tokens=0,
                         cost_info=None,
                         generation_id=None,
+                        metadata={
+                            "fallback_provider": fallback_provider,
+                            "fallback_of": first_model,
+                            "providers_tried": list(_providers_tried or []),
+                            "failover_path": f"fallback-{fallback_provider}-for-{first_model}",
+                        },
                     )
                 else:
                     from .errors import ProviderError, ErrorCode
@@ -3391,11 +3414,21 @@ Please provide an accurate, well-verified response."""
                     # Configure max iterations based on accuracy level
                     max_iters = 2 if accuracy_level <= 3 else 3
                     
+                    # Never pass synthetic fallback-* IDs to OpenRouter.
+                    refine_model = result.model
+                    if isinstance(refine_model, str) and refine_model.startswith("fallback-"):
+                        if "-for-" in refine_model:
+                            refine_model = refine_model.split("-for-", 1)[-1]
+                        else:
+                            refine_model = first_model if first_model else (
+                                models_to_use[0] if models_to_use else "openai/gpt-4o-mini"
+                            )
+
                     # Run the iterative refinement loop
                     refinement_result = await self.refinement_controller.run_refinement_loop(
                         answer=result.content,
                         prompt=prompt,
-                        model=result.model,
+                        model=refine_model,
                         context=memory_context if memory_context else None,
                         available_models=models_to_use if len(models_to_use) > 1 else None,
                     )

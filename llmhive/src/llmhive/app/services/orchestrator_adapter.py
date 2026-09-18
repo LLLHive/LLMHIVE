@@ -2388,6 +2388,18 @@ def _map_model_to_provider(model_id: str, available_providers: list) -> str:
         logger.warning("Stub model requested ('%s'); falling back to free model '%s'", model_id, fallback)
         return fallback
 
+    # Synthetic failover tags must never be sent to OpenRouter as model slugs.
+    # Example: "fallback-router-chain-for-openai/gpt-4o-mini" → "openai/gpt-4o-mini"
+    if model_id and model_id.startswith("fallback-") and "-for-" in model_id:
+        recovered = model_id.split("-for-", 1)[-1].strip()
+        if recovered:
+            logger.warning(
+                "Recovered real model ID from synthetic fallback tag: %s -> %s",
+                model_id,
+                recovered,
+            )
+            model_id = recovered
+
     # If it's already a full OpenRouter model ID (contains "/"), return as-is
     if "/" in model_id:
         return model_id
@@ -4888,7 +4900,8 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                 extra["failover"] = _fo
         
         # CRITICAL SAFEGUARD: Never return empty message
-        # If final_text is empty after all processing, provide a fallback
+        # If final_text is empty after all processing, try one bounded recovery
+        # then fall back to an explicit apology (still HTTP 200 for clients).
         if not final_text or not final_text.strip():
             logger.error(
                 "CRITICAL: final_text is empty after orchestration! "
@@ -4896,10 +4909,58 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                 request.prompt[:100],
                 actual_models,
             )
-            final_text = (
-                "I apologize, but I was unable to generate a response to your query. "
-                "Please try again or rephrase your question."
-            )
+            recovered = False
+            try:
+                recovery_models = []
+                for m in (actual_models or []) + (user_model_names or []):
+                    if not m:
+                        continue
+                    mapped = str(m)
+                    if mapped.startswith("fallback-") and "-for-" in mapped:
+                        mapped = mapped.split("-for-", 1)[-1].strip()
+                    if mapped and not mapped.startswith("fallback-") and mapped not in recovery_models:
+                        recovery_models.append(mapped)
+                if not recovery_models:
+                    recovery_models = [FALLBACK_GPT_4O_MINI]
+                recovery_models = recovery_models[:1]
+                logger.warning(
+                    "Empty-response recovery: retrying once with model=%s",
+                    recovery_models[0],
+                )
+                recovery_artifacts = await _orchestrator.orchestrate(
+                    enhanced_prompt if "enhanced_prompt" in locals() else request.prompt,
+                    recovery_models,
+                    use_hrm=False,
+                    use_adaptive_routing=False,
+                    use_deep_consensus=False,
+                    use_prompt_diffusion=False,
+                    accuracy_level=min(int(orchestration_config.get("accuracy_level", 3) or 3), 3),
+                    skip_injection_check=True,
+                    disable_shared_memory=True,
+                )
+                recovered_text = getattr(
+                    getattr(recovery_artifacts, "final_response", None), "content", None
+                )
+                if recovered_text and str(recovered_text).strip():
+                    final_text = str(recovered_text).strip()
+                    recovered = True
+                    extra["empty_response_recovery"] = {
+                        "recovered": True,
+                        "model": recovery_models[0],
+                    }
+                    logger.info("Empty-response recovery succeeded via %s", recovery_models[0])
+            except Exception as recovery_err:
+                logger.warning("Empty-response recovery failed: %s", recovery_err)
+                extra["empty_response_recovery"] = {
+                    "recovered": False,
+                    "error": str(recovery_err)[:200],
+                }
+
+            if not recovered:
+                final_text = (
+                    "I apologize, but I was unable to generate a response to your query. "
+                    "Please try again or rephrase your question."
+                )
         
         # ========================================================================
         # PHASE 2: MATH OUTPUT VALIDATION

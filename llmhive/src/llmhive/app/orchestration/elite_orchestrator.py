@@ -2872,7 +2872,11 @@ Provide the improved answer:"""
             result = await provider.complete(prompt, model=api_model)
             latency = (time.time() - start) * 1000
             
-            content = getattr(result, 'content', '') or getattr(result, 'text', '')
+            content = getattr(result, 'content', '') or getattr(result, 'text', '') or ""
+            if not str(content).strip():
+                # Treat empty as failure so strategies retry/fall back instead of
+                # returning a successful EliteResult with final_answer="".
+                raise ValueError(f"Empty response from model {model}")
             tokens = getattr(result, 'tokens_used', 0)
             
             # Quick quality estimation
