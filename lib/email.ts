@@ -73,14 +73,23 @@ async function sendEmail(options: {
 // ============================================================================
 
 /**
- * Welcome Email - Sent after user signs up
+ * Welcome Email - Sent immediately after free/trial signup.
+ *
+ * Research-backed job: one activation CTA (first chat), outcome language,
+ * under ~60s read. Avoids feature dumps / early upgrade pressure.
  */
 export async function sendWelcomeEmail(options: {
   to: string
   name: string
+  /** free | trial | default — soft framing only; CTA stays activation. */
+  accountType?: "free" | "trial" | "default"
 }): Promise<EmailResult> {
-  const { to, name } = options
+  const { to, name, accountType = "default" } = options
   const firstName = name.split(" ")[0] || "there"
+  const isTrial = accountType === "trial"
+  const planLine = isTrial
+    ? "Your Standard trial is live. You already have access — the fastest way to see the difference is one real question."
+    : "Your free account is ready. The fastest way to see why teams switch from single-model chat is one real question."
 
   const html = `
 <!DOCTYPE html>
@@ -95,100 +104,48 @@ export async function sendWelcomeEmail(options: {
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #171717; border-radius: 16px; overflow: hidden; border: 1px solid #262626;">
-          <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #C48E48 0%, #8B6914 100%); padding: 32px; text-align: center;">
-              <h1 style="margin: 0; color: #0a0a0a; font-size: 28px; font-weight: 700;">🐝 LLMHive</h1>
-              <p style="margin: 8px 0 0 0; color: #0a0a0a; font-size: 14px; opacity: 0.8;">Premium multi-model AI orchestration</p>
+            <td style="background: linear-gradient(135deg, #C48E48 0%, #8B6914 100%); padding: 28px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #0a0a0a; font-size: 26px; font-weight: 700;">LLMHive</h1>
+              <p style="margin: 8px 0 0 0; color: #0a0a0a; font-size: 14px; opacity: 0.85;">Better answers by routing the right models</p>
             </td>
           </tr>
-          
-          <!-- Content -->
           <tr>
-            <td style="padding: 40px 32px;">
-              <h2 style="margin: 0 0 16px 0; color: #f5f5f5; font-size: 24px;">Welcome, ${firstName}! 🎉</h2>
-              
-              <p style="margin: 0 0 24px 0; color: #a3a3a3; font-size: 16px; line-height: 1.6;">
-                You've just unlocked access to the most powerful AI orchestration platform available. 
-                LLMHive combines the best AI models to deliver consistently superior results.
+            <td style="padding: 36px 32px;">
+              <h2 style="margin: 0 0 12px 0; color: #f5f5f5; font-size: 22px;">Welcome, ${firstName}</h2>
+              <p style="margin: 0 0 18px 0; color: #a3a3a3; font-size: 16px; line-height: 1.6;">
+                ${planLine}
               </p>
-              
-              <!-- Features -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
-                <tr>
-                  <td style="padding: 16px; background-color: #262626; border-radius: 8px; margin-bottom: 12px;">
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td width="40" style="vertical-align: top;">
-                          <span style="font-size: 24px;">🧠</span>
-                        </td>
-                        <td style="padding-left: 12px;">
-                          <h4 style="margin: 0 0 4px 0; color: #f5f5f5; font-size: 14px;">Multi-Model Intelligence</h4>
-                          <p style="margin: 0; color: #737373; font-size: 13px;">GPT-4, Claude, Gemini, and more working together</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr><td style="height: 12px;"></td></tr>
-                <tr>
-                  <td style="padding: 16px; background-color: #262626; border-radius: 8px;">
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td width="40" style="vertical-align: top;">
-                          <span style="font-size: 24px;">⚡</span>
-                        </td>
-                        <td style="padding-left: 12px;">
-                          <h4 style="margin: 0 0 4px 0; color: #f5f5f5; font-size: 14px;">Premium Mode orchestration</h4>
-                          <p style="margin: 0; color: #737373; font-size: 13px;">Advanced reasoning with HRM, DeepConf, and ensemble methods</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr><td style="height: 12px;"></td></tr>
-                <tr>
-                  <td style="padding: 16px; background-color: #262626; border-radius: 8px;">
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td width="40" style="vertical-align: top;">
-                          <span style="font-size: 24px;">🏆</span>
-                        </td>
-                        <td style="padding-left: 12px;">
-                          <h4 style="margin: 0 0 4px 0; color: #f5f5f5; font-size: 14px;">Top-Ranked Performance</h4>
-                          <p style="margin: 0; color: #737373; font-size: 13px;">${BENCHMARK_CLAIM_SHORT} — strong results vs. single-model baselines</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-              
-              <!-- CTA Button -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
+              <p style="margin: 0 0 8px 0; color: #f5f5f5; font-size: 15px; font-weight: 600; line-height: 1.5;">
+                Do this once (about 2 minutes):
+              </p>
+              <p style="margin: 0 0 24px 0; color: #a3a3a3; font-size: 15px; line-height: 1.6;">
+                Ask a hard question you actually care about — coding, research, math, or a long document.
+                LLMHive orchestrates specialist models so you get a stronger answer than any single chat alone.
+                ${BENCHMARK_CLAIM_SHORT}.
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 8px 0 28px 0;">
                 <tr>
                   <td align="center">
                     <a href="${APP_URL}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #C48E48 0%, #A67C3D 100%); color: #0a0a0a; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                      Start Your First Chat →
+                      Ask your first question →
                     </a>
                   </td>
                 </tr>
               </table>
-              
-              <p style="margin: 24px 0 0 0; color: #737373; font-size: 14px; line-height: 1.6;">
-                Need help getting started? Check out our <a href="${APP_URL}/help" style="color: #C48E48;">Help Center</a> 
-                or reply to this email – we're here to help!
+              <p style="margin: 0; color: #737373; font-size: 13px; line-height: 1.6;">
+                Stuck? Reply to this email — a human reads it. Or skim the
+                <a href="${APP_URL}/help" style="color: #C48E48;">Help Center</a>.
+                ${isTrial ? `When your trial ends, Standard is $10/month if you want to keep going.` : `When you outgrow free, Standard is $10/month.`}
               </p>
             </td>
           </tr>
-          
-          <!-- Footer -->
           <tr>
-            <td style="padding: 24px 32px; background-color: #0f0f0f; border-top: 1px solid #262626;">
+            <td style="padding: 20px 32px; background-color: #0f0f0f; border-top: 1px solid #262626;">
               <p style="margin: 0; color: #525252; font-size: 12px; text-align: center;">
-                © ${new Date().getFullYear()} LLMHive. All rights reserved.<br>
-                <a href="${APP_URL}/privacy" style="color: #737373;">Privacy Policy</a> · 
-                <a href="${APP_URL}/terms" style="color: #737373;">Terms of Service</a>
+                © ${new Date().getFullYear()} LLMHive ·
+                <a href="${APP_URL}/privacy" style="color: #737373;">Privacy</a> ·
+                <a href="${APP_URL}/terms" style="color: #737373;">Terms</a>
               </p>
             </td>
           </tr>
@@ -201,25 +158,157 @@ export async function sendWelcomeEmail(options: {
   `.trim()
 
   const text = `
-Welcome to LLMHive, ${firstName}!
+Welcome to LLMHive, ${firstName}
 
-You've just unlocked access to the most powerful AI orchestration platform available.
+${planLine}
 
-What you can do:
-- Multi-Model Intelligence: GPT-4, Claude, Gemini, and more working together
-- Premium Mode orchestration: Advanced reasoning with HRM, DeepConf, and ensemble methods  
-- Top-Ranked Performance: ${BENCHMARK_CLAIM_SHORT} — strong results vs. single-model baselines
+Do this once (about 2 minutes):
+Ask a hard question you actually care about — coding, research, math, or a long document.
+LLMHive orchestrates specialist models for a stronger answer than any single chat alone.
+${BENCHMARK_CLAIM_SHORT}.
 
-Get started: ${APP_URL}
+Ask your first question: ${APP_URL}
 
-Need help? Visit our Help Center: ${APP_URL}/help
+Stuck? Reply to this email or visit ${APP_URL}/help
+${isTrial ? "When your trial ends, Standard is $10/month if you want to keep going." : "When you outgrow free, Standard is $10/month."}
 
 © ${new Date().getFullYear()} LLMHive
   `.trim()
 
   return sendEmail({
     to,
-    subject: "Welcome to LLMHive 🐝 – Your AI Journey Begins",
+    subject: isTrial
+      ? `${firstName}, your LLMHive trial is ready — ask one real question`
+      : `${firstName}, your LLMHive account is ready — ask one real question`,
+    html,
+    text,
+  })
+}
+
+/**
+ * Trial ending tomorrow — offer Standard at $10/mo to continue.
+ *
+ * Best-practice structure (Postmark / Bento / SaaS conversion research):
+ * exact deadline, what access ends, loss-framed value, transparent price,
+ * one CTA, easy support reply. No fake scarcity / invented discounts.
+ */
+export async function sendTrialExpiringEmail(options: {
+  to: string
+  name: string
+  trialEndIso: string
+  priceMonthlyUsd?: number
+}): Promise<EmailResult> {
+  const { to, name, trialEndIso, priceMonthlyUsd = 10 } = options
+  const firstName = name.split(" ")[0] || "there"
+  const endDate = new Date(trialEndIso)
+  const endLabel = Number.isFinite(endDate.getTime())
+    ? endDate.toLocaleString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        timeZoneName: "short",
+      })
+    : "tomorrow"
+  const billingUrl = `${APP_URL}/billing`
+  const price = `$${priceMonthlyUsd}/month`
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your LLMHive trial ends tomorrow</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0a0a0a; color: #e5e5e5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #171717; border-radius: 16px; overflow: hidden; border: 1px solid #262626;">
+          <tr>
+            <td style="background: linear-gradient(135deg, #C48E48 0%, #8B6914 100%); padding: 28px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #0a0a0a; font-size: 24px; font-weight: 700;">Your trial ends tomorrow</h1>
+              <p style="margin: 8px 0 0 0; color: #0a0a0a; font-size: 14px; opacity: 0.85;">Keep Standard access for ${price}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 36px 32px;">
+              <p style="margin: 0 0 16px 0; color: #f5f5f5; font-size: 16px; line-height: 1.6;">
+                Hi ${firstName},
+              </p>
+              <p style="margin: 0 0 16px 0; color: #a3a3a3; font-size: 16px; line-height: 1.6;">
+                Your LLMHive Standard trial ends <strong style="color:#f5f5f5;">${endLabel}</strong>
+                (about 24 hours from this note).
+              </p>
+              <p style="margin: 0 0 16px 0; color: #a3a3a3; font-size: 16px; line-height: 1.6;">
+                After that, paid Standard features pause unless you continue.
+                If orchestration has already saved you time on hard questions, the straightforward next step is Standard at
+                <strong style="color:#C48E48;">${price}</strong> — cancel anytime from Billing.
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 8px 0 24px 0; background-color: #262626; border-radius: 8px;">
+                <tr>
+                  <td style="padding: 16px 20px; color: #a3a3a3; font-size: 14px; line-height: 1.6;">
+                    <strong style="color:#f5f5f5;">What you keep with Standard:</strong><br>
+                    Multi-model orchestration · Premium Mode · conversation memory · the routing that made your trial answers stronger
+                  </td>
+                </tr>
+              </table>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 8px 0 28px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${billingUrl}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #C48E48 0%, #A67C3D 100%); color: #0a0a0a; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                      Continue for ${price} →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 0; color: #737373; font-size: 13px; line-height: 1.6;">
+                Not ready? No hard feelings — you can return later at
+                <a href="${APP_URL}/pricing" style="color: #C48E48;">llmhive.ai/pricing</a>.
+                Need a hand or more time? Reply to this email.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px 32px; background-color: #0f0f0f; border-top: 1px solid #262626;">
+              <p style="margin: 0; color: #525252; font-size: 12px; text-align: center;">
+                © ${new Date().getFullYear()} LLMHive ·
+                <a href="${APP_URL}/billing" style="color: #737373;">Billing</a> ·
+                <a href="${APP_URL}/privacy" style="color: #737373;">Privacy</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+Hi ${firstName},
+
+Your LLMHive Standard trial ends tomorrow — ${endLabel}.
+
+After that, paid Standard features pause unless you continue.
+Continue for ${price} (cancel anytime): ${billingUrl}
+
+What you keep with Standard:
+Multi-model orchestration, Premium Mode, conversation memory, and the routing that made your trial answers stronger.
+
+Not ready? You can return later: ${APP_URL}/pricing
+Need a hand or more time? Reply to this email.
+
+© ${new Date().getFullYear()} LLMHive
+  `.trim()
+
+  return sendEmail({
+    to,
+    subject: `${firstName}, your LLMHive trial ends tomorrow — continue for ${price}`,
     html,
     text,
   })

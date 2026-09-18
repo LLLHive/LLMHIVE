@@ -262,6 +262,21 @@ class FirestoreSubscriptionService:
             logger.error("Failed to record query usage for %s: %s", user_id, e)
             return False
 
+    def list_trialing_subscriptions(self, *, limit: int = 500) -> List[Dict[str, Any]]:
+        """Return recent ``status=trialing`` subscriptions (for expiry email cron)."""
+        if not self.db:
+            return []
+        try:
+            query = (
+                self.db.collection(self.COLLECTION)
+                .where("status", "==", "trialing")
+                .limit(max(1, min(int(limit), 2000)))
+            )
+            return [doc.to_dict() or {} for doc in query.stream()]
+        except Exception as e:
+            logger.error("Failed to list trialing subscriptions: %s", e)
+            return []
+
 
 # ==============================================================================
 # Usage Tracking

@@ -528,3 +528,185 @@ async def pinecone_smoke_test(
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
+
+# ==============================================================================
+# Trial expiry reminder emails (1 day before)
+# ==============================================================================
+
+class TrialExpiryRemindersResponse(BaseModel):
+    success: bool
+    scanned: int = 0
+    sent: int = 0
+    skipped: int = 0
+    errors: int = 0
+    details: List[Dict[str, Any]] = []
+    timestamp: str
+
+
+def _as_utc_dt(value: Any) -> Optional[datetime]:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    if isinstance(value, (int, float)):
+        try:
+            return datetime.fromtimestamp(float(value), tz=timezone.utc)
+        except (OSError, ValueError, OverflowError):
+            return None
+    if isinstance(value, str):
+        try:
+            raw = value.replace("Z", "+00:00")
+            parsed = datetime.fromisoformat(raw)
+            return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        except ValueError:
+            return None
+    return None
+
+
+@router.post("/trial-expiry-reminders", response_model=TrialExpiryRemindersResponse)
+async def trial_expiry_reminders(
+    x_cron_secret: Optional[str] = Header(None),
+    x_admin_key: Optional[str] = Header(None),
+    window_hours: float = 24.0,
+    window_slack_hours: float = 6.0,
+    dry_run: bool = False,
+):
+    """Email trialing users whose trial ends ~tomorrow, offering Standard at $10/mo.
+
+    Selects Firestore ``status=trialing`` subscriptions with ``trial_end`` in
+    ``[now + window_hours - slack, now + window_hours + slack]`` (default ~18–30h).
+    Idempotent via ``trial_expiry_reminder_sent_at`` on the subscription doc.
+    """
+    if not verify_admin_access(x_cron_secret, x_admin_key):
+        raise HTTPException(status_code=401, detail="Admin access required")
+
+    from ..firestore_db import FirestoreSubscriptionService, is_firestore_available
+    from ..services.email import send_trial_expiring_email
+
+    if not is_firestore_available():
+        raise HTTPException(status_code=503, detail="Firestore unavailable")
+
+    now = datetime.now(timezone.utc)
+    center = now.timestamp() + (window_hours * 3600.0)
+    slack = window_slack_hours * 3600.0
+    window_start = datetime.fromtimestamp(center - slack, tz=timezone.utc)
+    window_end = datetime.fromtimestamp(center + slack, tz=timezone.utc)
+
+    service = FirestoreSubscriptionService()
+    candidates = service.list_trialing_subscriptions(limit=1000)
+
+    sent = skipped = errors = 0
+    details: List[Dict[str, Any]] = []
+
+    stripe_mod = None
+    try:
+        import stripe as _stripe
+        import os as _os
+
+        key = _os.getenv("STRIPE_SECRET_KEY") or _os.getenv("STRIPE_API_KEY")
+        if key:
+            _stripe.api_key = key
+            stripe_mod = _stripe
+    except Exception:
+        stripe_mod = None
+
+    for sub in candidates:
+        sub_id = str(sub.get("id") or "")
+        trial_end = _as_utc_dt(sub.get("trial_end"))
+        if not trial_end or not (window_start <= trial_end <= window_end):
+            continue
+
+        if sub.get("trial_expiry_reminder_sent_at"):
+            skipped += 1
+            details.append({"id": sub_id, "status": "already_sent"})
+            continue
+
+        email = None
+        name = None
+        customer_id = sub.get("stripe_customer_id")
+        if stripe_mod and customer_id:
+            try:
+                customer = stripe_mod.Customer.retrieve(str(customer_id))
+                email = getattr(customer, "email", None) or (
+                    customer.get("email") if hasattr(customer, "get") else None
+                )
+                name = getattr(customer, "name", None) or (
+                    customer.get("name") if hasattr(customer, "get") else None
+                )
+            except Exception as exc:
+                logger.warning(
+                    "trial reminder: stripe lookup failed for %s: %s",
+                    customer_id,
+                    exc,
+                )
+
+        if not email:
+            skipped += 1
+            errors += 1
+            details.append({"id": sub_id, "status": "no_email"})
+            continue
+
+        end_iso = trial_end.isoformat()
+        if dry_run:
+            sent += 1
+            details.append(
+                {
+                    "id": sub_id,
+                    "status": "dry_run",
+                    "email": email,
+                    "trial_end": end_iso,
+                }
+            )
+            continue
+
+        result = send_trial_expiring_email(
+            to=str(email),
+            customer_name=str(name) if name else None,
+            trial_end_iso=end_iso,
+            price_monthly_usd=10.0,
+        )
+        if result.get("sent"):
+            if sub_id:
+                service.update_subscription(
+                    sub_id,
+                    {"trial_expiry_reminder_sent_at": now},
+                )
+            sent += 1
+            details.append(
+                {
+                    "id": sub_id,
+                    "status": "sent",
+                    "email": email,
+                    "trial_end": end_iso,
+                }
+            )
+        elif result.get("skipped"):
+            skipped += 1
+            details.append(
+                {
+                    "id": sub_id,
+                    "status": "skipped_no_key",
+                    "email": email,
+                    "trial_end": end_iso,
+                }
+            )
+        else:
+            errors += 1
+            details.append(
+                {
+                    "id": sub_id,
+                    "status": "send_failed",
+                    "error": result.get("error"),
+                }
+            )
+
+    return TrialExpiryRemindersResponse(
+        success=errors == 0,
+        scanned=len(candidates),
+        sent=sent,
+        skipped=skipped,
+        errors=errors,
+        details=details[:50],
+        timestamp=now.isoformat(),
+    )
+

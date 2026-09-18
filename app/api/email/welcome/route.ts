@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { email, name } = body
+    const { email, name, accountType } = body
 
     if (!email || !name) {
       return NextResponse.json(
@@ -31,7 +31,12 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const result = await sendWelcomeEmail({ to: email, name })
+    const result = await sendWelcomeEmail({
+      to: email,
+      name,
+      accountType:
+        accountType === "trial" || accountType === "free" ? accountType : "default",
+    })
 
     if (!result.success) {
       return NextResponse.json(

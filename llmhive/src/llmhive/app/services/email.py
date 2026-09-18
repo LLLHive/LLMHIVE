@@ -286,3 +286,60 @@ def send_subscription_cancelled_email(
         "Feedback? Just reply.\n"
     )
     return _post_email(to=to, subject=subject, html=html, text=text)
+
+
+def send_trial_expiring_email(
+    *,
+    to: str,
+    customer_name: Optional[str] = None,
+    trial_end_iso: Optional[str] = None,
+    price_monthly_usd: float = 10.0,
+) -> Dict[str, Any]:
+    """Day-before trial expiry: continue at Standard $10/mo.
+
+    Never raises — cron/webhook callers must stay resilient.
+    """
+    if not to:
+        logger.warning("email.trial_expiring: no recipient address")
+        return {"sent": False, "skipped": True, "reason": "no_recipient"}
+
+    first_name = (customer_name or "").split(" ")[0] or "there"
+    app_url = _app_url()
+    billing_url = f"{app_url}/billing"
+    price = f"${price_monthly_usd:g}/month"
+    end_label = trial_end_iso or "tomorrow"
+
+    subject = f"{first_name}, your LLMHive trial ends tomorrow — continue for {price}"
+    html = f"""<!DOCTYPE html>
+<html><head><meta charset=\"utf-8\"><title>{subject}</title></head>
+<body style=\"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#0a0a0a;color:#e5e5e5;margin:0;padding:24px;\">
+  <div style=\"max-width:560px;margin:0 auto;background:#171717;border:1px solid #262626;border-radius:12px;padding:32px;\">
+    <h2 style=\"margin:0 0 12px 0;color:#f5f5f5;\">Your trial ends tomorrow</h2>
+    <p style=\"color:#a3a3a3;line-height:1.6;\">Hi {first_name},</p>
+    <p style=\"color:#a3a3a3;line-height:1.6;\">
+      Your LLMHive Standard trial ends <strong style=\"color:#f5f5f5;\">{end_label}</strong>
+      (about 24 hours from this note).
+    </p>
+    <p style=\"color:#a3a3a3;line-height:1.6;\">
+      After that, paid Standard features pause unless you continue. If orchestration has already
+      saved you time on hard questions, the straightforward next step is Standard at
+      <strong style=\"color:#C48E48;\">{price}</strong> — cancel anytime from Billing.
+    </p>
+    <p style=\"text-align:center;margin:28px 0;\">
+      <a href=\"{billing_url}\" style=\"display:inline-block;background:linear-gradient(135deg,#C48E48,#A67C3D);color:#0a0a0a;padding:12px 24px;border-radius:8px;font-weight:600;text-decoration:none;\">Continue for {price}</a>
+    </p>
+    <p style=\"color:#737373;font-size:13px;line-height:1.5;\">
+      Not ready? Return later at <a href=\"{app_url}/pricing\" style=\"color:#C48E48;\">{app_url}/pricing</a>.
+      Need a hand or more time? Reply to this email.
+    </p>
+  </div>
+</body></html>
+"""
+    text = (
+        f"Hi {first_name},\n\n"
+        f"Your LLMHive Standard trial ends tomorrow — {end_label}.\n\n"
+        f"Continue for {price} (cancel anytime): {billing_url}\n\n"
+        f"Not ready? {app_url}/pricing\n"
+        "Need a hand or more time? Reply to this email.\n"
+    )
+    return _post_email(to=to, subject=subject, html=html, text=text)
