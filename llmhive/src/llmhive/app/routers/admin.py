@@ -80,12 +80,21 @@ class SystemHealthResponse(BaseModel):
 def verify_admin_access(
     x_cron_secret: Optional[str] = Header(None),
     x_admin_key: Optional[str] = Header(None),
+    authorization: Optional[str] = Header(None),
 ) -> bool:
     """Verify admin access via cron secret or admin key."""
     import os
     
-    cron_secret = os.getenv("CRON_SECRET")
-    admin_key = os.getenv("ADMIN_API_KEY")
+    cron_secret = (os.getenv("CRON_SECRET") or "").strip()
+    admin_key = (
+        (os.getenv("ADMIN_API_KEY") or "").strip()
+        or (os.getenv("INTERNAL_ADMIN_OVERRIDE_KEY") or "").strip()
+    )
+
+    provided_cron = (x_cron_secret or "").strip()
+    if authorization and authorization.lower().startswith("bearer "):
+        provided_cron = provided_cron or authorization.split(" ", 1)[1].strip()
+    provided_admin = (x_admin_key or "").strip()
     
     # Allow if no secrets configured (dev mode)
     if not cron_secret and not admin_key:
@@ -93,11 +102,11 @@ def verify_admin_access(
         return True
     
     # Check cron secret
-    if cron_secret and x_cron_secret == cron_secret:
+    if cron_secret and provided_cron and provided_cron == cron_secret:
         return True
     
     # Check admin key
-    if admin_key and x_admin_key == admin_key:
+    if admin_key and provided_admin and provided_admin == admin_key:
         return True
     
     return False
@@ -577,8 +586,20 @@ async def trial_expiry_reminders(
     ``[now + window_hours - slack, now + window_hours + slack]`` (default ~18–30h).
     Idempotent via ``trial_expiry_reminder_sent_at`` on the subscription doc.
     """
-    if not verify_admin_access(x_cron_secret, x_admin_key):
-        raise HTTPException(status_code=401, detail="Admin access required")
+    if not verify_admin_access(x_cron_secret, x_admin_key, authorization=None):
+        import os as _os
+        raise HTTPException(
+            status_code=401,
+            detail={
+                "error": "Admin access required",
+                "has_cron_header": bool((x_cron_secret or "").strip()),
+                "has_admin_header": bool((x_admin_key or "").strip()),
+                "has_cron_env": bool((_os.getenv("CRON_SECRET") or "").strip()),
+                "has_admin_env": bool(
+                    (_os.getenv("ADMIN_API_KEY") or _os.getenv("INTERNAL_ADMIN_OVERRIDE_KEY") or "").strip()
+                ),
+            },
+        )
 
     from ..firestore_db import FirestoreSubscriptionService, is_firestore_available
     from ..services.email import send_trial_expiring_email
