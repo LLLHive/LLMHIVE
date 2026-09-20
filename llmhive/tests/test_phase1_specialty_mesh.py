@@ -86,7 +86,34 @@ def test_mesh_free_uses_catalog_only():
     )
     assert mesh is not None
     assert len(mesh) == 2
+    assert mesh[0].startswith("nvidia/nemotron-3-ultra")
+    assert "glm" in mesh[1]
     assert all("claude-opus" not in m and "gpt-6-astra" not in m for m in mesh)
+
+
+def test_mesh_free_skipped_when_prefer_cheaper():
+    assert (
+        _phase1_specialty_mesh_models(
+            "coding",
+            use_free_models=True,
+            accuracy_level=5,
+            prefer_cheaper=True,
+        )
+        is None
+    )
+
+
+def test_mesh_free_math_ultra_deepseek():
+    mesh = _phase1_specialty_mesh_models(
+        "math_problem",
+        use_free_models=True,
+        accuracy_level=4,
+        prefer_cheaper=False,
+    )
+    assert mesh == [
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "deepseek/deepseek-chat",
+    ]
 
 
 def test_long_context_detection_still_independent_of_mesh():

@@ -64,6 +64,59 @@ def routing_v2_enabled() -> bool:
     )
 
 
+def skip_or_when_direct_enabled() -> bool:
+    """When true, omit OpenRouter if a preferred direct provider is available.
+
+    Default OFF — keep OR last-resort until family probes are green.
+    Enable with ROUTING_V2_SKIP_OR_WHEN_DIRECT=true and optionally restrict via
+    ROUTING_V2_SKIP_OR_FAMILIES=deepseek,google,zai,nvidia,kimi,groq
+    """
+    return os.getenv("ROUTING_V2_SKIP_OR_WHEN_DIRECT", "false").lower() not in (
+        "0",
+        "false",
+        "no",
+        "off",
+    )
+
+
+def skip_or_families() -> set:
+    raw = os.getenv(
+        "ROUTING_V2_SKIP_OR_FAMILIES",
+        "deepseek,google,zai,nvidia,kimi,groq",
+    )
+    return {p.strip().lower() for p in raw.split(",") if p.strip()}
+
+
+def reserved_spill_enabled() -> bool:
+    """Prefer Fireworks/DashScope/DeepInfra in free spillover when keys exist."""
+    return os.getenv("ROUTING_V2_RESERVED_SPILL", "true").lower() not in (
+        "0",
+        "false",
+        "no",
+        "off",
+    )
+
+
+def _model_skip_or_family(model_id: str) -> Optional[str]:
+    """Return provider family id if this slug is eligible for skip-OR."""
+    m = (model_id or "").lower()
+    if "deepseek" in m:
+        return P_DEEPSEEK
+    if m.startswith("google/") or "gemini" in m or "gemma" in m:
+        return P_GOOGLE
+    if "glm" in m or m.startswith("z-ai/") or "zhipu" in m:
+        return P_ZAI
+    if "nemotron" in m or m.startswith("nvidia/"):
+        return P_NVIDIA
+    if "kimi" in m or "moonshot" in m:
+        return P_KIMI
+    if "llama" in m or "meta-llama" in m:
+        return P_GROQ
+    if "qwen" in m:
+        return P_DASHSCOPE
+    return None
+
+
 def is_free_tier_slug(model_id: str) -> bool:
     if ":free" in model_id:
         return True
@@ -194,20 +247,34 @@ def build_provider_chain(
             chain.append((p, None))
             seen.add(p)
 
-    # Cheap general spillover pool for :free
+    # Cheap general spillover pool for :free (reserved providers first when enabled)
     if is_free_tier_slug(model_id):
-        spill = [
-            P_GROQ,
-            P_CEREBRAS,
-            P_CLOUDFLARE,
-            P_DEEPINFRA,
-            P_FIREWORKS,
-            P_HYPERBOLIC,
-            P_AZURE_FOUNDRY,
-            P_TOGETHER,
-            P_HUGGINGFACE,
-        ]
-        spill.sort(key=lambda x: PROVIDER_COST_SCORE.get(x, 1.0))
+        if reserved_spill_enabled():
+            spill = [
+                P_FIREWORKS,
+                P_DASHSCOPE,
+                P_DEEPINFRA,
+                P_GROQ,
+                P_CEREBRAS,
+                P_CLOUDFLARE,
+                P_HYPERBOLIC,
+                P_AZURE_FOUNDRY,
+                P_TOGETHER,
+                P_HUGGINGFACE,
+            ]
+        else:
+            spill = [
+                P_GROQ,
+                P_CEREBRAS,
+                P_CLOUDFLARE,
+                P_DEEPINFRA,
+                P_FIREWORKS,
+                P_HYPERBOLIC,
+                P_AZURE_FOUNDRY,
+                P_TOGETHER,
+                P_HUGGINGFACE,
+            ]
+            spill.sort(key=lambda x: PROVIDER_COST_SCORE.get(x, 1.0))
         for p in spill:
             if p not in seen and provider_available(p):
                 chain.append((p, None))
@@ -228,7 +295,19 @@ def build_provider_chain(
 
     if provider_available(P_OPENROUTER):
         if routing_v2_enabled() and is_free_tier_slug(model_id):
-            if P_OPENROUTER not in seen:
+            omit_or = False
+            if skip_or_when_direct_enabled():
+                fam = _model_skip_or_family(model_id)
+                # Prefer explicit preferred_api when present
+                preferred = chain[0][0] if chain else None
+                eligible = fam in skip_or_families() if fam else False
+                if preferred and preferred != P_OPENROUTER and provider_available(preferred):
+                    if preferred in skip_or_families() or eligible:
+                        omit_or = True
+                        logger.debug(
+                            "skip-OR: direct %s available for %s", preferred, model_id
+                        )
+            if not omit_or and P_OPENROUTER not in seen:
                 chain.append((P_OPENROUTER, None))
                 seen.add(P_OPENROUTER)
         elif not routing_v2_enabled() and P_OPENROUTER not in seen:

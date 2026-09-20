@@ -76,6 +76,18 @@ Mounted on `llmhive-orchestrator` and **read by orchestrator** via `spillover_pr
 | `ZAI_API_KEY` | `zai-api-key` | **OK** (`/models` 200) | **OK** — chat 200 on `glm-5.3-flash` (Sep 19 2026) | Wired — ROUTING_V2 + `zai-models.json` |
 | `NVIDIA_API_KEY` | `nvidia-api-key` | **OK** (`/models` 200) | **OK** — chat 200 on Nemotron Ultra / Super / Lightning-30B / Nano Omni | Wired — ROUTING_V2 + `nvidia-models.json` |
 
+### P1 routing flags (Cloud Run)
+
+| Env | Default | Purpose |
+|-----|---------|---------|
+| `ROUTING_V2_STRICT_IDENTITY` | `true` | Refuse cross-family remaps |
+| `ROUTING_V2_SKIP_OR_WHEN_DIRECT` | `false` | Omit OR when preferred direct is up (enable per-family after probes) |
+| `ROUTING_V2_SKIP_OR_FAMILIES` | `deepseek,google,zai,nvidia,kimi,groq` | Families eligible when skip-OR is on |
+| `ROUTING_V2_RESERVED_SPILL` | `true` | Prefer Fireworks/DashScope/DeepInfra in free spillover |
+| `FREE_P1_MESH_ENABLED` | `true` | Free dual mesh (Ultra∥GLM / Ultra∥DeepSeek); still requires accuracy≥4, non-LC, `prefer_cheaper=false` |
+
+Admin capacity dashboard: `GET /api/v1/admin/providers/capacity` (admin auth).
+
 
 Re-run probes after any secret change (then redeploy):
 

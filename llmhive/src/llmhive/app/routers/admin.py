@@ -9,6 +9,7 @@ This router provides:
 from __future__ import annotations
 
 import logging
+import os
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Header, BackgroundTasks
@@ -328,6 +329,48 @@ async def get_performance_summary(
         
     except Exception as e:
         logger.warning("Failed to get performance summary: %s", e)
+        return {"available": False, "error": str(e)}
+
+
+# ==============================================================================
+# Provider capacity (RPM token buckets)
+# ==============================================================================
+
+@router.get("/providers/capacity")
+async def get_providers_capacity(
+    x_cron_secret: Optional[str] = Header(None),
+    x_admin_key: Optional[str] = Header(None),
+):
+    """Live per-provider RPM capacity from the ProviderRouter singleton."""
+    if not verify_admin_access(x_cron_secret, x_admin_key):
+        raise HTTPException(status_code=401, detail="Admin access required")
+    try:
+        from ..providers.provider_router import get_provider_router
+        from ..providers.provider_chain import (
+            routing_v2_enabled,
+            skip_or_when_direct_enabled,
+            reserved_spill_enabled,
+        )
+
+        router = get_provider_router()
+        return {
+            "available": True,
+            "providers": router.get_capacity_status(),
+            "routing": {
+                "routing_v2": routing_v2_enabled(),
+                "skip_or_when_direct": skip_or_when_direct_enabled(),
+                "reserved_spill": reserved_spill_enabled(),
+                "strict_identity": os.getenv(
+                    "ROUTING_V2_STRICT_IDENTITY", "true"
+                ).lower()
+                not in ("0", "false", "no", "off"),
+                "free_p1_mesh": os.getenv("FREE_P1_MESH_ENABLED", "true").lower()
+                not in ("0", "false", "no", "off"),
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    except Exception as e:
+        logger.warning("Failed to get provider capacity: %s", e)
         return {"available": False, "error": str(e)}
 
 

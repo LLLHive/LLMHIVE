@@ -4,11 +4,17 @@
 FROM python:3.11-slim
 
 # Set environment variables
+ARG BUILD_COMMIT=unknown
+ARG GIT_SHA=unknown
+ARG BUILD_TIME=unknown
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PORT=8080
+    PORT=8080 \
+    BUILD_COMMIT=${BUILD_COMMIT} \
+    GIT_SHA=${GIT_SHA} \
+    BUILD_TIME=${BUILD_TIME}
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \

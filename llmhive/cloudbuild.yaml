@@ -24,20 +24,24 @@
 #     --build-config=llmhive/cloudbuild.yaml
 
 steps:
-  # Step 1: Build the Docker image
+  # Step 1: Build the Docker image (bake commit stamp into image env as fallback)
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build'
+    entrypoint: 'bash'
     args:
-      - 'build'
-      - '-t'
-      - 'gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA'
-      - '-t'
-      - 'gcr.io/$PROJECT_ID/llmhive-orchestrator:latest'
-      - '--cache-from'
-      - 'gcr.io/$PROJECT_ID/llmhive-orchestrator:latest'
-      - '-f'
-      - 'Dockerfile'
-      - '.'
+      - '-c'
+      - |
+        set -euo pipefail
+        BUILD_TIME="$$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        docker build \
+          -t "gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA" \
+          -t "gcr.io/$PROJECT_ID/llmhive-orchestrator:latest" \
+          --cache-from "gcr.io/$PROJECT_ID/llmhive-orchestrator:latest" \
+          --build-arg "BUILD_COMMIT=$COMMIT_SHA" \
+          --build-arg "GIT_SHA=$COMMIT_SHA" \
+          --build-arg "BUILD_TIME=$${BUILD_TIME}" \
+          -f Dockerfile \
+          .
     dir: 'llmhive'
 
   # Step 2: Push the Docker image to GCR
@@ -56,54 +60,55 @@ steps:
       - 'gcr.io/$PROJECT_ID/llmhive-orchestrator:latest'
     waitFor: ['build']
 
-  # Step 4: Deploy to Cloud Run
+  # Step 4: Deploy to Cloud Run (always refresh build identity env vars)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'deploy'
-    entrypoint: 'gcloud'
-    args:
-      - 'run'
-      - 'deploy'
-      - 'llmhive-orchestrator'
-      - '--image'
-      - 'gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA'
-      - '--region'
-      - 'us-east1'
-      - '--platform'
-      - 'managed'
-      - '--allow-unauthenticated'
-      - '--port'
-      - '8080'
-      - '--memory'
-      - '4Gi'
-      - '--cpu'
-      - '2'
-      - '--cpu-boost'
-      - '--min-instances'
-      - '0'
-      - '--max-instances'
-      - '20'
-      - '--timeout'
-      - '300'
-      - '--concurrency'
-      - '80'
-      - '--update-env-vars'
-      - 'ALLOW_STUB_PROVIDER=false,LOG_LEVEL=INFO,ENVIRONMENT=production,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,ROUTING_V2_ENABLED=true,ROUTING_V2_STRICT_IDENTITY=true'
-      - '--update-secrets'
-      - 'OPENAI_API_KEY=openai-api-key:latest,ANTHROPIC_API_KEY=anthropic-api-key:latest,GROK_API_KEY=grok-api-key:latest,GROQ_API_KEY=groq-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,GOOGLE_AI_API_KEY=gemini-api-key:latest,DEEPSEEK_API_KEY=deepseek-api-key:latest,TAVILY_API_KEY=tavily-api-key:latest,PINECONE_API_KEY=pinecone-api-key:latest,OPENROUTER_API_KEY=open-router-key:latest,API_KEY=api-key:latest,STRIPE_SECRET_KEY=stripe-secret-key:latest,STRIPE_WEBHOOK_SECRET=stripe-webhook-secret:latest,TOGETHERAI_API_KEY=togetherai-api-key:latest,CEREBRAS_API_KEY=cerebras-api-key:latest,FIREWORKS_KEY=fireworks-key:latest,FIREWORKS_MODELS=fireworks-models:latest,HYPERBOLIC_KEY=Hyperbolic-key:latest,HYPERBOLIC_MODELS=hyperbolic-models:latest,HYPERBOLIC_BASE_URL=hyperbolic-base-url:latest,DeepInfra_Api_Key=deepInfra_api_key:latest,DASHSCOPE_API_KEY=dashscope-api-key:latest,DASHSCOPE_BASE_URL=Dashscope-base-url:latest,Cloudflare_Api_Key=cloudflare-api-key:latest,Cloudflare_Account_ID=cloudflare-account-id:latest,Kimi_K26_Api_Key=kimi-k26-api-key:latest,MISTRAL_API_KEY=mistral-api-key:latest,HF_TOKEN=Hf-token:latest,AZURE_FOUNDRY_API_KEY=azure-foundry-api-key:latest,AZURE_FOUNDRY_ENDPOINT=azure-foundry-endpoint:latest,AZURE_FOUNDRY_DEPLOYMENTS=azure-foundry-deployments:latest,ZAI_API_KEY=zai-api-key:latest,NVIDIA_API_KEY=nvidia-api-key:latest'
-    waitFor: ['push', 'push-latest']
-
-  # Step 5: Run health check
-  - name: 'gcr.io/cloud-builders/curl'
-    id: 'health-check'
-    entrypoint: 'sh'
+    entrypoint: 'bash'
     args:
       - '-c'
       - |
+        set -euo pipefail
+        BUILD_TIME="$$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        gcloud run deploy llmhive-orchestrator \
+          --image "gcr.io/$PROJECT_ID/llmhive-orchestrator:$COMMIT_SHA" \
+          --region us-east1 \
+          --platform managed \
+          --allow-unauthenticated \
+          --port 8080 \
+          --memory 4Gi \
+          --cpu 2 \
+          --cpu-boost \
+          --min-instances 0 \
+          --max-instances 20 \
+          --timeout 300 \
+          --concurrency 80 \
+          --update-env-vars "ALLOW_STUB_PROVIDER=false,LOG_LEVEL=INFO,ENVIRONMENT=production,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,ROUTING_V2_ENABLED=true,ROUTING_V2_STRICT_IDENTITY=true,ROUTING_V2_SKIP_OR_WHEN_DIRECT=false,ROUTING_V2_RESERVED_SPILL=true,FREE_P1_MESH_ENABLED=true,BUILD_COMMIT=$COMMIT_SHA,GIT_SHA=$COMMIT_SHA,BUILD_TIME=$${BUILD_TIME}" \
+          --update-secrets "OPENAI_API_KEY=openai-api-key:latest,ANTHROPIC_API_KEY=anthropic-api-key:latest,GROK_API_KEY=grok-api-key:latest,GROQ_API_KEY=groq-api-key:latest,GEMINI_API_KEY=gemini-api-key:latest,GOOGLE_AI_API_KEY=gemini-api-key:latest,DEEPSEEK_API_KEY=deepseek-api-key:latest,TAVILY_API_KEY=tavily-api-key:latest,PINECONE_API_KEY=pinecone-api-key:latest,OPENROUTER_API_KEY=open-router-key:latest,API_KEY=api-key:latest,STRIPE_SECRET_KEY=stripe-secret-key:latest,STRIPE_WEBHOOK_SECRET=stripe-webhook-secret:latest,TOGETHERAI_API_KEY=togetherai-api-key:latest,CEREBRAS_API_KEY=cerebras-api-key:latest,FIREWORKS_KEY=fireworks-key:latest,FIREWORKS_MODELS=fireworks-models:latest,HYPERBOLIC_KEY=Hyperbolic-key:latest,HYPERBOLIC_MODELS=hyperbolic-models:latest,HYPERBOLIC_BASE_URL=hyperbolic-base-url:latest,DeepInfra_Api_Key=deepInfra_api_key:latest,DASHSCOPE_API_KEY=dashscope-api-key:latest,DASHSCOPE_BASE_URL=Dashscope-base-url:latest,Cloudflare_Api_Key=cloudflare-api-key:latest,Cloudflare_Account_ID=cloudflare-account-id:latest,Kimi_K26_Api_Key=kimi-k26-api-key:latest,MISTRAL_API_KEY=mistral-api-key:latest,HF_TOKEN=Hf-token:latest,AZURE_FOUNDRY_API_KEY=azure-foundry-api-key:latest,AZURE_FOUNDRY_ENDPOINT=azure-foundry-endpoint:latest,AZURE_FOUNDRY_DEPLOYMENTS=azure-foundry-deployments:latest,ZAI_API_KEY=zai-api-key:latest,NVIDIA_API_KEY=nvidia-api-key:latest"
+        # Ensure new revision gets 100% traffic (tagged old revs can otherwise pin traffic)
+        NEW_REV="$$(gcloud run services describe llmhive-orchestrator --region=us-east1 --project=$PROJECT_ID --format='value(status.latestCreatedRevisionName)')"
+        if [ -n "$$NEW_REV" ]; then
+          gcloud run services update-traffic llmhive-orchestrator \
+            --region=us-east1 --project=$PROJECT_ID \
+            --to-revisions="$${NEW_REV}=100" \
+            --quiet
+        fi
+    waitFor: ['push', 'push-latest']
+
+  # Step 5: Run health check
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'health-check'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -euo pipefail
         echo "Waiting for deployment to complete..."
-        sleep 30
-        SERVICE_URL=$$(gcloud run services describe llmhive-orchestrator --region=us-east1 --format='value(status.url)' --project=$PROJECT_ID)
+        sleep 20
+        SERVICE_URL="$$(gcloud run services describe llmhive-orchestrator --region=us-east1 --format='value(status.url)' --project=$PROJECT_ID)"
         echo "Service URL: $$SERVICE_URL"
-        curl -f "$$SERVICE_URL/health" || echo "Health check pending (service may still be starting)"
+        BODY="$$(curl -sf "$$SERVICE_URL/health" || true)"
+        echo "Health: $$BODY"
+        echo "$$BODY" | grep -q "\"commit\":\"$COMMIT_SHA\"" || echo "WARN: health commit may not match $COMMIT_SHA yet"
     waitFor: ['deploy']
 
 # Build configuration

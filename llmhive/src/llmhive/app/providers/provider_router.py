@@ -57,33 +57,55 @@ class Provider(str, Enum):
 
 @dataclass
 class ProviderCapacity:
-    """Track rate limit capacity for a provider."""
+    """Token-bucket style RPM tracker with throttle counters."""
+
     rpm_limit: int  # Requests per minute
     window_start: float  # Timestamp of current window start
     requests_in_window: int  # Requests made in current window
-    
+    throttle_events: int = 0  # 429 / capacity refusals in current window
+    total_requests: int = 0
+    total_throttles: int = 0
+
+    def _roll_window(self) -> None:
+        now = time.time()
+        if now - self.window_start >= 60:
+            self.window_start = now
+            self.requests_in_window = 0
+            self.throttle_events = 0
+
     def can_proceed(self) -> bool:
-        """Check if provider has capacity."""
-        now = time.time()
-        
-        # Reset window if 60s have passed
-        if now - self.window_start >= 60:
-            self.window_start = now
-            self.requests_in_window = 0
-        
-        # Check if under limit
+        """Check if provider has capacity in the current 60s window."""
+        self._roll_window()
         return self.requests_in_window < self.rpm_limit
-    
-    def record_request(self):
-        """Record a request to this provider."""
-        now = time.time()
-        
-        # Reset window if needed
-        if now - self.window_start >= 60:
-            self.window_start = now
-            self.requests_in_window = 0
-        
+
+    def record_request(self) -> None:
+        """Record a successful dispatch attempt against the bucket."""
+        self._roll_window()
         self.requests_in_window += 1
+        self.total_requests += 1
+
+    def record_throttle(self) -> None:
+        """Record a rate-limit / capacity refusal (e.g. HTTP 429)."""
+        self._roll_window()
+        self.throttle_events += 1
+        self.total_throttles += 1
+
+    def remaining(self) -> int:
+        self._roll_window()
+        return max(0, self.rpm_limit - self.requests_in_window)
+
+    def as_status(self) -> Dict:
+        self._roll_window()
+        return {
+            "rpm_limit": self.rpm_limit,
+            "requests_in_window": self.requests_in_window,
+            "remaining": self.remaining(),
+            "available": self.can_proceed(),
+            "utilization": f"{self.requests_in_window}/{self.rpm_limit}",
+            "throttle_events_window": self.throttle_events,
+            "total_requests": self.total_requests,
+            "total_throttles": self.total_throttles,
+        }
 
 
 # Provider routing configuration
@@ -376,11 +398,19 @@ class ProviderRouter:
 
     def _can_use_provider(self, provider: Provider) -> bool:
         if provider == Provider.OPENROUTER:
-            return self.capacity[Provider.OPENROUTER].can_proceed()
+            ok = self.capacity[Provider.OPENROUTER].can_proceed()
+            if not ok:
+                self.capacity[Provider.OPENROUTER].record_throttle()
+            return ok
         if not self._client_available(provider):
             return False
         cap = self.capacity.get(provider)
-        return cap is None or cap.can_proceed()
+        if cap is None:
+            return True
+        ok = cap.can_proceed()
+        if not ok:
+            cap.record_throttle()
+        return ok
 
     def get_provider_for_model(
         self, 
@@ -746,13 +776,16 @@ class ProviderRouter:
         """Get current capacity status for all providers."""
         status = {}
         for provider, capacity in self.capacity.items():
-            status[provider.value] = {
-                "rpm_limit": capacity.rpm_limit,
-                "requests_in_window": capacity.requests_in_window,
-                "available": capacity.can_proceed(),
-                "utilization": f"{capacity.requests_in_window}/{capacity.rpm_limit}"
-            }
+            row = capacity.as_status()
+            row["client_ready"] = bool(self._client_available(provider))
+            status[provider.value] = row
         return status
+
+    def note_provider_throttle(self, provider: Provider) -> None:
+        """Record a 429 / capacity miss for dashboards."""
+        cap = self.capacity.get(provider)
+        if cap:
+            cap.record_throttle()
 
 
 # Singleton instance

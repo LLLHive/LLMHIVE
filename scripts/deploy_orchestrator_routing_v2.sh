@@ -25,12 +25,23 @@ gcloud builds submit \
   "${REPO_ROOT}"
 
 echo
-echo "=== Post-deploy: ensure ROUTING_V2_ENABLED ==="
+echo "=== Post-deploy: ensure ROUTING_V2 + build identity ==="
+BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 gcloud run services update "${SERVICE}" \
   --region="${REGION}" \
   --project="${PROJECT}" \
-  --update-env-vars="ROUTING_V2_ENABLED=true" \
+  --update-env-vars="ROUTING_V2_ENABLED=true,ROUTING_V2_STRICT_IDENTITY=true,ROUTING_V2_SKIP_OR_WHEN_DIRECT=false,ROUTING_V2_RESERVED_SPILL=true,FREE_P1_MESH_ENABLED=true,BUILD_COMMIT=${COMMIT_SHA},GIT_SHA=${COMMIT_SHA},BUILD_TIME=${BUILD_TIME}" \
   --quiet
+
+NEW_REV="$(gcloud run services describe "${SERVICE}" \
+  --region="${REGION}" --project="${PROJECT}" \
+  --format='value(status.latestCreatedRevisionName)')"
+if [[ -n "${NEW_REV}" ]]; then
+  gcloud run services update-traffic "${SERVICE}" \
+    --region="${REGION}" --project="${PROJECT}" \
+    --to-revisions="${NEW_REV}=100" \
+    --quiet
+fi
 
 URL=$(gcloud run services describe "${SERVICE}" \
   --region="${REGION}" \
@@ -38,7 +49,9 @@ URL=$(gcloud run services describe "${SERVICE}" \
   --format='value(status.url)')
 echo "Service URL: ${URL}"
 echo "Health: ${URL}/health"
-curl -sf "${URL}/health" && echo " Health OK" || echo " Health check pending"
+BODY="$(curl -sf "${URL}/health" || true)"
+echo "${BODY}"
+echo "${BODY}" | grep -q "\"commit\":\"${COMMIT_SHA}\"" && echo " Health OK (commit matches ${COMMIT_SHA})" || echo " Health check pending / commit mismatch"
 
 echo
 echo "Run provider audit:"

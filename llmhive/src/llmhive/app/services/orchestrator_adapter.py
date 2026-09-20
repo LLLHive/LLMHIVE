@@ -2527,12 +2527,41 @@ def _filter_free_models(actual_models: List[str]) -> List[str]:
     """Filter to FREE models using a single canonical source."""
     all_free_models = _get_all_free_models()
     filtered = [m for m in actual_models if m in all_free_models]
-    if not filtered:
-        if FREE_MODELS_DB_AVAILABLE and FREE_MODELS_DB:
-            filtered = list(FREE_MODELS_DB.keys())[:3]
-        else:
-            filtered = FREE_MODELS.get("reasoning", [])[:3]
-    return filtered
+    if filtered:
+        return filtered
+
+    # Pinned safe fallbacks — never arbitrary FREE_MODELS_DB.keys()[:3].
+    known = set(all_free_models)
+    if FREE_MODELS_DB_AVAILABLE and FREE_MODELS_DB:
+        known.update(FREE_MODELS_DB.keys())
+    pinned = [
+        m
+        for m in (
+            "nvidia/nemotron-3-ultra-550b-a55b:free",
+            "z-ai/glm-5.3-flash",
+            "deepseek/deepseek-chat",
+            "google/gemini-3.8-flash",
+            "moonshotai/kimi-k2.6",
+        )
+        if m in known
+    ]
+    if pinned:
+        logger.warning(
+            "free model filter empty for %s — using pinned fallback %s",
+            actual_models[:5],
+            pinned[:3],
+        )
+        return pinned[:3]
+
+    reasoning = list(FREE_MODELS.get("reasoning") or [])[:3]
+    if reasoning:
+        logger.warning(
+            "free model filter empty — using FREE_MODELS reasoning %s", reasoning
+        )
+        return reasoning
+
+    logger.error("free model filter empty and no safe fallback available")
+    return []
 
 
 def _phase1_specialty_mesh_models(
@@ -2547,12 +2576,12 @@ def _phase1_specialty_mesh_models(
     Regression / spend guards:
     - Caller must skip long_context entirely.
     - accuracy < 4 → None (no mesh, no extra spend).
-    - prefer_cheaper on paid → None.
-    - Free tier → free catalog only (no paid frontier).
+    - prefer_cheaper → None (paid and free) to avoid RPM/spend amplification.
+    - Free tier → explicit P1 pairs when FREE_P1_MESH_ENABLED (default true).
     """
     if accuracy_level < 4:
         return None
-    if prefer_cheaper and not use_free_models:
+    if prefer_cheaper:
         return None
 
     task = (task_type or "general").lower().strip()
@@ -2564,6 +2593,13 @@ def _phase1_specialty_mesh_models(
     math_tasks = {"math_problem", "financial_analysis", "math"}
 
     if use_free_models and ELITE_ORCHESTRATION_AVAILABLE:
+        if os.getenv("FREE_P1_MESH_ENABLED", "true").lower() in (
+            "0",
+            "false",
+            "no",
+            "off",
+        ):
+            return None
         if task in coding_tasks:
             cat = "coding"
         elif task in math_tasks:
@@ -2572,6 +2608,24 @@ def _phase1_specialty_mesh_models(
             cat = "reasoning"
         else:
             return None
+        # Explicit complementary pairs (draft ∥ challenge)
+        pairs = {
+            "math": [
+                "nvidia/nemotron-3-ultra-550b-a55b:free",
+                "deepseek/deepseek-chat",
+            ],
+            "coding": [
+                "nvidia/nemotron-3-ultra-550b-a55b:free",
+                "z-ai/glm-5.3-flash",
+            ],
+            "reasoning": [
+                "nvidia/nemotron-3-ultra-550b-a55b:free",
+                "z-ai/glm-5.3-flash",
+            ],
+        }
+        mesh = list(pairs.get(cat) or [])
+        if len(mesh) >= 2:
+            return mesh[:2]
         mesh = list(FREE_MODELS.get(cat) or [])[:2]
         return mesh if len(mesh) >= 2 else None
 

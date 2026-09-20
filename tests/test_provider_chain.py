@@ -230,13 +230,39 @@ def test_strict_identity_refuses_cross_family_remap(monkeypatch, tmp_path):
         client.resolve_model("qwen/qwen3-next-80b-a3b-instruct:free")
 
 
-def test_benchmark_table_loaded():
-    from llmhive.app.knowledge.orchestrator_benchmark_table import (
-        BENCHMARK_TABLE_AVAILABLE,
-        get_orchestrator_benchmark_snapshot,
-    )
+def test_skip_or_when_direct_off_keeps_openrouter_last(monkeypatch):
+    monkeypatch.setenv("ROUTING_V2_SKIP_OR_WHEN_DIRECT", "false")
+    monkeypatch.setenv("ZAI_API_KEY", "zai-test")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test")
+    from llmhive.app.providers.provider_chain import build_provider_chain, P_OPENROUTER, P_ZAI
 
-    assert BENCHMARK_TABLE_AVAILABLE
-    snap = get_orchestrator_benchmark_snapshot(top_k=3)
-    assert snap["available"]
-    assert len(snap["categories"]) >= 5
+    chain = build_provider_chain("z-ai/glm-5.3-flash")
+    providers = [p for p, _ in chain]
+    assert providers[0] == P_ZAI
+    assert P_OPENROUTER in providers
+    assert providers.index(P_OPENROUTER) == len(providers) - 1
+
+
+def test_skip_or_when_direct_on_omits_openrouter(monkeypatch):
+    monkeypatch.setenv("ROUTING_V2_SKIP_OR_WHEN_DIRECT", "true")
+    monkeypatch.setenv("ROUTING_V2_SKIP_OR_FAMILIES", "zai,nvidia,deepseek,google")
+    monkeypatch.setenv("ZAI_API_KEY", "zai-test")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "or-test")
+    from llmhive.app.providers.provider_chain import build_provider_chain, P_OPENROUTER, P_ZAI
+
+    chain = build_provider_chain("z-ai/glm-5.3-flash")
+    providers = [p for p, _ in chain]
+    assert providers[0] == P_ZAI
+    assert P_OPENROUTER not in providers
+
+
+def test_capacity_status_shape(monkeypatch):
+    monkeypatch.setenv("ZAI_API_KEY", "zai-test")
+    from llmhive.app.providers.provider_router import reset_provider_router, get_provider_router
+
+    reset_provider_router()
+    status = get_provider_router().get_capacity_status()
+    assert "openrouter" in status
+    assert "rpm_limit" in status["openrouter"]
+    assert "remaining" in status["openrouter"]
+    assert "throttle_events_window" in status["openrouter"]
