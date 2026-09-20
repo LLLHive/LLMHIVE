@@ -20,6 +20,8 @@ _SPILLOVER_SPECS = (
     ("azure_foundry", "llmhive.app.providers.azure_foundry_client", "get_azure_foundry_client", "meta-llama/llama-3.3-70b-instruct:free", True),
     ("cloudflare", "llmhive.app.providers.cloudflare_client", "get_cloudflare_client", "meta-llama/llama-3.3-70b-instruct:free", True),
     ("kimi", "llmhive.app.providers.kimi_client", "get_kimi_client", "moonshotai/kimi-k2.6", True),
+    ("zai", "llmhive.app.providers.zai_client", "get_zai_client", "z-ai/glm-5.3-flash", True),
+    ("nvidia", "llmhive.app.providers.nvidia_client", "get_nvidia_client", "nvidia/nemotron-3-ultra-550b-a55b", True),
 )
 
 

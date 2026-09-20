@@ -12,7 +12,7 @@ IMPORTANT: Prefer live OpenRouter `:free` IDs when present. Direct-provider
 entries (DeepSeek, Google AI Studio, Groq, DashScope, Mistral) may omit `:free`
 and set preferred_api + native_model_id for ROUTING_V2.
 
-Last Updated: September 12, 2026
+Last Updated: September 19, 2026
 """
 
 from dataclasses import dataclass, field
@@ -89,6 +89,7 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
     # ORDERING: reliably-available models FIRST, rate-limited models later.
     # _filter_free_models() uses list(FREE_MODELS_DB.keys())[:3] as fallback.
     # Live-verified Sep 12, 2026 (OpenRouter + DeepSeek + Google AI Studio).
+    # P0 Sep 19, 2026: direct Z.ai GLM + NVIDIA NIM + Kimi promoted; OR kept last.
     # =========================================================================
     # OpenRouter :free is now a short list (~19). Most Jan/Feb 2026 free slugs
     # 404. Prefer direct APIs for free-tier reliability; keep live OR free as
@@ -141,6 +142,73 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
         supports_tools=True,
     ),
 
+    "z-ai/glm-5.3-flash": FreeModelInfo(
+        model_id="z-ai/glm-5.3-flash",
+        display_name="GLM-5.3 Flash",
+        provider="Z.ai",
+        context_window=202752,
+        speed_tier=SpeedTier.FAST,
+        strengths=[
+            ModelStrength.REASONING,
+            ModelStrength.CODING,
+            ModelStrength.MATH,
+            ModelStrength.MULTILINGUAL,
+            ModelStrength.TOOL_USE,
+        ],
+        best_for=["Agentic coding", "Multilingual", "Budget reasoning"],
+        notes="Z.ai direct (api.z.ai); inexpensive Flash SKU — preferred over OR",
+        verified_working=True,
+        preferred_api="zai",
+        native_model_id="glm-5.3-flash",
+        performance_score=80.0,
+        capability_score=78.0,
+        supports_tools=True,
+    ),
+
+    "z-ai/glm-4.5-air": FreeModelInfo(
+        model_id="z-ai/glm-4.5-air",
+        display_name="GLM-4.5 Air",
+        provider="Z.ai",
+        context_window=131072,
+        speed_tier=SpeedTier.FAST,
+        strengths=[
+            ModelStrength.REASONING,
+            ModelStrength.CODING,
+            ModelStrength.SPEED,
+            ModelStrength.MULTILINGUAL,
+        ],
+        best_for=["Budget GLM", "Fast coding", "Dialogue"],
+        notes="Z.ai account SKU (glm-4.7-flash not listed on this key; Air is cheap direct)",
+        verified_working=True,
+        preferred_api="zai",
+        native_model_id="glm-4.5-air",
+        performance_score=72.0,
+        capability_score=70.0,
+        supports_tools=True,
+    ),
+
+    "moonshotai/kimi-k2.6": FreeModelInfo(
+        model_id="moonshotai/kimi-k2.6",
+        display_name="Kimi K2.6",
+        provider="Moonshot",
+        context_window=262144,
+        speed_tier=SpeedTier.MEDIUM,
+        strengths=[
+            ModelStrength.REASONING,
+            ModelStrength.CODING,
+            ModelStrength.LONG_CONTEXT,
+            ModelStrength.TOOL_USE,
+        ],
+        best_for=["Long context", "Coding agents", "Challenge seat"],
+        notes="Moonshot direct (Kimi_K26_Api_Key); Fireworks spillover same-family only",
+        verified_working=True,
+        preferred_api="kimi",
+        native_model_id="kimi-k2.6",
+        performance_score=79.0,
+        capability_score=77.0,
+        supports_tools=True,
+    ),
+
     "meta-llama/llama-3.3-70b-instruct:free": FreeModelInfo(
         model_id="meta-llama/llama-3.3-70b-instruct:free",
         display_name="Llama 3.3 70B Instruct",
@@ -164,8 +232,35 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
     ),
 
     # =========================================================================
-    # LIVE OPENROUTER :free (chat-probed Sep 12 2026)
+    # NVIDIA NIM DIRECT (+ OR :free spillover)
     # =========================================================================
+    "nvidia/nemotron-3-ultra-550b-a55b:free": FreeModelInfo(
+        model_id="nvidia/nemotron-3-ultra-550b-a55b:free",
+        display_name="NVIDIA Nemotron 3 Ultra 550B",
+        provider="NVIDIA",
+        context_window=1048576,
+        speed_tier=SpeedTier.SLOW,
+        strengths=[
+            ModelStrength.REASONING,
+            ModelStrength.MATH,
+            ModelStrength.CODING,
+            ModelStrength.LONG_CONTEXT,
+            ModelStrength.TOOL_USE,
+        ],
+        best_for=["Hard reasoning", "Math", "Complex coding", "Agents"],
+        notes=(
+            "Flagship NVIDIA NIM model (integrate.api.nvidia.com). "
+            "Primary Nemotron for quality; Super/Lightning are secondary. "
+            "OR :free last resort."
+        ),
+        verified_working=True,
+        preferred_api="nvidia",
+        native_model_id="nvidia/nemotron-3-ultra-550b-a55b",
+        performance_score=88.0,
+        capability_score=86.0,
+        supports_tools=True,
+    ),
+
     "nvidia/nemotron-3-super-120b-a12b:free": FreeModelInfo(
         model_id="nvidia/nemotron-3-super-120b-a12b:free",
         display_name="NVIDIA Nemotron 3 Super 120B",
@@ -179,30 +274,12 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
             ModelStrength.RAG,
         ],
         best_for=["Reasoning", "Coding", "Long context"],
-        notes="Live OpenRouter free — verified 200 OK Sep 12 2026",
+        notes="Prefer NVIDIA NIM direct; OR :free spillover",
         verified_working=True,
-        performance_score=72.0,
-        capability_score=70.0,
-        supports_tools=True,
-    ),
-
-    "nvidia/nemotron-3-ultra-550b-a55b:free": FreeModelInfo(
-        model_id="nvidia/nemotron-3-ultra-550b-a55b:free",
-        display_name="NVIDIA Nemotron 3 Ultra 550B",
-        provider="NVIDIA",
-        context_window=262144,
-        speed_tier=SpeedTier.SLOW,
-        strengths=[
-            ModelStrength.REASONING,
-            ModelStrength.MATH,
-            ModelStrength.CODING,
-            ModelStrength.LONG_CONTEXT,
-        ],
-        best_for=["Hard reasoning", "Math", "Complex coding"],
-        notes="Live OpenRouter free — largest Nemotron free SKU",
-        verified_working=True,
-        performance_score=74.0,
-        capability_score=72.0,
+        preferred_api="nvidia",
+        native_model_id="nvidia/nemotron-3-super-120b-a12b",
+        performance_score=76.0,
+        capability_score=74.0,
         supports_tools=True,
     ),
 
@@ -218,8 +295,10 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
             ModelStrength.CODING,
         ],
         best_for=["Fast inference", "Quick coding"],
-        notes="Live OpenRouter free — speed-oriented Nemotron",
+        notes="Prefer NVIDIA NIM; OR :free spillover. Native: nemotron-3.5-lightning-30b-a3b",
         verified_working=True,
+        preferred_api="nvidia",
+        native_model_id="nvidia/nemotron-3.5-lightning-30b-a3b",
         performance_score=70.0,
         capability_score=68.0,
         supports_tools=True,
@@ -237,8 +316,10 @@ FREE_MODELS_DB: Dict[str, FreeModelInfo] = {
             ModelStrength.LONG_CONTEXT,
         ],
         best_for=["Reasoning", "Math", "RAG"],
-        notes="Live OpenRouter free — reasoning-tuned nano",
+        notes="Prefer NVIDIA NIM nano; OR :free spillover",
         verified_working=True,
+        preferred_api="nvidia",
+        native_model_id="nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
         performance_score=69.0,
         capability_score=66.0,
     ),

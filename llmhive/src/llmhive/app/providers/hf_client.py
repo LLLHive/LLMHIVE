@@ -46,7 +46,6 @@ class HuggingFaceClient:
         "meta-llama/llama-3.1-8b-instruct": "meta-llama/Llama-3.1-8B-Instruct",
         "meta-llama/llama-3.2-3b-instruct:free": "meta-llama/Llama-3.2-3B-Instruct",
         "qwen/qwen2.5-72b-instruct": "Qwen/Qwen2.5-72B-Instruct",
-        "qwen/qwen3-coder:free": "Qwen/Qwen2.5-Coder-32B-Instruct",
         "mistralai/mistral-small-3.1-24b-instruct:free": "mistralai/Mistral-Small-3.1-24B-Instruct-2503",
         "google/gemma-3-27b-it:free": "google/gemma-3-27b-it",
         "google/gemma-3-12b-it:free": "google/gemma-3-12b-it",

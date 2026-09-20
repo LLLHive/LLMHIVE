@@ -26,6 +26,8 @@ _CATALOG_API_MAP = {
     "mistral-models": "mistral",
     "cloudflare-models": "cloudflare",
     "kimi-models": "kimi",
+    "zai-models": "zai",
+    "nvidia-models": "nvidia",
     "azure-foundry-models": "azure_foundry",
 }
 

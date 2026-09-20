@@ -45,6 +45,8 @@ Mounts use `:latest`; production only picks up the newest version when a **new r
 | Cerebras | `CEREBRAS_API_KEY` | **OK** | Use `llama3.1-8b` (not deprecated `llama-3.3-70b`) | Wired in ROUTING_V2 |
 | HuggingFace | `HF_TOKEN` | | | Subscription; needs Inference Providers scope |
 | Moonshot (Kimi) | `Kimi_K26_Api_Key` | **OK** | [platform.kimi.ai](https://platform.kimi.ai) billing | Direct API `https://api.moonshot.ai/v1`; chat OK on `kimi-k2.6` |
+| Z.ai (GLM) | `ZAI_API_KEY` | | [z.ai](https://z.ai) / open.bigmodel | Direct `https://api.z.ai/api/paas/v4`; `scripts/zai-models.json` |
+| NVIDIA NIM | `NVIDIA_API_KEY` | | [build.nvidia.com](https://build.nvidia.com) | Direct `https://integrate.api.nvidia.com/v1`; Nemotron Ultra/Super |
 
 ## Production secrets (Cloud Run)
 
@@ -71,11 +73,28 @@ Mounted on `llmhive-orchestrator` and **read by orchestrator** via `spillover_pr
 | `DASHSCOPE_API_KEY` | `dashscope-api-key` | | | Wired |
 | `MISTRAL_API_KEY` | `mistral-api-key` | | | Wired |
 | `HF_TOKEN` | `Hf-token` | | | Wired (auth OK; some HF-router model IDs may 400) |
+| `ZAI_API_KEY` | `zai-api-key` | **OK** (`/models` 200) | **OK** — chat 200 on `glm-5.3-flash` (Sep 19 2026) | Wired — ROUTING_V2 + `zai-models.json` |
+| `NVIDIA_API_KEY` | `nvidia-api-key` | **OK** (`/models` 200) | **OK** — chat 200 on Nemotron Ultra / Super / Lightning-30B / Nano Omni | Wired — ROUTING_V2 + `nvidia-models.json` |
+
 
 Re-run probes after any secret change (then redeploy):
 
 ```bash
 ./scripts/run_verify_with_gcp_secrets.sh
+python scripts/probe_free_catalog_p0.py
+```
+
+Mount new secrets (after creating them in Secret Manager):
+
+```bash
+# Create secrets (once)
+printf '%s' "$ZAI_API_KEY" | gcloud secrets create zai-api-key --data-file=- --project=llmhive-orchestrator
+printf '%s' "$NVIDIA_API_KEY" | gcloud secrets create nvidia-api-key --data-file=- --project=llmhive-orchestrator
+
+# Attach to Cloud Run (add to cloudbuild.yaml --update-secrets as well)
+gcloud run services update llmhive-orchestrator --region=us-east1 --project=llmhive-orchestrator \
+  --update-secrets=ZAI_API_KEY=zai-api-key:latest,NVIDIA_API_KEY=nvidia-api-key:latest \
+  --update-env-vars=ROUTING_V2_STRICT_IDENTITY=true
 ```
 
 Or load secrets manually:

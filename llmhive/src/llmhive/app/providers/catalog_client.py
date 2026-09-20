@@ -13,6 +13,52 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
+_FAMILY_TOKENS = (
+    "nemotron",
+    "deepseek",
+    "qwen",
+    "llama",
+    "kimi",
+    "moonshot",
+    "glm",
+    "z-ai",
+    "zhipu",
+    "gemma",
+    "gemini",
+    "mistral",
+    "minimax",
+    "gpt",
+    "claude",
+)
+
+
+def strict_identity_enabled() -> bool:
+    """When true, refuse spillover maps that change model family (Qwen→Llama, etc.)."""
+    return os.getenv("ROUTING_V2_STRICT_IDENTITY", "true").lower() not in (
+        "0",
+        "false",
+        "no",
+        "off",
+    )
+
+
+def model_family(model_id: str) -> str:
+    s = (model_id or "").lower()
+    for tok in _FAMILY_TOKENS:
+        if tok in s:
+            if tok in ("moonshot", "kimi"):
+                return "kimi"
+            if tok in ("z-ai", "zhipu", "glm"):
+                return "glm"
+            return tok
+    if "/" in s:
+        return s.split("/", 1)[0]
+    return s or "unknown"
+
+
+def same_model_family(requested: str, resolved: str) -> bool:
+    return model_family(requested) == model_family(resolved)
+
 
 class CatalogClient:
     """Thin HTTP client backed by a JSON model catalog (env or file)."""
@@ -73,7 +119,12 @@ class CatalogClient:
             return self.chat_models[model]
         logical = self.openrouter_map.get(model)
         if logical and logical in self.chat_models:
-            return self.chat_models[logical]
+            native = self.chat_models[logical]
+            if strict_identity_enabled() and not same_model_family(model, native):
+                raise ValueError(
+                    f"strict identity: refused remap {model} -> {native} on {self.name}"
+                )
+            return native
         if "/" in model:
             return model
         return self.default_model
@@ -133,7 +184,17 @@ class CatalogClient:
                 err = str(e).lower()
                 if any(
                     x in err
-                    for x in ("auth", "payment", "401", "403", "402", "model not found", "404")
+                    for x in (
+                        "auth",
+                        "payment",
+                        "401",
+                        "403",
+                        "402",
+                        "model not found",
+                        "404",
+                        "strict identity",
+                        "refused remap",
+                    )
                 ):
                     return None
                 if attempt < max_retries:

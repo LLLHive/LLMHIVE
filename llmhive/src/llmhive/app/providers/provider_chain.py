@@ -21,6 +21,8 @@ P_CEREBRAS = "cerebras"
 P_GROK = "grok"
 P_KIMI = "kimi"
 P_MISTRAL = "mistral"
+P_ZAI = "zai"
+P_NVIDIA = "nvidia"
 P_DASHSCOPE = "dashscope"
 P_CLOUDFLARE = "cloudflare"
 P_DEEPINFRA = "deepinfra"
@@ -39,6 +41,8 @@ PROVIDER_COST_SCORE: Dict[str, float] = {
     P_GROK: 0.5,
     P_MISTRAL: 0.45,
     P_KIMI: 0.55,
+    P_ZAI: 0.5,
+    P_NVIDIA: 0.4,
     P_DASHSCOPE: 0.6,
     P_CLOUDFLARE: 0.65,
     P_DEEPINFRA: 0.7,
@@ -84,6 +88,8 @@ def provider_available(provider: str) -> bool:
         P_GROK: ("GROK_API_KEY",),
         P_KIMI: ("Kimi_K26_Api_Key", "KIMI_API_KEY", "MOONSHOT_API_KEY"),
         P_MISTRAL: ("MISTRAL_API_KEY",),
+        P_ZAI: ("ZAI_API_KEY", "ZHIPU_API_KEY", "GLM_API_KEY"),
+        P_NVIDIA: ("NVIDIA_API_KEY", "NGC_API_KEY", "NIM_API_KEY"),
         P_DASHSCOPE: ("DASHSCOPE_API_KEY",),
         P_CLOUDFLARE: ("Cloudflare_Api_Key", "CLOUDFLARE_API_KEY"),
         P_DEEPINFRA: ("DeepInfra_Api_Key", "DEEPINFRA_API_KEY"),
@@ -109,6 +115,10 @@ def _family_providers(model_id: str) -> List[str]:
         return [P_GROQ, P_CEREBRAS, P_AZURE_FOUNDRY, P_HYPERBOLIC, P_FIREWORKS, P_DEEPINFRA]
     if "kimi" in m or "moonshot" in m:
         return [P_KIMI, P_AZURE_FOUNDRY, P_FIREWORKS, P_HYPERBOLIC]
+    if "glm" in m or m.startswith("z-ai/") or "zhipu" in m:
+        return [P_ZAI]
+    if "nemotron" in m or m.startswith("nvidia/"):
+        return [P_NVIDIA]
     if "grok" in m or "x-ai" in m:
         return [P_GROK]
     if "mistral" in m:
@@ -136,6 +146,11 @@ def get_explicit_routing() -> Dict[str, Tuple[str, Optional[str]]]:
         "cloudflare": P_CLOUDFLARE,
         "kimi": P_KIMI,
         "mistral": P_MISTRAL,
+        "zai": P_ZAI,
+        "zhipu": P_ZAI,
+        "glm": P_ZAI,
+        "nvidia": P_NVIDIA,
+        "nim": P_NVIDIA,
         "openrouter": P_OPENROUTER,
     }
     try:
@@ -223,8 +238,11 @@ def build_provider_chain(
 
 
 def primary_provider_name(model_id: str) -> str:
-    """Map to orchestrator.providers dict keys."""
+    """Map to orchestrator.providers dict keys (first available in chain)."""
     chain = build_provider_chain(model_id)
+    for provider, _ in chain:
+        if provider == P_OPENROUTER or provider_available(provider):
+            return _provider_to_orchestrator_key(provider)
     if chain:
         return _provider_to_orchestrator_key(chain[0][0])
     return "openrouter"
@@ -248,5 +266,7 @@ def _provider_to_orchestrator_key(provider: str) -> str:
         P_CLOUDFLARE: "cloudflare",
         P_KIMI: "kimi",
         P_MISTRAL: "mistral",
+        P_ZAI: "zai",
+        P_NVIDIA: "nvidia",
     }
     return mapping.get(provider, provider)

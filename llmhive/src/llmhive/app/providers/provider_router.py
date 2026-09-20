@@ -51,6 +51,8 @@ class Provider(str, Enum):
     CLOUDFLARE = "cloudflare"
     KIMI = "kimi"
     MISTRAL = "mistral"
+    ZAI = "zai"
+    NVIDIA = "nvidia"
 
 
 @dataclass
@@ -99,6 +101,19 @@ PROVIDER_ROUTING = {
     # DeepSeek models → DeepSeek Direct (30 RPM, excellent for math/reasoning)
     "deepseek/deepseek-r1-0528:free": (Provider.DEEPSEEK, "deepseek-reasoner"),
     "deepseek/deepseek-chat": (Provider.DEEPSEEK, "deepseek-chat"),
+
+    # Z.ai GLM → direct paas/v4
+    "z-ai/glm-5.3-flash": (Provider.ZAI, "glm-5.3-flash"),
+    "z-ai/glm-4.5-air": (Provider.ZAI, "glm-4.5-air"),
+    "z-ai/glm-5.3": (Provider.ZAI, "glm-5.3"),
+
+    # NVIDIA NIM Nemotron
+    "nvidia/nemotron-3-ultra-550b-a55b:free": (Provider.NVIDIA, "nvidia/nemotron-3-ultra-550b-a55b"),
+    "nvidia/nemotron-3-super-120b-a12b:free": (Provider.NVIDIA, "nvidia/nemotron-3-super-120b-a12b"),
+    "nvidia/nemotron-3.5-lightning:free": (Provider.NVIDIA, "nvidia/nemotron-3.5-lightning-30b-a3b"),
+
+    # Moonshot Kimi
+    "moonshotai/kimi-k2.6": (Provider.KIMI, "kimi-k2.6"),
 
     # Together.ai models → Together Direct (backup/complement)
     "together/meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo": (
@@ -165,6 +180,8 @@ class ProviderRouter:
         from .cloudflare_client import get_cloudflare_client
         from .kimi_client import get_kimi_client
         from .mistral_client import get_mistral_client
+        from .zai_client import get_zai_client
+        from .nvidia_client import get_nvidia_client
 
         self.google_client = get_google_client()
         self.deepseek_client = get_deepseek_client()
@@ -181,6 +198,8 @@ class ProviderRouter:
         self.cloudflare_client = get_cloudflare_client()
         self.kimi_client = get_kimi_client()
         self.mistral_client = get_mistral_client()
+        self.zai_client = get_zai_client()
+        self.nvidia_client = get_nvidia_client()
 
         # Initialize capacity tracking
         self.capacity = {
@@ -264,6 +283,16 @@ class ProviderRouter:
                 window_start=time.time(),
                 requests_in_window=0
             ),
+            Provider.ZAI: ProviderCapacity(
+                rpm_limit=30,  # Z.ai GLM — conservative; free Flash SKUs available
+                window_start=time.time(),
+                requests_in_window=0
+            ),
+            Provider.NVIDIA: ProviderCapacity(
+                rpm_limit=40,  # NVIDIA NIM integrate.api free/paid endpoint
+                window_start=time.time(),
+                requests_in_window=0
+            ),
         }
         
         # Log availability
@@ -298,6 +327,10 @@ class ProviderRouter:
             providers_available.append("Kimi/Moonshot (20 RPM est.)")
         if self.mistral_client:
             providers_available.append("Mistral direct (30 RPM est.)")
+        if self.zai_client:
+            providers_available.append("Z.ai GLM (30 RPM est.)")
+        if self.nvidia_client:
+            providers_available.append("NVIDIA NIM Nemotron (40 RPM est.)")
         providers_available.append("OpenRouter (20 RPM)")
         
         logger.info(
@@ -335,6 +368,8 @@ class ProviderRouter:
             Provider.CLOUDFLARE: self.cloudflare_client,
             Provider.KIMI: self.kimi_client,
             Provider.MISTRAL: self.mistral_client,
+            Provider.ZAI: self.zai_client,
+            Provider.NVIDIA: self.nvidia_client,
             Provider.OPENROUTER: True,
             Provider.GROK: self.grok_client,
         }.get(provider)
@@ -425,6 +460,10 @@ class ProviderRouter:
             return await self.kimi_client.generate_with_retry(prompt, model_id)
         if provider == Provider.MISTRAL and self.mistral_client:
             return await self.mistral_client.generate_with_retry(prompt, model_id)
+        if provider == Provider.ZAI and self.zai_client:
+            return await self.zai_client.generate_with_retry(prompt, model_id)
+        if provider == Provider.NVIDIA and self.nvidia_client:
+            return await self.nvidia_client.generate_with_retry(prompt, model_id)
         if provider == Provider.HUGGINGFACE and self.hf_client:
             return await self.hf_client.generate_with_retry(
                 prompt, target or "meta-llama/Llama-3.3-70B-Instruct"

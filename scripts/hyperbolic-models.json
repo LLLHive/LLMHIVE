@@ -7,7 +7,6 @@
   },
   "openrouter_map": {
     "qwen/qwen3-coder:free": "qwen_coder_480b",
-    "qwen/qwen3-next-80b-a3b-instruct:free": "llama_33_70b",
     "meta-llama/llama-3.3-70b-instruct:free": "llama_33_70b"
   }
 }

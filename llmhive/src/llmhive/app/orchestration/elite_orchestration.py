@@ -138,93 +138,92 @@ def get_models_for_category(category: str, use_free: bool = False) -> List[str]:
 # Key insight: Multi-model consensus + calculator + reranker = great quality even with free models
 # UPDATED: January 27, 2026 - Weekly optimization sync from OpenRouter API
 # =============================================================================
-# VERIFIED FREE MODELS — September 12, 2026
+# VERIFIED FREE MODELS — September 19, 2026 (P0: Z.ai + NVIDIA NIM + Kimi)
 # =============================================================================
-# Mix of direct free-quota routes (DeepSeek/Google/Groq) + live OpenRouter :free.
-# Most Feb 2026 :free slugs are gone; do not resurrect hermes/trinity/solar/glm-4.5-air.
+# Mix of direct routes (DeepSeek/Google/Groq/Z.ai/NVIDIA/Kimi) + OR :free spillover.
+# Most Feb 2026 :free slugs are gone; do not resurrect hermes/trinity/solar.
 # =============================================================================
 FREE_MODELS = {
-    # Live-verified Sep 12 2026:
-    # Direct OK: deepseek-flash/chat, google gemini-3.8-flash, groq llama-3.3-70b
-    # OR free OK: nemotron-3-super/ultra/3.5-lightning
-    # OR free listed (may 429): gemma-4-31b-it:free
+    # Direct-first P0:
+    # NVIDIA flagship = nemotron-3-ultra-550b-a55b; Super/Lightning for mid/speed.
+    # Z.ai GLM Flash, Kimi, DeepSeek, Gemini Flash; OR :free last-resort spillover.
 
     "math": [
-        "deepseek/deepseek-chat",
         "nvidia/nemotron-3-ultra-550b-a55b:free",
-        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+        "deepseek/deepseek-chat",
+        "z-ai/glm-5.3-flash",
         "google/gemini-3.8-flash",
-        "qwen/qwen3-next-80b-a3b-instruct:free",
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
     ],
     "reasoning": [
-        "deepseek/deepseek-chat",
         "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "z-ai/glm-5.3-flash",
+        "deepseek/deepseek-chat",
+        "moonshotai/kimi-k2.6",
         "nvidia/nemotron-3-super-120b-a12b:free",
-        "google/gemini-3.8-flash",
-        "meta-llama/llama-3.3-70b-instruct:free",
     ],
     "coding": [
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "z-ai/glm-5.3-flash",
         "deepseek/deepseek-chat",
+        "moonshotai/kimi-k2.6",
         "qwen/qwen3-coder:free",
-        "nvidia/nemotron-3-super-120b-a12b:free",
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "google/gemini-3.8-flash",
     ],
     "rag": [
         "google/gemini-3.8-flash",
-        "nvidia/nemotron-3-super-120b-a12b:free",
-        "qwen/qwen3-next-80b-a3b-instruct:free",
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "moonshotai/kimi-k2.6",
+        "z-ai/glm-5.3-flash",
         "deepseek/deepseek-chat",
-        "google/gemma-4-31b-it:free",
     ],
     "multilingual": [
-        "google/gemma-4-31b-it:free",
+        "z-ai/glm-5.3-flash",
         "qwen/qwen3-next-80b-a3b-instruct:free",
+        "google/gemma-4-31b-it:free",
         "google/gemini-3.8-flash",
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "google/gemma-4-26b-a4b-it:free",
+        "z-ai/glm-4.5-air",
     ],
     "long_context": [
         "google/gemini-3.8-flash",
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "moonshotai/kimi-k2.6",
         "nvidia/nemotron-3-super-120b-a12b:free",
         "qwen/qwen3-next-80b-a3b-instruct:free",
-        "nvidia/nemotron-3-ultra-550b-a55b:free",
-        "meta-llama/llama-3.3-70b-instruct:free",
     ],
     "speed": [
         "google/gemini-3.8-flash",
+        "z-ai/glm-4.5-air",
         "nvidia/nemotron-3.5-lightning:free",
         "deepseek/deepseek-chat",
-        "mistralai/mistral-small-3.1-24b-instruct:free",
-        "meta-llama/llama-3.3-70b-instruct:free",
+        "z-ai/glm-5.3-flash",
     ],
     "dialogue": [
+        "z-ai/glm-5.3-flash",
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "moonshotai/kimi-k2.6",
         "meta-llama/llama-3.3-70b-instruct:free",
-        "google/gemma-4-31b-it:free",
         "google/gemini-3.8-flash",
-        "deepseek/deepseek-chat",
-        "nvidia/nemotron-3-super-120b-a12b:free",
     ],
     "multimodal": [
         "google/gemini-3.8-flash",
         "google/gemma-4-31b-it:free",
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
         "google/gemma-4-26b-a4b-it:free",
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "nvidia/nemotron-3-super-120b-a12b:free",
+        "z-ai/glm-5.3-flash",
     ],
     "tool_use": [
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "z-ai/glm-5.3-flash",
+        "moonshotai/kimi-k2.6",
         "deepseek/deepseek-chat",
         "qwen/qwen3-coder:free",
-        "nvidia/nemotron-3-super-120b-a12b:free",
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "google/gemini-3.8-flash",
     ],
     "general": [
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "z-ai/glm-5.3-flash",
         "deepseek/deepseek-chat",
         "google/gemini-3.8-flash",
-        "nvidia/nemotron-3-super-120b-a12b:free",
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "google/gemma-4-31b-it:free",
+        "moonshotai/kimi-k2.6",
     ],
 }
 

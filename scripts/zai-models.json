@@ -1,0 +1,27 @@
+{
+  "base_url": "https://api.z.ai/api/paas/v4",
+  "base_url_env": "ZAI_BASE_URL",
+  "default_chat": "glm_53_flash",
+  "chat": {
+    "glm_53_flash": "glm-5.3-flash",
+    "glm_53_flashx": "glm-5.3-flashx",
+    "glm_53": "glm-5.3",
+    "glm_52": "glm-5.2",
+    "glm_47": "glm-4.7",
+    "glm_45_air": "glm-4.5-air"
+  },
+  "openrouter_map": {
+    "z-ai/glm-5.3-flash": "glm_53_flash",
+    "z-ai/glm-5.3-flash:free": "glm_53_flash",
+    "z-ai/glm-5.3-flashx": "glm_53_flashx",
+    "z-ai/glm-5.3": "glm_53",
+    "z-ai/glm-5.2": "glm_52",
+    "z-ai/glm-4.7": "glm_47",
+    "z-ai/glm-4.5-air": "glm_45_air",
+    "z-ai/glm-4.5-air:free": "glm_45_air",
+    "z-ai/glm-4.7-flash": "glm_45_air",
+    "z-ai/glm-4.7-flash:free": "glm_45_air",
+    "z-ai/glm-4.5-flash": "glm_45_air",
+    "z-ai/glm-4.5-flash:free": "glm_45_air"
+  }
+}

@@ -42,14 +42,13 @@ class CerebrasClient:
     BASE_URL = "https://api.cerebras.ai/v1"
     DEFAULT_MODEL = "gemma-4-31b"
 
-    # Map OpenRouter model IDs to Cerebras native IDs (see GET /v1/models)
+    # Same-family maps only (ROUTING_V2_STRICT_IDENTITY). Cross-family spillover
+    # (Qwen→GLM, Llama→GPT-OSS) removed so we fail over to next provider / OR.
     MODEL_MAP = {
-        "meta-llama/llama-3.3-70b-instruct:free": "gpt-oss-120b",
-        "meta-llama/llama-3.3-70b-instruct": "gpt-oss-120b",
-        "meta-llama/llama-3.1-8b-instruct:free": "gemma-4-31b",
-        "meta-llama/llama-3.1-8b-instruct": "gemma-4-31b",
-        "qwen/qwen3-next-80b-a3b-instruct:free": "zai-glm-4.7",
-        "qwen/qwen2.5-72b-instruct": "zai-glm-4.7",
+        "z-ai/glm-4.5-air": "zai-glm-4.7",
+        "z-ai/glm-5.3-flash": "zai-glm-4.7",
+        "google/gemma-4-31b-it:free": "gemma-4-31b",
+        "google/gemma-4-31b-it": "gemma-4-31b",
     }
 
     def __init__(self, api_key: Optional[str] = None):

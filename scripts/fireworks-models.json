@@ -16,7 +16,6 @@
   "openrouter_map": {
     "deepseek/deepseek-chat": "deepseek_v4_flash",
     "qwen/qwen3-next-80b-a3b-instruct:free": "qwen36_plus",
-    "qwen/qwen3-coder:free": "minimax_m27",
     "moonshotai/kimi-k2:free": "kimi_k26",
     "moonshotai/kimi-k2.5:free": "kimi_k26",
     "moonshotai/kimi-k2.6:free": "kimi_k26"

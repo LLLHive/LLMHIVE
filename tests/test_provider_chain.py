@@ -119,12 +119,13 @@ def test_gemma_free_slug_routes_hf_when_token_set(monkeypatch):
     assert chain[0][0] == P_HUGGINGFACE
     assert primary_provider_name(slug) == "huggingface"
 
-    # 27b prefers Google in free_models_database; HF still on chain as spillover
+    # 27b: PROVIDER_ROUTING → HF first; Google family spillover when key present
     slug27 = "google/gemma-3-27b-it:free"
     chain27 = build_provider_chain(slug27)
     providers = [p for p, _ in chain27]
-    assert providers[0] == "google"
-    assert P_HUGGINGFACE in providers
+    assert providers[0] == P_HUGGINGFACE
+    # Google may appear as family spillover when GOOGLE_AI_API_KEY is set
+    assert "google" in providers or P_HUGGINGFACE in providers
 
 
 def test_hf_provider_registered_with_token(monkeypatch):
@@ -156,6 +157,77 @@ def test_catalog_sync_adds_mistral_free_slug():
     assert "mistralai/mistral-small-3.1-24b-instruct:free" in FREE_MODELS_DB or any(
         "mistral" in k for k in FREE_MODELS_DB
     )
+
+
+def test_zai_glm_routes_direct_first(monkeypatch):
+    monkeypatch.setenv("ZAI_API_KEY", "zai-test")
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    from llmhive.app.providers.provider_chain import (
+        build_provider_chain,
+        primary_provider_name,
+        P_ZAI,
+        P_OPENROUTER,
+    )
+
+    slug = "z-ai/glm-5.3-flash"
+    chain = build_provider_chain(slug)
+    assert chain[0][0] == P_ZAI
+    assert primary_provider_name(slug) == "zai"
+    providers = [p for p, _ in chain]
+    if P_OPENROUTER in providers:
+        assert providers.index(P_OPENROUTER) == len(providers) - 1
+
+
+def test_nvidia_nemotron_routes_direct_first(monkeypatch):
+    monkeypatch.setenv("NVIDIA_API_KEY", "nv-test")
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    from llmhive.app.providers.provider_chain import (
+        build_provider_chain,
+        primary_provider_name,
+        P_NVIDIA,
+        P_OPENROUTER,
+    )
+
+    slug = "nvidia/nemotron-3-ultra-550b-a55b:free"
+    chain = build_provider_chain(slug)
+    assert chain[0][0] == P_NVIDIA
+    assert primary_provider_name(slug) == "nvidia"
+    providers = [p for p, _ in chain]
+    if P_OPENROUTER in providers:
+        assert providers.index(P_OPENROUTER) == len(providers) - 1
+
+
+def test_kimi_promoted_in_free_db():
+    from llmhive.app.orchestration.free_models_database import FREE_MODELS_DB
+    from llmhive.app.orchestration.elite_orchestration import FREE_MODELS
+
+    assert "moonshotai/kimi-k2.6" in FREE_MODELS_DB
+    assert FREE_MODELS_DB["moonshotai/kimi-k2.6"].preferred_api == "kimi"
+    assert "z-ai/glm-5.3-flash" in FREE_MODELS_DB
+    assert FREE_MODELS_DB["nvidia/nemotron-3-ultra-550b-a55b:free"].preferred_api == "nvidia"
+    assert any("glm" in m for m in FREE_MODELS["coding"])
+    assert any("kimi" in m for m in FREE_MODELS["reasoning"])
+
+
+def test_strict_identity_refuses_cross_family_remap(monkeypatch, tmp_path):
+    monkeypatch.setenv("ROUTING_V2_STRICT_IDENTITY", "true")
+    monkeypatch.setenv("ZAI_API_KEY", "test-key")
+    from llmhive.app.providers.catalog_client import CatalogClient
+
+    catalog = tmp_path / "bad.json"
+    catalog.write_text(
+        '{"base_url":"https://example.com/v1","chat":{"llama_x":"meta-llama/Llama"},'
+        '"openrouter_map":{"qwen/qwen3-next-80b-a3b-instruct:free":"llama_x"}}'
+    )
+    client = CatalogClient(
+        name="Test",
+        api_key_envs=("ZAI_API_KEY",),
+        catalog_env="UNUSED_CATALOG_ENV_XYZ",
+        default_catalog_path=catalog,
+        default_base_url="https://example.com/v1",
+    )
+    with pytest.raises(ValueError, match="strict identity"):
+        client.resolve_model("qwen/qwen3-next-80b-a3b-instruct:free")
 
 
 def test_benchmark_table_loaded():

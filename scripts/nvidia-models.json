@@ -1,0 +1,23 @@
+{
+  "base_url": "https://integrate.api.nvidia.com/v1",
+  "base_url_env": "NVIDIA_BASE_URL",
+  "default_chat": "nemotron_ultra",
+  "chat": {
+    "nemotron_ultra": "nvidia/nemotron-3-ultra-550b-a55b",
+    "nemotron_super": "nvidia/nemotron-3-super-120b-a12b",
+    "nemotron_lightning": "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "nemotron_nano_reasoning": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning"
+  },
+  "openrouter_map": {
+    "nvidia/nemotron-3-ultra-550b-a55b:free": "nemotron_ultra",
+    "nvidia/nemotron-3-ultra-550b-a55b": "nemotron_ultra",
+    "nvidia/nemotron-3-super-120b-a12b:free": "nemotron_super",
+    "nvidia/nemotron-3-super-120b-a12b": "nemotron_super",
+    "nvidia/nemotron-3.5-lightning:free": "nemotron_lightning",
+    "nvidia/nemotron-3.5-lightning": "nemotron_lightning",
+    "nvidia/nemotron-3.5-lightning-30b-a3b": "nemotron_lightning",
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free": "nemotron_nano_reasoning",
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning": "nemotron_nano_reasoning",
+    "nvidia/nemotron-3-nano-30b-a3b": "nemotron_nano_reasoning"
+  }
+}
