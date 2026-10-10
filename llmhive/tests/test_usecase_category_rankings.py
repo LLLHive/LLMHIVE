@@ -22,21 +22,23 @@ def test_scores_are_strictly_descending():
         assert scores == sorted(scores, reverse=True), slug
 
 
-def test_science_leader_is_claude_opus_5():
-    rows = get_usecase_category_rankings("science", top_k=3)
-    assert rows[0] == "anthropic/claude-opus-5"
+def test_science_leader_is_gpt_6_astra_pro():
+    rows = get_usecase_category_rankings("science", top_k=5)
+    assert rows[0] == "openai/gpt-6-astra-pro"
+    assert "anthropic/claude-opus-5" in rows
     assert "openai/gpt-5.6-sol-pro" in rows
 
 
 def test_programming_leader_is_claude_opus_5():
-    rows = get_usecase_category_rankings("programming", top_k=3)
+    rows = get_usecase_category_rankings("programming", top_k=5)
     assert rows[0] == "anthropic/claude-opus-5"
     assert "openai/gpt-5.6-sol-pro" in rows
 
 
-def test_reasoning_includes_sol_pro_and_opus_5():
+def test_reasoning_leader_is_gpt_6_astra():
     rows = get_usecase_category_rankings("reasoning", top_k=5)
-    assert rows[0] == "openai/gpt-5.6-sol-pro"
+    assert rows[0] == "openai/gpt-6-astra"
+    assert "openai/gpt-5.6-sol-pro" in rows
     assert "anthropic/claude-opus-5" in rows
 
 

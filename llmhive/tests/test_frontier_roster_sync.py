@@ -17,7 +17,8 @@ def test_frontier_roster_source_exists():
     assert "anthropic/claude-opus-5" in ui_ids
     assert "anthropic/claude-opus-4.8" in ui_ids
     paid_ids = [m["model_id"] for m in payload.get("paid_catalog") or []]
-    assert paid_ids[0] == "anthropic/claude-opus-5"
+    assert "anthropic/claude-opus-5" in paid_ids
+    assert paid_ids[0] == "openai/gpt-6-astra"
 
 
 def test_generated_surfaces_are_current():
@@ -41,7 +42,8 @@ def test_paid_catalog_generated_loads_in_python():
 
     catalog = load_paid_model_catalog()
     assert catalog
-    assert catalog[0]["model_id"] == "anthropic/claude-opus-5"
+    assert catalog[0]["model_id"] == "openai/gpt-6-astra"
+    assert any(row["model_id"] == "anthropic/claude-opus-5" for row in catalog)
 
 
 def test_category_rankings_include_opus_5():
