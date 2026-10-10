@@ -41,6 +41,10 @@ SAME_MODEL_PROVIDER_MATRIX: Dict[str, List[str]] = {
     "grok-3-mini":       ["openrouter", "grok"],
     "deepseek-reasoner": ["openrouter", "deepseek"],
     "deepseek-flash":    ["openrouter", "deepseek"],
+    # Production chat fallback. OpenRouter slugs ("openai/gpt-4o-mini") resolve
+    # to these keys so one provider failure is not SAME_MODEL_EXHAUSTED.
+    "gpt-4o":            ["openrouter", "openai"],
+    "gpt-4o-mini":       ["openrouter", "openai"],
 }
 
 # Maps internal model_id → the model string each provider expects.
@@ -122,6 +126,14 @@ _MODEL_ID_PER_PROVIDER: Dict[str, Dict[str, str]] = {
         "openrouter": "deepseek/deepseek-v4.1-flash",
         "deepseek":   "deepseek-flash",
     },
+    "gpt-4o": {
+        "openrouter": "openai/gpt-4o",
+        "openai":     "gpt-4o",
+    },
+    "gpt-4o-mini": {
+        "openrouter": "openai/gpt-4o-mini",
+        "openai":     "gpt-4o-mini",
+    },
 }
 
 # ── Provider SLA thresholds ─────────────────────────────────────────────
@@ -149,6 +161,7 @@ class ProviderFailureType:
     RATE_LIMIT = "rate_limit"
     SERVER = "server_failure"
     TIMEOUT = "timeout"
+    NOT_FOUND = "model_not_found"
     CLIENT = "client_error"
 
 
@@ -165,6 +178,8 @@ def classify_provider_failure(exc: BaseException) -> str:
 
     if status_code == 402:
         return ProviderFailureType.PAYMENT
+    if status_code == 404:
+        return ProviderFailureType.NOT_FOUND
     if status_code == 429:
         return ProviderFailureType.RATE_LIMIT
     if status_code is not None and status_code >= 500:
@@ -198,6 +213,7 @@ _FAILOVER_TYPES = frozenset({
     ProviderFailureType.RATE_LIMIT,
     ProviderFailureType.SERVER,
     ProviderFailureType.TIMEOUT,
+    ProviderFailureType.NOT_FOUND,
 })
 
 
@@ -208,21 +224,55 @@ def is_failover_worthy(failure_type: str) -> bool:
 
 # ── Public API ──────────────────────────────────────────────────────────
 
+def unwrap_synthetic_model_id(model_id: str) -> str:
+    """Turn ``fallback-<provider>-for-<model>`` back into ``<model>``.
+
+    Those tags are telemetry only. Sending them to OpenRouter is a 400.
+    """
+    raw = (model_id or "").strip()
+    if raw.startswith("fallback-") and "-for-" in raw:
+        recovered = raw.split("-for-", 1)[-1].strip()
+        if recovered:
+            return recovered
+    return raw
+
+
+def _matrix_key(model_id: str) -> str:
+    """Resolve a short id or provider slug onto a matrix key."""
+    raw = unwrap_synthetic_model_id(model_id)
+    if raw in SAME_MODEL_PROVIDER_MATRIX:
+        return raw
+    leaf = raw.split("/")[-1] if raw else raw
+    if leaf in SAME_MODEL_PROVIDER_MATRIX:
+        return leaf
+    return raw
+
+
 def get_equivalent_providers(model_id: str) -> List[str]:
     """Return ordered list of provider keys that can serve *model_id*.
 
-    Falls back to ``["openrouter"]`` for models not in the matrix
-    (non-elite models keep existing behaviour).
+    Accepts short ids (``gpt-4o-mini``) and provider slugs
+    (``openai/gpt-4o-mini``). Falls back to ``["openrouter"]`` for models
+    not in the matrix.
     """
-    return list(SAME_MODEL_PROVIDER_MATRIX.get(model_id, ["openrouter"]))
+    return list(SAME_MODEL_PROVIDER_MATRIX.get(_matrix_key(model_id), ["openrouter"]))
 
 
 def get_provider_model_name(model_id: str, provider_key: str) -> str:
     """Return the model name string that *provider_key* expects for *model_id*.
 
-    Falls back to *model_id* unchanged if no explicit mapping exists.
+    OpenRouter slugs that already contain ``/`` are passed through. Direct
+    providers receive the native name from the matrix, or the slug leaf.
     """
-    return _MODEL_ID_PER_PROVIDER.get(model_id, {}).get(provider_key, model_id)
+    raw = unwrap_synthetic_model_id(model_id)
+    if provider_key == "openrouter" and "/" in raw:
+        return raw
+    mapped = _MODEL_ID_PER_PROVIDER.get(_matrix_key(raw), {}).get(provider_key)
+    if mapped:
+        return mapped
+    if provider_key != "openrouter" and "/" in raw:
+        return raw.split("/")[-1]
+    return raw
 
 
 def is_provider_sla_healthy(
@@ -290,7 +340,7 @@ def _extract_status_code(exc: BaseException) -> Optional[int]:
     # Scan message for common HTTP codes
     msg = str(exc)
     import re
-    m = re.search(r"\b(402|429|500|502|503|504)\b", msg)
+    m = re.search(r"\b(402|404|429|500|502|503|504)\b", msg)
     if m:
         return int(m.group(1))
 

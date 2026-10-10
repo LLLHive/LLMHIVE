@@ -79,7 +79,11 @@ class FireworksClient:
             return self.chat_models[logical]
         if model.startswith("accounts/fireworks/"):
             return model
-        return self.default_model
+        # Only substitute a real Fireworks id. A logical key such as
+        # "deepseek_v4_flash" is not a model path and returns HTTP 404.
+        if str(self.default_model).startswith("accounts/fireworks/"):
+            return self.default_model
+        return model
 
     async def generate(
         self,
@@ -90,6 +94,8 @@ class FireworksClient:
         **kwargs: Any,
     ) -> str:
         native_model = self.resolve_model(model or self.default_model)
+        if not str(native_model).startswith("accounts/fireworks/"):
+            raise Exception(f"Fireworks model not found: {model or native_model}")
         payload = {
             "model": native_model,
             "messages": [{"role": "user", "content": prompt}],
@@ -118,6 +124,10 @@ class FireworksClient:
                     raise Exception("Fireworks rate limit - retry later")
                 if response.status_code == 401:
                     raise Exception("Invalid FIREWORKS_API_KEY / FIREWORKS_KEY")
+                if response.status_code == 404:
+                    raise Exception(
+                        f"Fireworks model not found: {response.text[:200]}"
+                    )
                 raise Exception(
                     f"Fireworks API error {response.status_code}: {response.text[:200]}"
                 )
@@ -136,7 +146,7 @@ class FireworksClient:
                 return await self.generate(prompt, model, **kwargs)
             except Exception as e:
                 err = str(e).lower()
-                if any(x in err for x in ["401", "invalid"]):
+                if any(x in err for x in ["401", "invalid", "404", "model not found"]):
                     logger.warning("Fireworks non-retryable: %s", e)
                     return None
                 if attempt < max_retries:

@@ -852,6 +852,17 @@ The user wants an answer, not questions. Provide helpful, direct responses."""
                     async def generate(self, prompt: str, model: str = "openai/gpt-4o", **kwargs):
                         """Generate response using OpenRouter API."""
                         try:
+                            from .intelligence.provider_equivalence import (
+                                unwrap_synthetic_model_id,
+                            )
+                            recovered = unwrap_synthetic_model_id(model)
+                            if recovered != model:
+                                logger.warning(
+                                    "Recovered real model ID from synthetic fallback tag: %s -> %s",
+                                    model,
+                                    recovered,
+                                )
+                                model = recovered
                             await self._ensure_client()
                             
                             api_kwargs = {
@@ -3098,10 +3109,11 @@ Please provide an accurate, well-verified response."""
                 is_failover_worthy,
                 is_provider_sla_healthy,
                 record_provider_error,
+                unwrap_synthetic_model_id,
             )
             from .intelligence.elite_policy import is_benchmark_mode
 
-            first_model = models_to_use[0]
+            first_model = unwrap_synthetic_model_id(models_to_use[0])
             equivalent_providers = get_equivalent_providers(first_model)
 
             # Telemetry tracking for this invocation
@@ -3237,8 +3249,10 @@ Please provide an accurate, well-verified response."""
                         f"No downgrade allowed in benchmark mode."
                     )
 
-                # Production fallback: try weaker-model chain as last resort
-                logger.error(
+                # Production fallback: try weaker-model chain as last resort.
+                # Warning here: a later provider may still answer. Error only
+                # if that chain fails, so Sentry does not page on a recovery.
+                logger.warning(
                     "SAME_MODEL_EXHAUSTED: model=%s providers_tried=%s "
                     "failure_type=%s — falling back to weak-model chain",
                     first_model, _providers_tried, _failure_type,
@@ -3317,6 +3331,11 @@ Please provide an accurate, well-verified response."""
                         },
                     )
                 else:
+                    logger.error(
+                        "SAME_MODEL_EXHAUSTED: model=%s providers_tried=%s "
+                        "failure_type=%s — weak-model chain also failed",
+                        first_model, _providers_tried, _failure_type,
+                    )
                     from .errors import ProviderError, ErrorCode
                     raise ProviderError(
                         message=f"Provider error: {_last_exc}",

@@ -4404,6 +4404,9 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
         )
         
         elite_result = None
+        # Standard orchestration assigns this. Elite success does not, and later
+        # telemetry must not touch an unbound local (UnboundLocalError).
+        artifacts = None
         
         if use_elite:
             logger.info(
@@ -4804,7 +4807,7 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
             token_usage = elite_result.total_tokens
             quality_score = elite_result.quality_score
             actual_models_used = elite_result.models_used
-        elif 'artifacts' in dir() and artifacts:
+        elif artifacts:
             if hasattr(artifacts.final_response, 'tokens_used'):
                 token_usage = artifacts.final_response.tokens_used
             actual_models_used = actual_models
@@ -4841,7 +4844,7 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
             }
             extra["performance_notes"] = elite_result.performance_notes
         else:
-            if 'artifacts' in dir() and artifacts:
+            if artifacts:
                 extra["initial_responses_count"] = len(artifacts.initial_responses)
                 extra["critiques_count"] = len(artifacts.critiques)
                 extra["improvements_count"] = len(artifacts.improvements)
@@ -4903,7 +4906,7 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
         # Add cost tracking information if available
         cost_info = None
         generation_id = None
-        if 'artifacts' in dir() and artifacts and hasattr(artifacts, 'final_response'):
+        if artifacts and hasattr(artifacts, 'final_response'):
             cost_info = getattr(artifacts.final_response, 'cost_info', None)
             generation_id = getattr(artifacts.final_response, 'generation_id', None)
         
@@ -4957,8 +4960,8 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
         # If final_text is empty after all processing, try one bounded recovery
         # then fall back to an explicit apology (still HTTP 200 for clients).
         if not final_text or not final_text.strip():
-            logger.error(
-                "CRITICAL: final_text is empty after orchestration! "
+            logger.warning(
+                "final_text is empty after orchestration; attempting one recovery. "
                 "Prompt: %s, Models: %s",
                 request.prompt[:100],
                 actual_models,
@@ -5011,6 +5014,12 @@ REMINDER: Your response MUST be in {detected_language}. Use {detected_language} 
                 }
 
             if not recovered:
+                logger.error(
+                    "CRITICAL: final_text is empty after orchestration! "
+                    "Prompt: %s, Models: %s",
+                    request.prompt[:100],
+                    actual_models,
+                )
                 final_text = (
                     "I apologize, but I was unable to generate a response to your query. "
                     "Please try again or rephrase your question."
