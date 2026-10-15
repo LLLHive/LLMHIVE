@@ -1,5 +1,6 @@
 # Review-only monthly pack: copies weekly improvement artifacts into a dated folder
-# under artifacts/weekly_improvement_review/ and opens a PR to main (no OpenRouter sync, no auto-apply).
+# under artifacts/weekly_improvement_review/YYYY-MM-DD/{reports,plans}/ and opens a PR
+# to main (no OpenRouter sync, no auto-apply). Report JSON and plan JSON stay apart.
 #
 # Cron runs from the repository default branch only. Enable Actions in repo settings.
 # After merge, history stays on main under artifacts/weekly_improvement_review/YYYY-MM-DD/.
@@ -37,34 +38,10 @@ jobs:
         id: pack
         run: |
           set -euo pipefail
-          DATE=$(date -u +%Y-%m-%d)
-          DEST="artifacts/weekly_improvement_review/${DATE}"
-          mkdir -p "$DEST"
-          shopt -s nullglob || true
-          for f in llmhive/src/llmhive/app/weekly/reports/*.md llmhive/src/llmhive/app/weekly/reports/*.json; do
-            [ -e "$f" ] && cp "$f" "$DEST/" || true
-          done
-          for f in llmhive/src/llmhive/app/weekly/plans/*.json; do
-            [ -e "$f" ] && cp "$f" "$DEST/" || true
-          done
-          {
-            echo "# Improvement report pack (${DATE})"
-            echo ""
-            echo "Produced by \`monthly-improvement-reports.yml\` (review-only)."
-            echo ""
-            echo "- Sources: \`llmhive/src/llmhive/app/weekly/reports/\`, \`llmhive/src/llmhive/app/weekly/plans/\`"
-            echo "- No catalog sync and no auto-apply in this workflow."
-            echo ""
-            echo "## Human review"
-            echo ""
-            echo "1. Inspect JSON/Markdown in this folder."
-            echo "2. Apply gated upgrades manually if appropriate."
-          } > "$DEST/README.md"
-          echo "date=${DATE}" >> "$GITHUB_OUTPUT"
-          echo "Pack at ${DEST}"
-          ls -la "$DEST" || true
+          bash scripts/assemble_monthly_improvement_pack.sh
 
       - name: Upload pack as artifact
+        if: steps.pack.outputs.skip_pr != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: monthly-improvement-pack-${{ steps.pack.outputs.date }}
@@ -81,6 +58,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          if [ "${{ steps.pack.outputs.skip_pr }}" = "true" ]; then
+            echo "Pack skipped; not opening a pull request."
+            exit 0
+          fi
           DATE="${{ steps.pack.outputs.date }}"
           RID="${{ github.run_id }}"
           BR="chore/monthly-improvement-pack-${DATE}-${RID}"
@@ -101,5 +82,5 @@ jobs:
           git push -u origin "$BR"
           gh pr create --base main --head "$BR" \
             --title "chore: monthly improvement report pack ${DATE}" \
-            --body "Review-only pack from \`monthly-improvement-reports.yml\` (run ${RID}). Merge if the artifacts look correct. **Does not** run OpenRouter sync or auto-apply upgrades." \
+            --body "Review-only pack from \`monthly-improvement-reports.yml\` (run ${RID}). Reports are in \`reports/\` and plans are in \`plans/\`. Merge if the artifacts look correct. **Does not** run OpenRouter sync or auto-apply upgrades." \
             || echo "PR creation skipped or failed; check with gh pr list"
